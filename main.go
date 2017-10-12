@@ -1,10 +1,10 @@
 package main
 
 import (
-	"github.com/appliscale/cftool/cfonlinevalidator"
+	"github.com/Appliscale/cftool/cfonlinevalidator"
 	"fmt"
-	"github.com/appliscale/cftool/cfcliparser"
-	"github.com/appliscale/cftool/cfconverter"
+	"github.com/Appliscale/cftool/cfcliparser"
+	"github.com/Appliscale/cftool/cfconverter"
 )
 
 func main() {

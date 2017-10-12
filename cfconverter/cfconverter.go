@@ -6,7 +6,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"fmt"
-	"github.com/appliscale/cftool/cfcliparser"
+	"github.com/Appliscale/cftool/cfcliparser"
 	"os"
 )
 
