@@ -1,4 +1,4 @@
-# CFTool
+# CFTool [![Build Status](https://travis-ci.org/Appliscale/cftool.svg?branch=master)](https://travis-ci.org/Appliscale/cftool)
 A tool for CloudFormation template validation and conversion.
 
 ## Goal
