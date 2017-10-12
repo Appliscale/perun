@@ -1,8 +1,8 @@
-package cfconverter
+package cfcliparser
 
 import "testing"
 
-func TestConverter(t *testing.T) {
+func TestParser(t *testing.T) {
 	if false {
 		t.Error("Just an example")
 	}

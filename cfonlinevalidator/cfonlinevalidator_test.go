@@ -2,10 +2,8 @@ package cfonlinevalidator
 
 import "testing"
 
-func TestSayHello(t *testing.T) {
-/*	var hello string
-	hello = SayHello()
-	if hello != "Hello" {
-		t.Error("Expected Hello, got " + hello)
-	}*/
+func TestValidator(t *testing.T) {
+	if false {
+		t.Error("Just an example")
+	}
 }
