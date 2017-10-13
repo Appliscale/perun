@@ -1,0 +1,48 @@
+{
+  "PropertyTypes": {
+    "ExampleProperties": {
+      "Documentation": "Documentation string",
+      "Properties": {
+        "ExampleProperty": {
+          "Required": true,
+          "Documentation": "Documentation string",
+          "PrimitiveType": "String",
+          "UpdateType": "Mutable"
+        },
+        "AnotherExampleProperty": {
+          "Documentation": "Documentation string",
+          "DuplicatesAllowed": true,
+          "ItemType": "Tag",
+          "Required": false,
+          "Type": "List",
+          "PrimitiveItemType": "String",
+          "UpdateType": "Conditional"
+        }
+      }
+    }
+  },
+  "ResourceTypes": {
+    "ExampleResourceType": {
+      "Documentation": "Documentation string",
+      "Attributes": {
+        "ExampleAttribute": {
+          "PrimitiveItemType": "String",
+          "Type": "List"
+        },
+        "AnotherExampleAttribute": {
+          "ItemType": "Tag",
+          "PrimitiveType": "String"
+        }
+      },
+      "Properties": {
+        "ExampleProperty": {
+          "Documentation": "Documentation string",
+          "PrimitiveType": "String",
+          "Required": true,
+          "UpdateType": "Immutable"
+        }
+      }
+    }
+  },
+  "ResourceSpecificationVersion": "1.2.3"
+}
