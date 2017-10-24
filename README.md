@@ -11,9 +11,9 @@ First of all you need to download CFTool to your GO workspace:
 
 `go get github.com/Appliscale/cftool`
 
-Then install the application:
+Then install the application by going to cftool directory and typing:
 
-`go install github.com/Appliscale/cftool`
+`./build.sh`
 
 The application should be compiled to `cftool` binary file to the `bin` directory in your GO workspace.
 

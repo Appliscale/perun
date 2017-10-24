@@ -3,6 +3,7 @@ package cfspecification
 import (
 	"encoding/json"
 	"io/ioutil"
+	"github.com/Appliscale/cftool/cfspecification/specification"
 )
 
 type Specification struct {
@@ -40,6 +41,17 @@ type Attribute struct {
 	Type string
 }
 
+// Use this function to read specification files genereted with go-bindata library.
+func GetEmbeddedSpecification(specificationAssetPath string) (specification Specification, err error) {
+	specificationFile, err := cfspecification.Asset(specificationAssetPath)
+	if err != nil {
+		panic(err)
+	}
+
+	return ParseSpecificationFile(specificationFile)
+}
+
+// Use this function to read specification from a file.
 func GetSpecification(specificationFilePath string) (specification Specification, err error) {
 	specificationFile, err := ioutil.ReadFile(specificationFilePath)
 	if err != nil {
