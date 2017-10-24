@@ -23,7 +23,7 @@ if [ ! -f $GOPATH/bin/go-bindata ]; then
 fi
 
 SPECIFICATION_DIRECTORY=$GOPATH/src/github.com/Appliscale/cftool/cfspecification/specification
-$GOPATH/bin/go-bindata -pkg cfspecification -o $SPECIFICATION_DIRECTORY/CloudFormationResourceSpecification.go $SPECIFICATION_DIRECTORY/CloudFormationResourceSpecification.json
+$GOPATH/bin/go-bindata -pkg cfspecification -o $SPECIFICATION_DIRECTORY/CloudFormationResourceSpecification.go -prefix $SPECIFICATION_DIRECTORY $SPECIFICATION_DIRECTORY/CloudFormationResourceSpecification.json
 if [ $? -ne 0 ]
 then
     exit 1
