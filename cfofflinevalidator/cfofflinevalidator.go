@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"github.com/Appliscale/cftool/cfspecification"
 	"io/ioutil"
+	"path"
+	"errors"
+	"github.com/ghodss/yaml"
 )
 
 type Template struct {
@@ -31,9 +34,18 @@ func Validate(templatePath *string, specification *cfspecification.Specification
 		fmt.Println(err)
 	}
 
-	template, err := parse(rawTemplate)
+	var template Template
+	templateFileExtension := path.Ext(*templatePath)
+	if templateFileExtension == ".json" {
+		template, err = parseJSON(rawTemplate)
+	} else if templateFileExtension == ".yaml" ||  templateFileExtension == ".yml" {
+		template, err = parseYAML(rawTemplate)
+	} else {
+		err = errors.New("Invalid template file format.")
+	}
 	if err != nil {
 		fmt.Println(err)
+		return
 	}
 
 	valid := validateResources(template.Resources, specification)
@@ -72,8 +84,17 @@ func areResourcePropertiesValid(resourceSpecification cfspecification.Resource, 
 	return valid
 }
 
-func parse(templateFile []byte) (template Template, err error) {
+func parseJSON(templateFile []byte) (template Template, err error) {
 	err = json.Unmarshal(templateFile, &template)
+	if err != nil {
+		return template, err
+	}
+
+	return template, nil
+}
+
+func parseYAML(templateFile []byte) (template Template, err error) {
+	err = yaml.Unmarshal(templateFile, &template)
 	if err != nil {
 		return template, err
 	}
