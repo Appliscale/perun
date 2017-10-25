@@ -70,5 +70,12 @@ func ParseCliArguments() (cliArguments CliArguments, err error) {
 		}
 	}
 
+	if *cliArguments.Mode == OfflineValidateMode {
+		if *cliArguments.Region == "" {
+			err = errors.New("You should specify a region with -region flag")
+			return
+		}
+	}
+
 	return
 }

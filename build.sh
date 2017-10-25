@@ -14,19 +14,10 @@ case $i in
 esac
 done
 
-
-
-if [ ! -f $GOPATH/bin/go-bindata ]; then
-    echo "Installing go-bindata library"
-    go get -u github.com/jteeuwen/go-bindata/...
-    go install github.com/jteeuwen/go-bindata/...
-fi
-
-SPECIFICATION_DIRECTORY=$GOPATH/src/github.com/Appliscale/cftool/cfspecification/specification
-$GOPATH/bin/go-bindata -pkg cfspecification -o $SPECIFICATION_DIRECTORY/CloudFormationResourceSpecification.go -prefix $SPECIFICATION_DIRECTORY $SPECIFICATION_DIRECTORY/CloudFormationResourceSpecification.json
-if [ $? -ne 0 ]
-then
-    exit 1
+if [ ! -f /etc/.Appliscale/cftool/config.yaml ]; then
+    echo "Extracting configuration file..."
+    sudo mkdir -p /etc/.Appliscale/cftool/
+    sudo cp config.yaml /etc/.Appliscale/cftool/config.yaml
 fi
 
 go get -t -v ./...

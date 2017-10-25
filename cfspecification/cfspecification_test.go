@@ -10,7 +10,7 @@ var specification Specification
 
 func setup() {
 	var err error
-	specification, err = GetSpecification("specification/test_specification.json")
+	specification, err = GetSpecificationFromFile("specification/test_specification.json")
 	if err != nil {
 		panic(err)
 	}

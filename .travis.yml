@@ -4,3 +4,5 @@ go:
   - 1.9
 
 install: ./build.sh --skip_tests
+
+sudo: required

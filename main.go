@@ -28,8 +28,8 @@ func main() {
 	}
 
 	if *cliArguments.Mode == cfcliparser.OfflineValidateMode {
-		specification, err := cfspecification.GetEmbeddedSpecification(
-			"CloudFormationResourceSpecification.json")
+		specification, err := cfspecification.GetSpecification(
+			*cliArguments.Region)
 		if err != nil {
 			fmt.Println(err)
 			return

@@ -3,7 +3,12 @@ package cfspecification
 import (
 	"encoding/json"
 	"io/ioutil"
-	"github.com/Appliscale/cftool/cfspecification/specification"
+	"os"
+	"io"
+	"net/http"
+	"os/user"
+	"github.com/Appliscale/cftool/cfconfiguration"
+	"strings"
 )
 
 type Specification struct {
@@ -41,27 +46,67 @@ type Attribute struct {
 	Type string
 }
 
-// Use this function to read specification files genereted with go-bindata library.
-func GetEmbeddedSpecification(specificationAssetPath string) (specification Specification, err error) {
-	specificationFile, err := cfspecification.Asset(specificationAssetPath)
-	if err != nil {
-		panic(err)
+func GetSpecification(region string) (specification Specification, err error) {
+	filePath, err := downloadSpecification(region)
+	if err != nil  {
+		return specification, err
 	}
 
-	return ParseSpecificationFile(specificationFile)
+	return GetSpecificationFromFile(filePath)
 }
 
-// Use this function to read specification from a file.
-func GetSpecification(specificationFilePath string) (specification Specification, err error) {
+func GetSpecificationFromFile(specificationFilePath string) (specification Specification, err error) {
 	specificationFile, err := ioutil.ReadFile(specificationFilePath)
-	if err != nil {
-		panic(err)
+	if err != nil  {
+		return specification, err
 	}
 
-	return ParseSpecificationFile(specificationFile)
+	return parseSpecificationFile(specificationFile)
 }
 
-func ParseSpecificationFile(specificationFile []byte) (specification Specification, err error) {
+func downloadSpecification(region string) (filePath string, err error) {
+	user, err := user.Current()
+	if err != nil  {
+		return
+	}
+
+	specificationDir := user.HomeDir + "/.Appliscale/cftool/specification"
+	specificationFileUrl, err := cfconfiguration.GetSpecificationFileURL(region)
+	if err != nil  {
+		return
+	}
+	fileName := strings.Replace(specificationFileUrl, "https://", "", -1)
+	fileName = strings.Replace(fileName, ".cloudfront.net/latest/gzip/CloudFormationResourceSpecification.json", "", -1)
+	specificationFilePath := specificationDir + "/" + fileName + ".json"
+
+	if _, err := os.Stat(specificationFilePath); err == nil {
+		return specificationFilePath, nil
+	}
+
+	if _, err := os.Stat(specificationDir); os.IsNotExist(err) {
+		os.MkdirAll(specificationDir, os.ModePerm)
+	}
+	out, err := os.Create(specificationFilePath)
+	if err != nil  {
+		return
+	}
+	defer out.Close()
+
+	resp, err := http.Get(specificationFileUrl)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	_, err = io.Copy(out, resp.Body)
+	if err != nil  {
+		return
+	}
+
+	return specificationFilePath, nil
+}
+
+func parseSpecificationFile(specificationFile []byte) (specification Specification, err error) {
 	err = json.Unmarshal(specificationFile, &specification)
 	if err != nil {
 		return specification, err

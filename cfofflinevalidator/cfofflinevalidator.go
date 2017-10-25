@@ -8,7 +8,15 @@ import (
 )
 
 type Template struct {
+	AWSTemplateFormatVersion string
+	Description string
+	Metadata map[string]interface{}
+	Parameters map[string]interface{}
+	Mappings map[string]interface{}
+	Conditions map[string]interface{}
+	Transform map[string]interface{}
 	Resources map[string]Resource
+	Outputs map[string]interface{}
 }
 
 type Resource struct {
@@ -31,23 +39,34 @@ func Validate(templatePath *string, specification *cfspecification.Specification
 	valid := validateResources(template.Resources, specification)
 	if !valid {
 		fmt.Println("Template is invalid!")
+	} else {
+		fmt.Println("Template is valid!")
 	}
 }
 
 func validateResources(resources map[string]Resource, specification *cfspecification.Specification) (bool) {
-	returnValue := true
+	valid := true
 	for resourceName, resourceValue := range resources {
-		resourceSpecification := specification.ResourceTypes[resourceValue.Type]
-		for propertyName, propertyValue := range resourceSpecification.Properties {
-			if propertyValue.Required {
-				if _, ok := resourceValue.Properties[propertyName]; !ok {
-					fmt.Println("Property " + propertyName + " is required for resource " + resourceName)
-					returnValue = false
-				}
-			}
+		if resourceSpecification, ok := specification.ResourceTypes[resourceValue.Type]; ok {
+			valid = areResourcePropertiesValid(resourceSpecification, resourceValue, resourceName)
+		} else {
+			fmt.Println("Type needs to be specified for resource " + resourceName)
+			valid = false
 		}
 	}
 
+	return valid
+}
+func areResourcePropertiesValid(resourceSpecification cfspecification.Resource, resourceValue Resource, resourceName string) bool {
+	returnValue := true
+	for propertyName, propertyValue := range resourceSpecification.Properties {
+		if propertyValue.Required {
+			if _, ok := resourceValue.Properties[propertyName]; !ok {
+				fmt.Println("Property " + propertyName + " is required for resource " + resourceName)
+				returnValue = false
+			}
+		}
+	}
 	return returnValue
 }
 
