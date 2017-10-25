@@ -11,15 +11,21 @@ First of all you need to download CFTool to your GO workspace:
 
 `go get github.com/Appliscale/cftool`
 
-Then install the application:
+Then install the application by going to cftool directory and typing:
 
-`go install github.com/Appliscale/cftool`
+`./build.sh`
+
+Configuration file (config.yaml) will be copied to `/etc/.Appliscale/cftool`
 
 The application should be compiled to `cftool` binary file to the `bin` directory in your GO workspace.
 
-To validate your template just type:
+To validate your template online, with AWS API, just type:
 
 `cftool -mode=validate -file=[path to your template] -region=[region, e.g. eu-central-1]`
+
+To validate template offline (well, almost offline - AWS CloudFormation Resource Specification still needs be downloaded) use validate_offline mode:
+
+`cftool -mode=validate_offline -file=[path to your template] -region=[region]`
 
 To convert your template from JSON to YAML and form YAML to JSON type:
 

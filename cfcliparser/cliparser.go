@@ -8,6 +8,7 @@ import (
 
 const ValidateMode string = "validate"
 const ConvertMode string = "convert"
+const OfflineValidateMode = "validate_offline"
 const JSON string = "json"
 const YAML string = "yaml"
 
@@ -20,7 +21,7 @@ type CliArguments struct {
 }
 
 func ParseCliArguments() (cliArguments CliArguments, err error) {
-	cliArguments.Mode = flag.String("mode", "", "Mode: " + ValidateMode + "|" + ConvertMode)
+	cliArguments.Mode = flag.String("mode", "", "Mode: " + ValidateMode + "|" + OfflineValidateMode + "|" + ConvertMode)
 	cliArguments.FilePath = flag.String("file", "", "A path to the template")
 	cliArguments.OutputFilePath = flag.String("output", "", "A path, where converted file will be saved")
 	cliArguments.OutputFileFormat = flag.String("format", "", "Output format: " + strings.ToUpper(JSON) +
@@ -34,7 +35,7 @@ func ParseCliArguments() (cliArguments CliArguments, err error) {
 		return
 	}
 
-	if *cliArguments.Mode != ValidateMode && *cliArguments.Mode != ConvertMode {
+	if *cliArguments.Mode != ValidateMode && *cliArguments.Mode != ConvertMode && *cliArguments.Mode != OfflineValidateMode {
 		err = errors.New("Invalid mode. Use validate or convert")
 		return
 	}
@@ -65,6 +66,13 @@ func ParseCliArguments() (cliArguments CliArguments, err error) {
 		*cliArguments.OutputFileFormat = strings.ToLower(*cliArguments.OutputFileFormat)
 		if *cliArguments.OutputFileFormat != JSON && *cliArguments.OutputFileFormat != YAML {
 			err = errors.New("Invalid mode. Use validate or convert")
+			return
+		}
+	}
+
+	if *cliArguments.Mode == OfflineValidateMode {
+		if *cliArguments.Region == "" {
+			err = errors.New("You should specify a region with -region flag")
 			return
 		}
 	}
