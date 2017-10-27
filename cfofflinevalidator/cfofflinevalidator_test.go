@@ -5,13 +5,17 @@ import (
 	"os"
 	"github.com/Appliscale/cftool/cfspecification"
 	"github.com/stretchr/testify/assert"
+	"github.com/Appliscale/cftool/cfofflinevalidator/cftemplate"
+	"github.com/Appliscale/cftool/cflogger"
 )
 
 var specification cfspecification.Specification
+var logger cflogger.Logger
 
 func setup() {
 	var err error
-	specification, err = cfspecification.GetSpecificationFromFile("resources/test_specification.json")
+	logger = cflogger.Logger{}
+	specification, err = cfspecification.GetSpecificationFromFile("test_specification.json")
 	if err != nil {
 		panic(err)
 	}
@@ -24,28 +28,28 @@ func TestMain(m *testing.M) {
 }
 
 func TestValidResource(t *testing.T) {
-	resources := make(map[string]Resource)
+	resources := make(map[string]cftemplate.Resource)
 	resources["ExampleResource"] = createResourceWithOneProperty("ExampleResourceType", "ExampleProperty", "Property value")
 
-	assert.True(t, validateResources(resources, &specification), "This resource should be valid")
+	assert.True(t, validateResources(resources, &specification, &logger), "This resource should be valid")
 }
 
 func TestInvalidResourceType(t *testing.T) {
-	resources := make(map[string]Resource)
+	resources := make(map[string]cftemplate.Resource)
 	resources["ExampleResource"] = createResourceWithOneProperty("InvalidType", "ExampleProperty", "Property value")
 
-	assert.False(t, validateResources(resources, &specification), "This resource should be valid, it has invalid resource type")
+	assert.False(t, validateResources(resources, &specification, &logger), "This resource should be valid, it has invalid resource type")
 }
 
 func TestLackOfRequiredPropertyInResource(t *testing.T) {
-	resources := make(map[string]Resource)
+	resources := make(map[string]cftemplate.Resource)
 	resources["ExampleResource"] = createResourceWithOneProperty("ExampleResourceType", "SomeProperty", "Property value")
 
-	assert.False(t, validateResources(resources, &specification), "This resource should not be valid, it do not have required property")
+	assert.False(t, validateResources(resources, &specification, &logger), "This resource should not be valid, it do not have required property")
 }
 
-func createResourceWithOneProperty(resourceType string, propertyName string, propertyValue string) (Resource) {
-	resource := Resource{}
+func createResourceWithOneProperty(resourceType string, propertyName string, propertyValue string) (cftemplate.Resource) {
+	resource := cftemplate.Resource{}
 	resource.Type = resourceType
 	resource.Properties = make(map[string]interface{})
 	resource.Properties[propertyName] = propertyValue
