@@ -20,7 +20,7 @@ var validators = map[string]interface{}{
 func Validate(templatePath *string, specification *cfspecification.Specification) {
 	valid := false
 	logger := cflogger.Logger{}
-	defer printResult(valid, &logger)
+	defer printResult(&valid, &logger)
 
 	rawTemplate, err := ioutil.ReadFile(*templatePath)
 	if err != nil {
@@ -45,9 +45,9 @@ func Validate(templatePath *string, specification *cfspecification.Specification
 	valid = validateResources(template.Resources, specification, &logger)
 }
 
-func printResult(valid bool, logger *cflogger.Logger) {
+func printResult(valid *bool, logger *cflogger.Logger) {
 	cflogger.PrintErrors(logger)
-	if !valid {
+	if !*valid {
 		fmt.Println("Template is invalid!")
 	} else {
 		fmt.Println("Template is valid!")

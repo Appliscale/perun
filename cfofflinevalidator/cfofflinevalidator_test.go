@@ -15,7 +15,7 @@ var logger cflogger.Logger
 func setup() {
 	var err error
 	logger = cflogger.Logger{}
-	specification, err = cfspecification.GetSpecificationFromFile("test_specification.json")
+	specification, err = cfspecification.GetSpecificationFromFile("test_resources/test_specification.json")
 	if err != nil {
 		panic(err)
 	}
