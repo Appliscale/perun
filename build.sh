@@ -14,11 +14,11 @@ case $i in
 esac
 done
 
-if [ ! -f /etc/.Appliscale/cftool/config.yaml ]; then
-    echo "Extracting configuration file..."
-    sudo mkdir -p /etc/.Appliscale/cftool/
-    sudo cp config.yaml /etc/.Appliscale/cftool/config.yaml
+echo "Extracting configuration file..."
+if [ ! -f $HOME"/.Appliscale/cftool" ]; then
+    mkdir -p $HOME"/.Appliscale/cftool/"
 fi
+cp config.yaml $HOME"/.Appliscale/cftool/config.yaml"
 
 go get -t -v ./...
 if [ $? -ne 0 ]

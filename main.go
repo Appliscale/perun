@@ -1,12 +1,11 @@
 package main
 
 import (
-	"github.com/Appliscale/cftool/cfonlinevalidator"
 	"fmt"
 	"github.com/Appliscale/cftool/cfcliparser"
 	"github.com/Appliscale/cftool/cfconverter"
 	"github.com/Appliscale/cftool/cfofflinevalidator"
-	"github.com/Appliscale/cftool/cfspecification"
+	"github.com/Appliscale/cftool/cfonlinevalidator"
 )
 
 func main() {
@@ -18,7 +17,7 @@ func main() {
 	}
 
 	if *cliArguments.Mode == cfcliparser.ValidateMode {
-		cfonlinevalidator.ValidateAndEstimateCosts(cliArguments.FilePath, cliArguments.Region)
+		cfonlinevalidator.ValidateAndEstimateCosts(cliArguments.FilePath, cliArguments.ConfigurationPath)
 		return
 	}
 
@@ -28,13 +27,7 @@ func main() {
 	}
 
 	if *cliArguments.Mode == cfcliparser.OfflineValidateMode {
-		specification, err := cfspecification.GetSpecification(
-			*cliArguments.Region)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		cfofflinevalidator.Validate(cliArguments.FilePath, &specification)
+		cfofflinevalidator.Validate(cliArguments.FilePath, cliArguments.ConfigurationPath)
 		return
 	}
 }

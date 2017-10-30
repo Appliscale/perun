@@ -17,10 +17,16 @@ var validators = map[string]interface{}{
 	"AWS::EC2::VPC": cfvalidators.IsVpcValid,
 }
 
-func Validate(templatePath *string, specification *cfspecification.Specification) {
+func Validate(templatePath *string, configurationPath *string) {
 	valid := false
 	logger := cflogger.Logger{}
 	defer printResult(&valid, &logger)
+
+	specification, err := cfspecification.GetSpecification(*configurationPath)
+	if err != nil {
+		cflogger.LogError(&logger, err.Error())
+		return
+	}
 
 	rawTemplate, err := ioutil.ReadFile(*templatePath)
 	if err != nil {
@@ -42,7 +48,7 @@ func Validate(templatePath *string, specification *cfspecification.Specification
 		return
 	}
 
-	valid = validateResources(template.Resources, specification, &logger)
+	valid = validateResources(template.Resources, &specification, &logger)
 }
 
 func printResult(valid *bool, logger *cflogger.Logger) {

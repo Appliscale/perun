@@ -5,34 +5,37 @@ import (
 	"github.com/asaskevich/govalidator"
 	"errors"
 	"io/ioutil"
-	"fmt"
 	"github.com/Appliscale/cftool/cfcliparser"
 	"os"
+	"github.com/Appliscale/cftool/cflogger"
 )
 
 func Convert(sourceFilePath *string, destinationFilePath *string, format *string) {
-	rawTemplate, error := ioutil.ReadFile(*sourceFilePath)
-	if error != nil {
-		fmt.Println(error)
+	logger := cflogger.Logger{}
+	defer cflogger.PrintErrors(&logger)
+
+	rawTemplate, err := ioutil.ReadFile(*sourceFilePath)
+	if err != nil {
+		cflogger.LogError(&logger, err.Error())
 		return
 	}
 
 	if *format == cfcliparser.YAML {
-		outputTemplate, error := toYAML(rawTemplate)
-		if error != nil {
-			fmt.Println(error)
+		outputTemplate, err := toYAML(rawTemplate)
+		if err != nil {
+			cflogger.LogError(&logger, err.Error())
 			return
 		}
-		saveToFile(outputTemplate, destinationFilePath)
+		saveToFile(outputTemplate, destinationFilePath, &logger)
 	}
 
 	if *format == cfcliparser.JSON {
-		outputTemplate, error := toJSON(rawTemplate)
-		if error != nil {
-			fmt.Println(error)
+		outputTemplate, err := toJSON(rawTemplate)
+		if err != nil {
+			cflogger.LogError(&logger, err.Error())
 			return
 		}
-		saveToFile(outputTemplate, destinationFilePath)
+		saveToFile(outputTemplate, destinationFilePath, &logger)
 	}
 }
 
@@ -56,18 +59,18 @@ func toJSON(yamlTemplate []byte) ([]byte, error) {
 	return jsonTemplate, error
 }
 
-func saveToFile(template []byte, path *string) {
-	outputFile, error := os.Create(*path)
-	if error != nil {
-		fmt.Println(error)
+func saveToFile(template []byte, path *string, logger *cflogger.Logger) {
+	outputFile, err := os.Create(*path)
+	if err != nil {
+		cflogger.LogError(logger, err.Error())
 		return
 	}
 
 	defer outputFile.Close()
 
-	_, error = outputFile.Write(template)
-	if error != nil {
-		fmt.Println(error)
+	_, err = outputFile.Write(template)
+	if err != nil {
+		cflogger.LogError(logger, err.Error())
 		return
 	}
 }

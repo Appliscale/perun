@@ -4,31 +4,48 @@ import (
 	"io/ioutil"
 	"errors"
 	"github.com/ghodss/yaml"
+	"os"
+	"os/user"
+	"fmt"
 )
 
 type configuration struct {
+	Profile string
+	Region string
 	SpecificationURL map[string]string
 }
 
 var config configuration
+const globalConfigFile string = "/etc/.Appliscale/cftool/config.yaml"
+const userConfigFile string = "/.Appliscale/cftool/config.yaml"
 
-func GetSpecificationFileURL(region string) (string, error) {
-	err := getConfiguration()
+func GetSpecificationFileURL(configurationFilePath string) (string, error) {
+	err := getConfiguration(configurationFilePath)
 	if err != nil {
 		return "", err
 	}
-	if url, ok := config.SpecificationURL[region]; ok {
+	if url, ok := config.SpecificationURL[config.Region]; ok {
 		return url + "/latest/gzip/CloudFormationResourceSpecification.json", nil
 	}
-	return "", errors.New("There is no specification file for region " + region)
+	return "", errors.New("There is no specification file for region " + config.Region)
 }
 
-func getConfiguration() (error) {
+func GetRegion(configurationFilePath string) (string, error) {
+	err := getConfiguration(configurationFilePath)
+	if err != nil {
+		return "", err
+	}
+	return config.Region, nil
+}
+
+func getConfiguration(configurationFilePath string) error {
 	if len(config.SpecificationURL) == 0 {
-		rawConfiguration, err := ioutil.ReadFile("/etc/.Appliscale/cftool/config.yaml")
+		configPath, err := getConfigPath(configurationFilePath)
 		if err != nil {
+			config = configuration{}
 			return err
 		}
+		rawConfiguration, err := ioutil.ReadFile(configPath)
 		err = yaml.Unmarshal(rawConfiguration, &config)
 		if err != nil {
 			config = configuration{}
@@ -37,4 +54,24 @@ func getConfiguration() (error) {
 	}
 
 	return nil
+}
+
+func getConfigPath(configurationFilePath string) (configPath string, err error) {
+	user, err := user.Current()
+	usersHomeConfiguration := user.HomeDir + userConfigFile
+	if _, err := os.Stat(configurationFilePath); err == nil {
+		notifyUserAboutConfigurationFile(configurationFilePath)
+		return configurationFilePath, nil
+	} else if _, err := os.Stat(usersHomeConfiguration); err == nil {
+		notifyUserAboutConfigurationFile(usersHomeConfiguration)
+		return usersHomeConfiguration, nil
+	} else if _, err := os.Stat(globalConfigFile); err == nil {
+		notifyUserAboutConfigurationFile(globalConfigFile)
+		return globalConfigFile, nil
+	} else {
+		return "", errors.New("There is no configuration file!")
+	}
+}
+func notifyUserAboutConfigurationFile(configurationFilePath string) (int, error) {
+	return fmt.Println("Configuration file from the following location will be use: " + configurationFilePath)
 }

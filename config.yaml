@@ -1,3 +1,5 @@
+Profile: default
+Region: eu-central-1
 SpecificationURL:
   us-east-2: "https://dnwj8swjjbsbt.cloudfront.net"
   us-east-1: "https://d1uauaxba7bl26.cloudfront.net"
