@@ -8,39 +8,39 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/Appliscale/cftool/cfconfiguration"
 	"github.com/Appliscale/cftool/cflogger"
+	"github.com/Appliscale/cftool/cfcontext"
 )
 
-func ValidateAndEstimateCosts(filePath *string, configPath *string) {
+func ValidateAndEstimateCosts(context *cfcontext.Context) {
 	valid := false
-	logger := cflogger.Logger{}
-	defer printResult(&valid, &logger)
+	defer printResult(&valid, context.Logger)
 
-	region, err := cfconfiguration.GetRegion(*configPath)
+	region, err := cfconfiguration.GetRegion(context)
 	if err != nil {
-		cflogger.LogError(&logger, err.Error())
+		context.Logger.LogError(err.Error())
 		return
 	}
 
 	session, err := createSession(&region)
 	if err != nil {
-		cflogger.LogError(&logger, err.Error())
+		context.Logger.LogError(err.Error())
 		return
 	}
 
-	rawTemplate, err := ioutil.ReadFile(*filePath)
+	rawTemplate, err := ioutil.ReadFile(*context.CliArguments.FilePath)
 	if err != nil {
-		cflogger.LogError(&logger, err.Error())
+		context.Logger.LogError(err.Error())
 		return
 	}
 
 	template := string(rawTemplate)
 	valid, err = isTemplateValid(session, &template)
 	if err != nil {
-		cflogger.LogError(&logger, err.Error())
+		context.Logger.LogError(err.Error())
 		return
 	}
 
-	estimateCosts(session, &template, &logger)
+	estimateCosts(session, &template, context.Logger)
 }
 
 func isTemplateValid(session *session.Session, template *string) (bool, error) {
@@ -64,7 +64,7 @@ func estimateCosts(session *session.Session, template *string, logger *cflogger.
 	output, err := cfm.EstimateTemplateCost(&templateCostInput)
 
 	if err != nil {
-		cflogger.LogError(logger, err.Error())
+		logger.LogError(err.Error())
 		return
 	}
 
@@ -82,7 +82,6 @@ func createSession(endpoint *string) (*session.Session, error) {
 }
 
 func printResult(valid *bool, logger *cflogger.Logger) {
-	cflogger.PrintErrors(logger)
 	if !*valid {
 		fmt.Println("Template is invalid!")
 	} else {

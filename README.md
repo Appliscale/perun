@@ -15,7 +15,7 @@ Then install the application by going to cftool directory and typing:
 
 `./build.sh`
 
-Configuration file (config.yaml) will be copied to your home directory under the `/.Appliscale/cftool/config.yaml` path.
+Configuration file (config.yaml) will be copied to your home directory under the `~/.config/cftool/config.yaml` path.
 
 The application should be compiled to `cftool` binary file to the `bin` directory in your GO workspace.
 
@@ -32,12 +32,11 @@ To convert your template from JSON to YAML and form YAML to JSON type:
 `cftool -mode=convert -file=[path to your template] -output=[path to place, where you want to save converted file] 
 -format=[JSON or YAML]`
 
-
 ## Configuration file
 You can find example configuration file in the main directory of the repository - config.yml.
 
 The application will be looking for the configuration file in following order:
 
 * path specified in the command line by -config flag,
-* user home directory under the `/.Appliscale/cftool/config.yaml` path,
+* user home directory under the `~/.config/cftool/config.yaml` path,
 * `/etc/.Appliscale/cftool/config.yaml`.

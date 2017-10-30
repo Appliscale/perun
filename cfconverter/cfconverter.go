@@ -8,34 +8,34 @@ import (
 	"github.com/Appliscale/cftool/cfcliparser"
 	"os"
 	"github.com/Appliscale/cftool/cflogger"
+	"github.com/Appliscale/cftool/cfcontext"
 )
 
-func Convert(sourceFilePath *string, destinationFilePath *string, format *string) {
-	logger := cflogger.Logger{}
-	defer cflogger.PrintErrors(&logger)
+func Convert(context *cfcontext.Context) {
+	defer context.Logger.PrintErrors()
 
-	rawTemplate, err := ioutil.ReadFile(*sourceFilePath)
+	rawTemplate, err := ioutil.ReadFile(*context.CliArguments.FilePath)
 	if err != nil {
-		cflogger.LogError(&logger, err.Error())
+		context.Logger.LogError(err.Error())
 		return
 	}
 
-	if *format == cfcliparser.YAML {
+	if *context.CliArguments.OutputFileFormat == cfcliparser.YAML {
 		outputTemplate, err := toYAML(rawTemplate)
 		if err != nil {
-			cflogger.LogError(&logger, err.Error())
+			context.Logger.LogError(err.Error())
 			return
 		}
-		saveToFile(outputTemplate, destinationFilePath, &logger)
+		saveToFile(outputTemplate, *context.CliArguments.OutputFilePath, context.Logger)
 	}
 
-	if *format == cfcliparser.JSON {
+	if *context.CliArguments.OutputFileFormat == cfcliparser.JSON {
 		outputTemplate, err := toJSON(rawTemplate)
 		if err != nil {
-			cflogger.LogError(&logger, err.Error())
+			context.Logger.LogError(err.Error())
 			return
 		}
-		saveToFile(outputTemplate, destinationFilePath, &logger)
+		saveToFile(outputTemplate, *context.CliArguments.OutputFilePath, context.Logger)
 	}
 }
 
@@ -59,10 +59,10 @@ func toJSON(yamlTemplate []byte) ([]byte, error) {
 	return jsonTemplate, error
 }
 
-func saveToFile(template []byte, path *string, logger *cflogger.Logger) {
-	outputFile, err := os.Create(*path)
+func saveToFile(template []byte, path string, logger *cflogger.Logger) {
+	outputFile, err := os.Create(path)
 	if err != nil {
-		cflogger.LogError(logger, err.Error())
+		logger.LogError(err.Error())
 		return
 	}
 
@@ -70,7 +70,7 @@ func saveToFile(template []byte, path *string, logger *cflogger.Logger) {
 
 	_, err = outputFile.Write(template)
 	if err != nil {
-		cflogger.LogError(logger, err.Error())
+		logger.LogError(err.Error())
 		return
 	}
 }

@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/user"
 	"fmt"
+	"github.com/Appliscale/cftool/cfcontext"
 )
 
 type configuration struct {
@@ -17,10 +18,10 @@ type configuration struct {
 
 var config configuration
 const globalConfigFile string = "/etc/.Appliscale/cftool/config.yaml"
-const userConfigFile string = "/.Appliscale/cftool/config.yaml"
+const userConfigFile string = "/.config/cftool/config.yaml"
 
-func GetSpecificationFileURL(configurationFilePath string) (string, error) {
-	err := getConfiguration(configurationFilePath)
+func GetSpecificationFileURL(context *cfcontext.Context) (string, error) {
+	err := getConfiguration(*context.CliArguments.ConfigurationPath)
 	if err != nil {
 		return "", err
 	}
@@ -30,8 +31,8 @@ func GetSpecificationFileURL(configurationFilePath string) (string, error) {
 	return "", errors.New("There is no specification file for region " + config.Region)
 }
 
-func GetRegion(configurationFilePath string) (string, error) {
-	err := getConfiguration(configurationFilePath)
+func GetRegion(context *cfcontext.Context) (string, error) {
+	err := getConfiguration(*context.CliArguments.ConfigurationPath)
 	if err != nil {
 		return "", err
 	}

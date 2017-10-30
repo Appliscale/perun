@@ -21,7 +21,7 @@ func IsVpcValid(name string, vpc cftemplate.Resource, logger *cflogger.Logger) b
 	mapstructure.Decode(vpc.Properties, &properties)
 
 	if properties.CidrBlock != "" && !govalidator.IsCIDR(properties.CidrBlock) {
-		cflogger.LogValidationError(logger, name, "Invalid CIDR format - " + properties.CidrBlock)
+		logger.LogValidationError(name, "Invalid CIDR format - " + properties.CidrBlock)
 		valid = false
 	}
 
