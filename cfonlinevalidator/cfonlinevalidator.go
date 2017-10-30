@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/Appliscale/cftool/cfconfiguration"
 	"github.com/Appliscale/cftool/cflogger"
 	"github.com/Appliscale/cftool/cfcontext"
 )
@@ -15,13 +14,7 @@ func ValidateAndEstimateCosts(context *cfcontext.Context) {
 	valid := false
 	defer printResult(&valid, context.Logger)
 
-	region, err := cfconfiguration.GetRegion(context)
-	if err != nil {
-		context.Logger.LogError(err.Error())
-		return
-	}
-
-	session, err := createSession(&region)
+	session, err := createSession(&context.Config.Region)
 	if err != nil {
 		context.Logger.LogError(err.Error())
 		return

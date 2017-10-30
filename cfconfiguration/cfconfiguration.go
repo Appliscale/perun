@@ -7,68 +7,54 @@ import (
 	"os"
 	"os/user"
 	"fmt"
-	"github.com/Appliscale/cftool/cfcontext"
+	"github.com/Appliscale/cftool/cfcliparser"
 )
 
-type configuration struct {
+type Configuration struct {
 	Profile string
 	Region string
 	SpecificationURL map[string]string
 }
 
-var config configuration
-const globalConfigFile string = "/etc/.Appliscale/cftool/config.yaml"
-const userConfigFile string = "/.config/cftool/config.yaml"
+const GlobalConfigFile string = "/etc/.Appliscale/cftool/config.yaml"
+const UserConfigFile string = "/.config/cftool/config.yaml"
 
-func GetSpecificationFileURL(context *cfcontext.Context) (string, error) {
-	err := getConfiguration(*context.CliArguments.ConfigurationPath)
-	if err != nil {
-		return "", err
-	}
+func (config Configuration) GetSpecificationFileURLForCurrentRegion() (string, error) {
 	if url, ok := config.SpecificationURL[config.Region]; ok {
 		return url + "/latest/gzip/CloudFormationResourceSpecification.json", nil
 	}
 	return "", errors.New("There is no specification file for region " + config.Region)
 }
 
-func GetRegion(context *cfcontext.Context) (string, error) {
-	err := getConfiguration(*context.CliArguments.ConfigurationPath)
+func GetConfiguration(cliArguments cfcliparser.CliArguments) (config Configuration, err error) {
+	configPath, err := getConfigurationPath(cliArguments)
 	if err != nil {
-		return "", err
+		return
 	}
-	return config.Region, nil
-}
-
-func getConfiguration(configurationFilePath string) error {
-	if len(config.SpecificationURL) == 0 {
-		configPath, err := getConfigPath(configurationFilePath)
-		if err != nil {
-			config = configuration{}
-			return err
-		}
-		rawConfiguration, err := ioutil.ReadFile(configPath)
-		err = yaml.Unmarshal(rawConfiguration, &config)
-		if err != nil {
-			config = configuration{}
-			return err
-		}
+	rawConfiguration, err := ioutil.ReadFile(configPath)
+	if err != nil {
+		return
+	}
+	err = yaml.Unmarshal(rawConfiguration, &config)
+	if err != nil {
+		return
 	}
 
-	return nil
+	return
 }
 
-func getConfigPath(configurationFilePath string) (configPath string, err error) {
+func getConfigurationPath(cliArguments cfcliparser.CliArguments) (configPath string, err error) {
 	user, err := user.Current()
-	usersHomeConfiguration := user.HomeDir + userConfigFile
-	if _, err := os.Stat(configurationFilePath); err == nil {
-		notifyUserAboutConfigurationFile(configurationFilePath)
-		return configurationFilePath, nil
+	usersHomeConfiguration := user.HomeDir + UserConfigFile
+	if _, err := os.Stat(*cliArguments.ConfigurationPath); err == nil {
+		notifyUserAboutConfigurationFile(*cliArguments.ConfigurationPath)
+		return *cliArguments.ConfigurationPath, nil
 	} else if _, err := os.Stat(usersHomeConfiguration); err == nil {
 		notifyUserAboutConfigurationFile(usersHomeConfiguration)
 		return usersHomeConfiguration, nil
-	} else if _, err := os.Stat(globalConfigFile); err == nil {
-		notifyUserAboutConfigurationFile(globalConfigFile)
-		return globalConfigFile, nil
+	} else if _, err := os.Stat(GlobalConfigFile); err == nil {
+		notifyUserAboutConfigurationFile(GlobalConfigFile)
+		return GlobalConfigFile, nil
 	} else {
 		return "", errors.New("There is no configuration file!")
 	}

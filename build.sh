@@ -15,10 +15,10 @@ esac
 done
 
 echo "Extracting configuration file..."
-if [ ! -f ~/.config/cftool ]; then
-    mkdir -p ~/.config/cftool/
+if [ ! -f "$HOME/.Appliscale/cftool" ]; then
+    mkdir -p "$HOME/.Appliscale/cftool"
 fi
-cp config.yaml ~/.config/cftool/config.yaml
+cp config.yaml "$HOME/.Appliscale/cftool/config.yaml"
 
 go get -t -v ./...
 if [ $? -ne 0 ]
