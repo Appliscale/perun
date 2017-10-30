@@ -7,8 +7,9 @@ import (
 	"io"
 	"net/http"
 	"os/user"
-	"github.com/Appliscale/cftool/cfconfiguration"
 	"strings"
+	"github.com/Appliscale/cftool/cfcontext"
+	"github.com/Appliscale/cftool/cfconfiguration"
 )
 
 type Specification struct {
@@ -46,8 +47,8 @@ type Attribute struct {
 	Type string
 }
 
-func GetSpecification(region string) (specification Specification, err error) {
-	filePath, err := downloadSpecification(region)
+func GetSpecification(context *cfcontext.Context) (specification Specification, err error) {
+	filePath, err := downloadSpecification(context)
 	if err != nil  {
 		return specification, err
 	}
@@ -64,14 +65,14 @@ func GetSpecificationFromFile(specificationFilePath string) (specification Speci
 	return parseSpecificationFile(specificationFile)
 }
 
-func downloadSpecification(region string) (filePath string, err error) {
+func downloadSpecification(context *cfcontext.Context) (filePath string, err error) {
 	user, err := user.Current()
 	if err != nil  {
 		return
 	}
 
-	specificationDir := user.HomeDir + "/.Appliscale/cftool/specification"
-	specificationFileUrl, err := cfconfiguration.GetSpecificationFileURL(region)
+	specificationDir := user.HomeDir + cfconfiguration.UserConfigFile
+	specificationFileUrl, err := context.Config.GetSpecificationFileURLForCurrentRegion()
 	if err != nil  {
 		return
 	}

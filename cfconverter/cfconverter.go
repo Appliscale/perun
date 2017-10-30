@@ -5,34 +5,37 @@ import (
 	"github.com/asaskevich/govalidator"
 	"errors"
 	"io/ioutil"
-	"fmt"
 	"github.com/Appliscale/cftool/cfcliparser"
 	"os"
+	"github.com/Appliscale/cftool/cflogger"
+	"github.com/Appliscale/cftool/cfcontext"
 )
 
-func Convert(sourceFilePath *string, destinationFilePath *string, format *string) {
-	rawTemplate, error := ioutil.ReadFile(*sourceFilePath)
-	if error != nil {
-		fmt.Println(error)
+func Convert(context *cfcontext.Context) {
+	defer context.Logger.PrintErrors()
+
+	rawTemplate, err := ioutil.ReadFile(*context.CliArguments.FilePath)
+	if err != nil {
+		context.Logger.LogError(err.Error())
 		return
 	}
 
-	if *format == cfcliparser.YAML {
-		outputTemplate, error := toYAML(rawTemplate)
-		if error != nil {
-			fmt.Println(error)
+	if *context.CliArguments.OutputFileFormat == cfcliparser.YAML {
+		outputTemplate, err := toYAML(rawTemplate)
+		if err != nil {
+			context.Logger.LogError(err.Error())
 			return
 		}
-		saveToFile(outputTemplate, destinationFilePath)
+		saveToFile(outputTemplate, *context.CliArguments.OutputFilePath, context.Logger)
 	}
 
-	if *format == cfcliparser.JSON {
-		outputTemplate, error := toJSON(rawTemplate)
-		if error != nil {
-			fmt.Println(error)
+	if *context.CliArguments.OutputFileFormat == cfcliparser.JSON {
+		outputTemplate, err := toJSON(rawTemplate)
+		if err != nil {
+			context.Logger.LogError(err.Error())
 			return
 		}
-		saveToFile(outputTemplate, destinationFilePath)
+		saveToFile(outputTemplate, *context.CliArguments.OutputFilePath, context.Logger)
 	}
 }
 
@@ -56,18 +59,18 @@ func toJSON(yamlTemplate []byte) ([]byte, error) {
 	return jsonTemplate, error
 }
 
-func saveToFile(template []byte, path *string) {
-	outputFile, error := os.Create(*path)
-	if error != nil {
-		fmt.Println(error)
+func saveToFile(template []byte, path string, logger *cflogger.Logger) {
+	outputFile, err := os.Create(path)
+	if err != nil {
+		logger.LogError(err.Error())
 		return
 	}
 
 	defer outputFile.Close()
 
-	_, error = outputFile.Write(template)
-	if error != nil {
-		fmt.Println(error)
+	_, err = outputFile.Write(template)
+	if err != nil {
+		logger.LogError(err.Error())
 		return
 	}
 }

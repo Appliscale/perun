@@ -6,24 +6,34 @@ import (
 	"io/ioutil"
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/Appliscale/cftool/cflogger"
+	"github.com/Appliscale/cftool/cfcontext"
 )
 
-func ValidateAndEstimateCosts(filePath *string, region *string) {
-	session, _ := createSession(region)
-	rawTemplate, error := ioutil.ReadFile(*filePath)
-	if error != nil {
-		fmt.Println(error)
+func ValidateAndEstimateCosts(context *cfcontext.Context) {
+	valid := false
+	defer printResult(&valid, context.Logger)
+
+	session, err := createSession(&context.Config.Region)
+	if err != nil {
+		context.Logger.LogError(err.Error())
 		return
 	}
-	template := string(rawTemplate)
-	valid, error := isTemplateValid(session, &template)
-	if valid != true {
-		fmt.Println(error)
-	} else {
-		fmt.Println("Template is valid.")
+
+	rawTemplate, err := ioutil.ReadFile(*context.CliArguments.FilePath)
+	if err != nil {
+		context.Logger.LogError(err.Error())
+		return
 	}
 
-	estimateCosts(session, &template)
+	template := string(rawTemplate)
+	valid, err = isTemplateValid(session, &template)
+	if err != nil {
+		context.Logger.LogError(err.Error())
+		return
+	}
+
+	estimateCosts(session, &template, context.Logger)
 }
 
 func isTemplateValid(session *session.Session, template *string) (bool, error) {
@@ -39,15 +49,15 @@ func isTemplateValid(session *session.Session, template *string) (bool, error) {
 	return true, nil
 }
 
-func estimateCosts(session *session.Session, template *string) {
+func estimateCosts(session *session.Session, template *string, logger *cflogger.Logger) {
 	cfm := cloudformation.New(session)
 	templateCostInput := cloudformation.EstimateTemplateCostInput{
 		TemplateBody: template,
 	}
-	output, error := cfm.EstimateTemplateCost(&templateCostInput)
+	output, err := cfm.EstimateTemplateCost(&templateCostInput)
 
-	if error != nil {
-		fmt.Println(error)
+	if err != nil {
+		logger.LogError(err.Error())
 		return
 	}
 
@@ -62,4 +72,12 @@ func createSession(endpoint *string) (*session.Session, error) {
 		Region: endpoint,
 	})
 	return session, error
+}
+
+func printResult(valid *bool, logger *cflogger.Logger) {
+	if !*valid {
+		fmt.Println("Template is invalid!")
+	} else {
+		fmt.Println("Template is valid!")
+	}
 }

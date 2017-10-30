@@ -13,11 +13,11 @@ const JSON string = "json"
 const YAML string = "yaml"
 
 type CliArguments struct {
-	Mode *string
-	FilePath *string
-	OutputFilePath *string
-	OutputFileFormat *string
-	Region *string
+	Mode              *string
+	FilePath          *string
+	OutputFilePath    *string
+	OutputFileFormat  *string
+	ConfigurationPath *string
 }
 
 func ParseCliArguments() (cliArguments CliArguments, err error) {
@@ -26,7 +26,7 @@ func ParseCliArguments() (cliArguments CliArguments, err error) {
 	cliArguments.OutputFilePath = flag.String("output", "", "A path, where converted file will be saved")
 	cliArguments.OutputFileFormat = flag.String("format", "", "Output format: " + strings.ToUpper(JSON) +
 		"|" + strings.ToUpper(YAML))
-	cliArguments.Region = flag.String("region", "", "Region (e.g. eu-central-1)")
+	cliArguments.ConfigurationPath = flag.String("config", "", "A path to the configuration file")
 
 	flag.Parse()
 
@@ -45,13 +45,6 @@ func ParseCliArguments() (cliArguments CliArguments, err error) {
 		return
 	}
 
-	if *cliArguments.Mode == ValidateMode {
-		if *cliArguments.Region == "" {
-			err = errors.New("You should specify a region with -region flag")
-			return
-		}
-	}
-
 	if *cliArguments.Mode == ConvertMode {
 		if *cliArguments.OutputFilePath == "" {
 			err = errors.New("You should specify a output file path with -output flag")
@@ -66,13 +59,6 @@ func ParseCliArguments() (cliArguments CliArguments, err error) {
 		*cliArguments.OutputFileFormat = strings.ToLower(*cliArguments.OutputFileFormat)
 		if *cliArguments.OutputFileFormat != JSON && *cliArguments.OutputFileFormat != YAML {
 			err = errors.New("Invalid mode. Use validate or convert")
-			return
-		}
-	}
-
-	if *cliArguments.Mode == OfflineValidateMode {
-		if *cliArguments.Region == "" {
-			err = errors.New("You should specify a region with -region flag")
 			return
 		}
 	}

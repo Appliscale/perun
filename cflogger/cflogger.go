@@ -6,15 +6,15 @@ type Logger struct {
 	errors []string
 }
 
-func LogError(logger *Logger, error string) {
+func (logger *Logger) LogError(error string) {
 	logger.errors = append(logger.errors, error)
 }
 
-func LogValidationError(logger *Logger, elementName string, error string) {
+func (logger *Logger) LogValidationError(elementName string, error string) {
 	logger.errors = append(logger.errors, elementName + ": " + error)
 }
 
-func PrintErrors(logger *Logger) {
+func (logger *Logger) PrintErrors() {
 	for _, err := range logger.errors {
 		fmt.Println(err)
 	}

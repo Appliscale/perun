@@ -1,40 +1,33 @@
 package main
 
 import (
-	"github.com/Appliscale/cftool/cfonlinevalidator"
-	"fmt"
 	"github.com/Appliscale/cftool/cfcliparser"
 	"github.com/Appliscale/cftool/cfconverter"
 	"github.com/Appliscale/cftool/cfofflinevalidator"
-	"github.com/Appliscale/cftool/cfspecification"
+	"github.com/Appliscale/cftool/cfonlinevalidator"
+	"github.com/Appliscale/cftool/cfcontext"
 )
 
 func main() {
-	cliArguments, error := cfcliparser.ParseCliArguments()
+	context, err := cfcontext.GetContext()
+	if err != nil {
+		return
+	}
+	defer context.Logger.PrintErrors()
 
-	if error != nil {
-		fmt.Println(error)
+
+	if *context.CliArguments.Mode == cfcliparser.ValidateMode {
+		cfonlinevalidator.ValidateAndEstimateCosts(&context)
 		return
 	}
 
-	if *cliArguments.Mode == cfcliparser.ValidateMode {
-		cfonlinevalidator.ValidateAndEstimateCosts(cliArguments.FilePath, cliArguments.Region)
+	if *context.CliArguments.Mode == cfcliparser.ConvertMode {
+		cfconverter.Convert(&context)
 		return
 	}
 
-	if *cliArguments.Mode == cfcliparser.ConvertMode {
-		cfconverter.Convert(cliArguments.FilePath, cliArguments.OutputFilePath, cliArguments.OutputFileFormat)
-		return
-	}
-
-	if *cliArguments.Mode == cfcliparser.OfflineValidateMode {
-		specification, err := cfspecification.GetSpecification(
-			*cliArguments.Region)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		cfofflinevalidator.Validate(cliArguments.FilePath, &specification)
+	if *context.CliArguments.Mode == cfcliparser.OfflineValidateMode {
+		cfofflinevalidator.Validate(&context)
 		return
 	}
 }
