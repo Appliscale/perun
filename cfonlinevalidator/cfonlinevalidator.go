@@ -19,7 +19,7 @@ func ValidateAndEstimateCosts(context *cfcontext.Context) bool {
 		return false
 	}
 
-	rawTemplate, err := ioutil.ReadFile(*context.CliArguments.FilePath)
+	rawTemplate, err := ioutil.ReadFile(*context.CliArguments.TemplatePath)
 	if err != nil {
 		context.Logger.Error(err.Error())
 		return false

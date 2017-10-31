@@ -21,22 +21,22 @@ The application should be compiled to `cftool` binary file to the `bin` director
 
 To validate your template online, with AWS API, just type:
 
-`cftool -mode=validate -file=[path to your template]`
+`cftool --mode=validate --template=[path to your template]`
 
 To validate template offline (well, almost offline - AWS CloudFormation Resource Specification still needs be downloaded) use validate_offline mode:
 
-`cftool -mode=validate_offline -file=[path to your template]`
+`cftool --mode=validate_offline --template=[path to your template]`
 
 To convert your template from JSON to YAML and form YAML to JSON type:
 
-`cftool -mode=convert -file=[path to your template] -output=[path to place, where you want to save converted file] 
--format=[JSON or YAML]`
+`cftool --mode=convert --template=[path to your template] --output=[path to place, where you want to save converted file]
+--format=[JSON or YAML]`
 
 ## Configuration file
 You can find example configuration file in the main directory of the repository - config.yml.
 
 The application will be looking for the configuration file in following order:
 
-* path specified in the command line by -config flag,
+* path specified in the command line by --config flag,
 * user home directory under the `~/.config/cftool/config.yaml` path,
 * `/etc/.Appliscale/cftool/config.yaml`.

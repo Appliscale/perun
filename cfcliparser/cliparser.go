@@ -1,9 +1,9 @@
 package cfcliparser
 
 import (
-	"flag"
 	"errors"
 	"strings"
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 const ValidateMode string = "validate"
@@ -14,7 +14,7 @@ const YAML string = "yaml"
 
 type CliArguments struct {
 	Mode              *string
-	FilePath          *string
+	TemplatePath      *string
 	OutputFilePath    *string
 	OutputFileFormat  *string
 	ConfigurationPath *string
@@ -25,20 +25,16 @@ type CliArguments struct {
 
 func ParseCliArguments() (cliArguments CliArguments, err error) {
 
-	cliArguments.Mode = flag.String("mode", "", "Mode: "+ValidateMode+"|"+OfflineValidateMode+"|"+ConvertMode)
-	cliArguments.FilePath = flag.String("file", "", "A path to the template")
-	cliArguments.OutputFilePath = flag.String("output", "", "A path, where converted file will be saved")
-	cliArguments.OutputFileFormat = flag.String("format", "", "Output format: " + strings.ToUpper(JSON)+
-		"|"+ strings.ToUpper(YAML))
-	cliArguments.ConfigurationPath = flag.String("config", "", "A path to the configuration file")
-	cliArguments.Quiet = flag.Bool("quiet", false, "No console output, just return code")
-	flag.BoolVar(cliArguments.Quiet, "q", false, "Short version of -quiet")
-	cliArguments.Yes = flag.Bool("yes", false, "Always say yes")
-	flag.BoolVar(cliArguments.Yes, "y", false, "Short version of -yes")
-	cliArguments.Verbosity = flag.String("verbosity", "", "Verbosity TRACE|DEBUG|INFO|ERROR")
-	flag.StringVar(cliArguments.Verbosity, "v", "", "Short version of -verbosity")
+	cliArguments.Mode = kingpin.Flag("mode", ValidateMode+"|"+OfflineValidateMode+"|"+ConvertMode).Short('f').String()
+	cliArguments.TemplatePath = kingpin.Flag("template", "A path to the template").Short('t').String()
+	cliArguments.OutputFilePath = kingpin.Flag("output", "A path, where converted file will be saved").Short('o').String()
+	cliArguments.OutputFileFormat = kingpin.Flag("format", "Output format: " + strings.ToUpper(JSON)+ "|"+ strings.ToUpper(YAML)).Short('x').String()
+	cliArguments.ConfigurationPath = kingpin.Flag("config", "A path to the configuration file").Short('c').String()
+	cliArguments.Quiet = kingpin.Flag("quiet", "No console output, just return code").Short('q').Bool()
+	cliArguments.Yes = kingpin.Flag("yes", "Always say yes").Short('y').Bool()
+	cliArguments.Verbosity = kingpin.Flag("verbosity", "TRACE|DEBUG|INFO|ERROR").Short('v').String()
 
-	flag.Parse()
+	kingpin.Parse()
 
 	if *cliArguments.Mode == "" {
 		err = errors.New("You should specify what you want to do with -mode flag")
@@ -50,7 +46,7 @@ func ParseCliArguments() (cliArguments CliArguments, err error) {
 		return
 	}
 
-	if *cliArguments.FilePath == "" {
+	if *cliArguments.TemplatePath == "" {
 		err = errors.New("You should specify a source of the template file with -file flag")
 		return
 	}

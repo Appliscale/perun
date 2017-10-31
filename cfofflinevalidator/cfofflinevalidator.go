@@ -27,14 +27,14 @@ func Validate(context *cfcontext.Context) bool {
 		return false
 	}
 
-	rawTemplate, err := ioutil.ReadFile(*context.CliArguments.FilePath)
+	rawTemplate, err := ioutil.ReadFile(*context.CliArguments.TemplatePath)
 	if err != nil {
 		context.Logger.Error(err.Error())
 		return false
 	}
 
 	var template cftemplate.Template
-	templateFileExtension := path.Ext(*context.CliArguments.FilePath)
+	templateFileExtension := path.Ext(*context.CliArguments.TemplatePath)
 	if templateFileExtension == ".json" {
 		template, err = parseJSON(rawTemplate)
 	} else if templateFileExtension == ".yaml" ||  templateFileExtension == ".yml" {

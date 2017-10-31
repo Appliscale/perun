@@ -12,7 +12,7 @@ import (
 )
 
 func Convert(context *cfcontext.Context) error {
-	rawTemplate, err := ioutil.ReadFile(*context.CliArguments.FilePath)
+	rawTemplate, err := ioutil.ReadFile(*context.CliArguments.TemplatePath)
 	if err != nil {
 		return err
 	}
