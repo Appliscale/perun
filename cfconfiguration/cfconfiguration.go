@@ -6,8 +6,8 @@ import (
 	"github.com/ghodss/yaml"
 	"os"
 	"os/user"
-	"fmt"
 	"github.com/Appliscale/cftool/cfcliparser"
+	"github.com/Appliscale/cftool/cflogger"
 )
 
 type Configuration struct {
@@ -26,8 +26,8 @@ func (config Configuration) GetSpecificationFileURLForCurrentRegion() (string, e
 	return "", errors.New("There is no specification file for region " + config.Region)
 }
 
-func GetConfiguration(cliArguments cfcliparser.CliArguments) (config Configuration, err error) {
-	configPath, err := getConfigurationPath(cliArguments)
+func GetConfiguration(cliArguments cfcliparser.CliArguments, logger *cflogger.Logger) (config Configuration, err error) {
+	configPath, err := getConfigurationPath(cliArguments, logger)
 	if err != nil {
 		return
 	}
@@ -43,22 +43,22 @@ func GetConfiguration(cliArguments cfcliparser.CliArguments) (config Configurati
 	return
 }
 
-func getConfigurationPath(cliArguments cfcliparser.CliArguments) (configPath string, err error) {
+func getConfigurationPath(cliArguments cfcliparser.CliArguments, logger *cflogger.Logger) (configPath string, err error) {
 	user, err := user.Current()
 	usersHomeConfiguration := user.HomeDir + UserConfigFile
 	if _, err := os.Stat(*cliArguments.ConfigurationPath); err == nil {
-		notifyUserAboutConfigurationFile(*cliArguments.ConfigurationPath)
+		notifyUserAboutConfigurationFile(*cliArguments.ConfigurationPath, logger)
 		return *cliArguments.ConfigurationPath, nil
 	} else if _, err := os.Stat(usersHomeConfiguration); err == nil {
-		notifyUserAboutConfigurationFile(usersHomeConfiguration)
+		notifyUserAboutConfigurationFile(usersHomeConfiguration, logger)
 		return usersHomeConfiguration, nil
 	} else if _, err := os.Stat(GlobalConfigFile); err == nil {
-		notifyUserAboutConfigurationFile(GlobalConfigFile)
+		notifyUserAboutConfigurationFile(GlobalConfigFile, logger)
 		return GlobalConfigFile, nil
 	} else {
 		return "", errors.New("There is no configuration file!")
 	}
 }
-func notifyUserAboutConfigurationFile(configurationFilePath string) (int, error) {
-	return fmt.Println("Configuration file from the following location will be use: " + configurationFilePath)
+func notifyUserAboutConfigurationFile(configurationFilePath string, logger *cflogger.Logger) {
+	logger.Info("Configuration file from the following location will be use: " + configurationFilePath)
 }

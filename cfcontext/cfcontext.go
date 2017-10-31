@@ -13,16 +13,21 @@ type Context struct {
 }
 
 func GetContext() (context Context, err error) {
-	logger := cflogger.Logger{}
-	defer logger.PrintErrors()
+	logger := cflogger.CreateDefaultLogger()
 
 	cliArguments, err := cfcliparser.ParseCliArguments()
 	if err != nil {
+		logger.Error(err.Error())
 		return
 	}
 
-	config, err := cfconfiguration.GetConfiguration(cliArguments)
+	logger.Quiet = *cliArguments.Quiet
+	logger.Yes = *cliArguments.Yes
+	logger.SetVerbosity(*cliArguments.Verbosity)
+
+	config, err := cfconfiguration.GetConfiguration(cliArguments, &logger)
 	if err != nil {
+		logger.Error(err.Error())
 		return
 	}
 

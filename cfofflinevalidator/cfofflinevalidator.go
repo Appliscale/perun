@@ -1,7 +1,6 @@
 package cfofflinevalidator
 
 import (
-	"fmt"
 	"encoding/json"
 	"github.com/Appliscale/cftool/cfspecification"
 	"io/ioutil"
@@ -18,24 +17,24 @@ var validators = map[string]interface{}{
 	"AWS::EC2::VPC": cfvalidators.IsVpcValid,
 }
 
-func Validate(context *cfcontext.Context) {
+func Validate(context *cfcontext.Context) bool {
 	valid := false
 	defer printResult(&valid, context.Logger)
 
 	specification, err := cfspecification.GetSpecification(context)
 	if err != nil {
-		context.Logger.LogError(err.Error())
-		return
+		context.Logger.Error(err.Error())
+		return false
 	}
 
-	rawTemplate, err := ioutil.ReadFile(*context.CliArguments.FilePath)
+	rawTemplate, err := ioutil.ReadFile(*context.CliArguments.TemplatePath)
 	if err != nil {
-		context.Logger.LogError(err.Error())
-		return
+		context.Logger.Error(err.Error())
+		return false
 	}
 
 	var template cftemplate.Template
-	templateFileExtension := path.Ext(*context.CliArguments.FilePath)
+	templateFileExtension := path.Ext(*context.CliArguments.TemplatePath)
 	if templateFileExtension == ".json" {
 		template, err = parseJSON(rawTemplate)
 	} else if templateFileExtension == ".yaml" ||  templateFileExtension == ".yml" {
@@ -44,18 +43,20 @@ func Validate(context *cfcontext.Context) {
 		err = errors.New("Invalid template file format.")
 	}
 	if err != nil {
-		context.Logger.LogError(err.Error())
-		return
+		context.Logger.Error(err.Error())
+		return false
 	}
 
 	valid = validateResources(template.Resources, &specification, context.Logger)
+	return valid
 }
 
 func printResult(valid *bool, logger *cflogger.Logger) {
+	logger.PrintValidationErrors()
 	if !*valid {
-		fmt.Println("Template is invalid!")
+		logger.Info("Template is invalid!")
 	} else {
-		fmt.Println("Template is valid!")
+		logger.Info("Template is valid!")
 	}
 }
 
@@ -67,7 +68,7 @@ func validateResources(resources map[string]cftemplate.Resource, specification *
 				valid = false
 			}
 		} else {
-			logger.LogValidationError(resourceName, "Type needs to be specified")
+			logger.ValidationError(resourceName, "Type needs to be specified")
 			valid = false
 		}
 		if validator, ok := validators[resourceValue.Type]; ok {
@@ -84,7 +85,7 @@ func areRequiredPropertiesPresent(resourceSpecification cfspecification.Resource
 	for propertyName, propertyValue := range resourceSpecification.Properties {
 		if propertyValue.Required {
 			if _, ok := resourceValue.Properties[propertyName]; !ok {
-				logger.LogValidationError(resourceName, "Property " + propertyName + " is required")
+				logger.ValidationError(resourceName, "Property " + propertyName + " is required")
 				valid = false
 			}
 		}

@@ -9,7 +9,6 @@ import (
 	"os/user"
 	"strings"
 	"github.com/Appliscale/cftool/cfcontext"
-	"github.com/Appliscale/cftool/cfconfiguration"
 )
 
 type Specification struct {
@@ -71,7 +70,7 @@ func downloadSpecification(context *cfcontext.Context) (filePath string, err err
 		return
 	}
 
-	specificationDir := user.HomeDir + cfconfiguration.UserConfigFile
+	specificationDir := user.HomeDir + "/.config/cftool/specification"
 	specificationFileUrl, err := context.Config.GetSpecificationFileURLForCurrentRegion()
 	if err != nil  {
 		return
