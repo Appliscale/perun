@@ -6,28 +6,42 @@ import (
 	"github.com/Appliscale/cftool/cfofflinevalidator"
 	"github.com/Appliscale/cftool/cfonlinevalidator"
 	"github.com/Appliscale/cftool/cfcontext"
+	"os"
 )
 
 func main() {
 	context, err := cfcontext.GetContext()
 	if err != nil {
-		return
+		os.Exit(1)
 	}
-	defer context.Logger.PrintErrors()
-
 
 	if *context.CliArguments.Mode == cfcliparser.ValidateMode {
-		cfonlinevalidator.ValidateAndEstimateCosts(&context)
-		return
+		valid := cfonlinevalidator.ValidateAndEstimateCosts(&context)
+		if valid {
+			os.Exit(0)
+		} else {
+			os.Exit(1)
+		}
 	}
 
 	if *context.CliArguments.Mode == cfcliparser.ConvertMode {
-		cfconverter.Convert(&context)
-		return
+		err := cfconverter.Convert(&context)
+		if err == nil {
+			os.Exit(0)
+		} else {
+			context.Logger.Error(err.Error())
+			os.Exit(1)
+		}
 	}
 
 	if *context.CliArguments.Mode == cfcliparser.OfflineValidateMode {
-		cfofflinevalidator.Validate(&context)
-		return
+		valid := cfofflinevalidator.Validate(&context)
+		if valid {
+			os.Exit(0)
+		} else {
+			os.Exit(1)
+		}
 	}
+
+	os.Exit(0)
 }

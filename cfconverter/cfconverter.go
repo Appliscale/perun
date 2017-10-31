@@ -11,20 +11,16 @@ import (
 	"github.com/Appliscale/cftool/cfcontext"
 )
 
-func Convert(context *cfcontext.Context) {
-	defer context.Logger.PrintErrors()
-
+func Convert(context *cfcontext.Context) error {
 	rawTemplate, err := ioutil.ReadFile(*context.CliArguments.FilePath)
 	if err != nil {
-		context.Logger.LogError(err.Error())
-		return
+		return err
 	}
 
 	if *context.CliArguments.OutputFileFormat == cfcliparser.YAML {
 		outputTemplate, err := toYAML(rawTemplate)
 		if err != nil {
-			context.Logger.LogError(err.Error())
-			return
+			return err
 		}
 		saveToFile(outputTemplate, *context.CliArguments.OutputFilePath, context.Logger)
 	}
@@ -32,11 +28,15 @@ func Convert(context *cfcontext.Context) {
 	if *context.CliArguments.OutputFileFormat == cfcliparser.JSON {
 		outputTemplate, err := toJSON(rawTemplate)
 		if err != nil {
-			context.Logger.LogError(err.Error())
-			return
+			return err
 		}
-		saveToFile(outputTemplate, *context.CliArguments.OutputFilePath, context.Logger)
+		err = saveToFile(outputTemplate, *context.CliArguments.OutputFilePath, context.Logger)
+		if err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
 func toYAML(jsonTemplate []byte) ([]byte, error) {
@@ -59,18 +59,18 @@ func toJSON(yamlTemplate []byte) ([]byte, error) {
 	return jsonTemplate, error
 }
 
-func saveToFile(template []byte, path string, logger *cflogger.Logger) {
+func saveToFile(template []byte, path string, logger *cflogger.Logger) error {
 	outputFile, err := os.Create(path)
 	if err != nil {
-		logger.LogError(err.Error())
-		return
+		return err
 	}
 
 	defer outputFile.Close()
 
 	_, err = outputFile.Write(template)
 	if err != nil {
-		logger.LogError(err.Error())
-		return
+		return err
 	}
+
+	return nil
 }
