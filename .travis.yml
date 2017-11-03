@@ -3,4 +3,8 @@ language: go
 go:
   - 1.9
 
-install: ./build.sh --skip_tests
+install: ./build.sh --skip_tests --skip_analyze
+
+script:
+  - go test -v -cover ./...
+  - go tool vet -v ./
