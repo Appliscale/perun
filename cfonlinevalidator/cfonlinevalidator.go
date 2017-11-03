@@ -3,17 +3,32 @@ package cfonlinevalidator
 import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
-	"io/ioutil"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/Appliscale/cftool/cflogger"
 	"github.com/Appliscale/cftool/cfcontext"
+	"github.com/aws/aws-sdk-go/service/sts"
+	"github.com/go-ini/ini"
+	"os/user"
+	"time"
+	"io/ioutil"
+	"errors"
 )
+
+const dateFormat = "2006-01-02 15:04:05 MST"
 
 func ValidateAndEstimateCosts(context *cfcontext.Context) bool {
 	valid := false
 	defer printResult(&valid, context.Logger)
 
-	session, err := createSession(&context.Config.Region)
+	if *context.CliArguments.MFA {
+		err := updateSessionToken(context.Config.Profile, context.Config.Region, context.Logger)
+		if err != nil {
+			context.Logger.Error(err.Error())
+			return false
+		}
+	}
+
+	session, err := createSession(&context.Config.Region, context.Config.Profile, context.Logger)
 	if err != nil {
 		context.Logger.Error(err.Error())
 		return false
@@ -68,11 +83,107 @@ func estimateCosts(session *session.Session, template *string, logger *cflogger.
 	fmt.Println("HTML:\n\n", string(bytes))*/
 }
 
-func createSession(endpoint *string) (*session.Session, error) {
-	session, error := session.NewSession(&aws.Config{
-		Region: endpoint,
-	})
-	return session, error
+func createSession(region *string, profile string, logger *cflogger.Logger) (*session.Session, error) {
+	logger.Info("Profile: " + profile)
+	logger.Info("Region: " + *region)
+	session, err := session.NewSessionWithOptions(
+		session.Options{
+			Config: aws.Config{
+				Region: region,
+			},
+			Profile: profile,
+		})
+	if err != nil {
+		return nil, err
+	}
+
+	return session, nil
+}
+
+func updateSessionToken(profile string, region string, logger *cflogger.Logger) error {
+	user, err := user.Current()
+	if err != nil {
+		return err
+	}
+
+	credentialsFilePath := user.HomeDir + "/.aws/credentials"
+	cfg, err := ini.Load(credentialsFilePath)
+	if err != nil {
+		return err
+	}
+
+	section, err := cfg.GetSection(profile)
+	if err != nil {
+		section, err = cfg.NewSection(profile)
+		if err != nil {
+			return err
+		}
+	}
+
+	profileLongTerm := profile + "-long-term"
+	sectionLongTerm, err := cfg.GetSection(profileLongTerm)
+	if err != nil {
+		return err
+	}
+
+	sessionToken := section.Key("aws_session_token")
+	expiration := section.Key("expiration")
+
+	expirationDate, err := time.Parse(dateFormat, section.Key("expiration").Value())
+	if err == nil {
+		logger.Info("Session token will expire in " +
+			time.Since(expirationDate).Truncate(time.Duration(1) * time.Second).String() +
+			" (" + expirationDate.Truncate(time.Duration(1) * time.Second).Format(dateFormat) + ")")
+	}
+
+	mfaDevice := sectionLongTerm.Key("mfa_serial").Value()
+	if mfaDevice == "" {
+		return errors.New("There is no mfa_serial for the profile " + profileLongTerm)
+	}
+
+	if sessionToken.Value() == "" || expiration.Value() == "" || time.Since(expirationDate).Nanoseconds() > 0 {
+		session, err := session.NewSessionWithOptions(
+			session.Options{
+				Config: aws.Config{
+					Region: &region,
+				},
+				Profile: profileLongTerm,
+			})
+		if err != nil {
+			return err
+		}
+
+		var tokenCode string
+		err = logger.GetInput("MFA token code", &tokenCode)
+		if err != nil {
+			return err
+		}
+
+		var duration int64
+		err = logger.GetInput("Duration", &duration)
+		if err != nil {
+			return err
+		}
+
+		stsSession := sts.New(session)
+		newToken, err := stsSession.GetSessionToken(&sts.GetSessionTokenInput{
+			DurationSeconds: &duration,
+			SerialNumber:    aws.String(mfaDevice),
+			TokenCode:       &tokenCode,
+		})
+		if err != nil {
+			return err
+		}
+
+		section.Key("aws_access_key_id").SetValue(*newToken.Credentials.AccessKeyId)
+		section.Key("aws_secret_access_key").SetValue(*newToken.Credentials.SecretAccessKey)
+		sessionToken.SetValue(*newToken.Credentials.SessionToken)
+		section.Key("expiration").SetValue(newToken.Credentials.Expiration.Format(dateFormat))
+
+		cfg.SaveTo(credentialsFilePath)
+	}
+
+	return nil
 }
 
 func printResult(valid *bool, logger *cflogger.Logger) {

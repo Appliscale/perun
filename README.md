@@ -40,3 +40,20 @@ The application will be looking for the configuration file in following order:
 * path specified in the command line by --config flag,
 * user home directory under the `~/.config/cftool/config.yaml` path,
 * `/etc/.Appliscale/cftool/config.yaml`.
+
+## AWS MFA
+If you want to use MFA add `--mfa` flag to the command:
+
+`cftool --mode=validate --template=[path to your template] --mfa`
+
+Application will use `[profile]-long-term` from the `~/.aws/credentials` file (`[profile]` - profile specified in config.yaml file.).
+
+Example - profile `default`:
+
+> \[default-long-term]
+
+> aws_access_key_id = your access key
+
+> aws_secret_access_key = your secret access key
+
+> mfa_serial = the identification number of the MFA device

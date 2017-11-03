@@ -33,9 +33,9 @@ func (verbosity Verbosity) String() string {
 }
 
 func CreateDefaultLogger() Logger {
-	return Logger {
-		Quiet: false,
-		Yes: false,
+	return Logger{
+		Quiet:     false,
+		Yes:       false,
 		Verbosity: INFO,
 	}
 }
@@ -58,6 +58,15 @@ func (logger *Logger) Trace(trace string) {
 
 func (logger *Logger) ValidationError(elementName string, error string) {
 	logger.validationErrors = append(logger.validationErrors, "\""+elementName+"\" "+error)
+}
+
+func (logger *Logger) GetInput(message string, v ...interface{}) error {
+	fmt.Printf(message + ": ")
+	_, err := fmt.Scanln(v...)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (logger *Logger) log(verbosity Verbosity, message string) {
