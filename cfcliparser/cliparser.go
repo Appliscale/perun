@@ -21,6 +21,7 @@ type CliArguments struct {
 	Quiet             *bool
 	Yes               *bool
 	Verbosity         *string
+	MFA               *bool
 }
 
 func ParseCliArguments() (cliArguments CliArguments, err error) {
@@ -28,11 +29,12 @@ func ParseCliArguments() (cliArguments CliArguments, err error) {
 	cliArguments.Mode = kingpin.Flag("mode", ValidateMode+"|"+OfflineValidateMode+"|"+ConvertMode).Short('f').String()
 	cliArguments.TemplatePath = kingpin.Flag("template", "A path to the template").Short('t').String()
 	cliArguments.OutputFilePath = kingpin.Flag("output", "A path, where converted file will be saved").Short('o').String()
-	cliArguments.OutputFileFormat = kingpin.Flag("format", "Output format: " + strings.ToUpper(JSON)+ "|"+ strings.ToUpper(YAML)).Short('x').String()
+	cliArguments.OutputFileFormat = kingpin.Flag("format", "Output format: "+strings.ToUpper(JSON)+"|"+strings.ToUpper(YAML)).Short('x').String()
 	cliArguments.ConfigurationPath = kingpin.Flag("config", "A path to the configuration file").Short('c').String()
 	cliArguments.Quiet = kingpin.Flag("quiet", "No console output, just return code").Short('q').Bool()
 	cliArguments.Yes = kingpin.Flag("yes", "Always say yes").Short('y').Bool()
 	cliArguments.Verbosity = kingpin.Flag("verbosity", "TRACE|DEBUG|INFO|ERROR").Short('v').String()
+	cliArguments.MFA = kingpin.Flag("mfa", "Enable AWS MFA").Bool()
 
 	kingpin.Parse()
 
