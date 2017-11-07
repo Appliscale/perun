@@ -37,7 +37,7 @@ fi
 
 if [ "$SKIP_TESTS" == false ] ; then
     echo "Running tests..."
-    go test github.com/Appliscale/cftool/... -cover
+    go test github.com/Appliscale/cftool/... --v -cover
     if [ $? -ne 0 ]
     then
         exit 1
