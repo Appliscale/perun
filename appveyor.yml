@@ -1,0 +1,20 @@
+version: 0.9.{build}
+
+platform: x64
+
+clone_folder: c:\gopath\src\github.com\Appliscale\cftool
+
+environment:
+  GOPATH: c:\gopath
+
+install:
+  - echo %APPDATA%
+  - echo %PROGRAMFILES%
+  - echo %PATH%
+  - echo %GOPATH%
+  - set PATH=%GOPATH%\bin;c:\go\bin;%PATH%
+  - go version
+  - go env
+
+build_script:
+  - ps: .\build.ps1
