@@ -36,6 +36,14 @@ func GetConfiguration(cliArguments cfcliparser.CliArguments, logger *cflogger.Lo
 		return
 	}
 
+	if config.Profile == "" {
+		config.Profile = "default"
+	}
+
+	if config.Region == "" {
+		config.Region = "us-east-1"
+	}
+
 	return
 }
 
@@ -43,13 +51,13 @@ func getConfigurationPath(cliArguments cfcliparser.CliArguments, logger *cflogge
 	if _, err := os.Stat(*cliArguments.ConfigurationPath); err == nil {
 		notifyUserAboutConfigurationFile(*cliArguments.ConfigurationPath, logger)
 		return *cliArguments.ConfigurationPath, nil
-	} else if path, ok := getUserConfigFile(); ok {
+	} else if path, ok := getConfigFileFromCurrentWorkingDirectory(os.Stat); ok {
 		notifyUserAboutConfigurationFile(path, logger)
 		return path, nil
-	} else if path, ok := getGlobalConfigFile(); ok {
+	} else if path, ok := getUserConfigFile(os.Stat); ok {
 		notifyUserAboutConfigurationFile(path, logger)
 		return path, nil
-	} else if path, ok := getConfigFileFromProjectRoot(); ok {
+	} else if path, ok := getGlobalConfigFile(os.Stat); ok {
 		notifyUserAboutConfigurationFile(path, logger)
 		return path, nil
 	} else {

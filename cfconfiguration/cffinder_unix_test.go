@@ -10,82 +10,51 @@ import (
 	"testing"
 )
 
-func TestMain(m *testing.M) {
-	retCode := m.Run()
-	os.Exit(retCode)
+func existStub(string) (os.FileInfo, error) {
+	return nil, nil
+}
+
+func notExistStub(string) (os.FileInfo, error) {
+	return nil, errors.New("")
 }
 
 func TestGetUserConfigFile(t *testing.T) {
 	t.Run("File exist", func(t *testing.T) {
-		tmp := checkFileExistence
-		defer func() { checkFileExistence = tmp }()
-		checkFileExistence = func(name string) (os.FileInfo, error) {
-			return nil, nil
-		}
-
-		path, ok := getUserConfigFile()
+		path, ok := getUserConfigFile(existStub)
 		usr, _ := user.Current()
-		assert.Equal(t, usr.HomeDir + "/.config/cftool/config.yaml", path, "Should contain user home")
+		assert.Equal(t, usr.HomeDir + "/.config/cftool/main.yaml", path, "Should contain user home")
 		assert.True(t, ok, "Should exist")
 	})
 
 	t.Run("File do not exist", func(t *testing.T) {
-		tmp := checkFileExistence
-		defer func() { checkFileExistence = tmp }()
-		checkFileExistence = func(name string) (os.FileInfo, error) {
-			return nil, errors.New("")
-		}
-
-		_, ok := getConfigFileFromProjectRoot()
+		_, ok := getUserConfigFile(notExistStub)
 		assert.False(t, ok, "Should not exist")
 	})
 }
 
 func TestGetGlobalConfigFile(t *testing.T) {
 	t.Run("File exist", func(t *testing.T) {
-		tmp := checkFileExistence
-		defer func() { checkFileExistence = tmp }()
-		checkFileExistence = func(name string) (os.FileInfo, error) {
-			return nil, nil
-		}
-
-		path, ok := getGlobalConfigFile()
-		assert.Equal(t, "/etc/.Appliscale/cftool/config.yaml", path, "Should contain /etc")
+		path, ok := getGlobalConfigFile(existStub)
+		assert.Equal(t, "/etc/cftool/main.yaml", path, "Should contain /etc")
 		assert.True(t, ok, "Should exist")
 	})
 
 	t.Run("File do not exist", func(t *testing.T) {
-		tmp := checkFileExistence
-		defer func() { checkFileExistence = tmp }()
-		checkFileExistence = func(name string) (os.FileInfo, error) {
-			return nil, errors.New("")
-		}
-
-		_, ok := getConfigFileFromProjectRoot()
+		_, ok := getGlobalConfigFile(notExistStub)
 		assert.False(t, ok, "Should not exist")
 	})
 }
 
-func TestGetConfigFileFromProjectRoot(t *testing.T) {
+func TestGetConfigFileFromCurrentWorkingDirectory(t *testing.T) {
 	t.Run("File exist", func(t *testing.T) {
-		tmp := checkFileExistence
-		defer func() { checkFileExistence = tmp }()
-		checkFileExistence = func(name string) (os.FileInfo, error) {
-			return nil, nil
-		}
-
-		_, ok := getConfigFileFromProjectRoot()
+		path, ok := getConfigFileFromCurrentWorkingDirectory(existStub)
+		dir, _ := os.Getwd()
+		assert.Equal(t, dir + "/.cftool", path, "Should contain current working directory")
 		assert.True(t, ok, "Should exist")
 	})
 
 	t.Run("File do not exist", func(t *testing.T) {
-		tmp := checkFileExistence
-		defer func() { checkFileExistence = tmp }()
-		checkFileExistence = func(name string) (os.FileInfo, error) {
-			return nil, errors.New("")
-		}
-
-		_, ok := getConfigFileFromProjectRoot()
+		_, ok := getConfigFileFromCurrentWorkingDirectory(notExistStub)
 		assert.False(t, ok, "Should not exist")
 	})
 }
