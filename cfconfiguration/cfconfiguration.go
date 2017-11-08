@@ -1,3 +1,4 @@
+// Package cfconfiguration provides reader for PerunCloud configuration.
 package cfconfiguration
 
 import (
@@ -9,12 +10,17 @@ import (
 	"github.com/Appliscale/cftool/cflogger"
 )
 
+// PerunCloud configuration.
 type Configuration struct {
+	// AWS credentials profile.
 	Profile string
+	// AWS region (e.g. us-east-1).
 	Region string
+	// Map of resource specification cloudfront URL per region.
 	SpecificationURL map[string]string
 }
 
+// Return URL to specification file. If there is no specification file for selected region, return error.
 func (config Configuration) GetSpecificationFileURLForCurrentRegion() (string, error) {
 	if url, ok := config.SpecificationURL[config.Region]; ok {
 		return url + "/latest/gzip/CloudFormationResourceSpecification.json", nil
@@ -22,6 +28,7 @@ func (config Configuration) GetSpecificationFileURLForCurrentRegion() (string, e
 	return "", errors.New("There is no specification file for region " + config.Region)
 }
 
+// Return PerunCloud configuration readed from file.
 func GetConfiguration(cliArguments cfcliparser.CliArguments, logger *cflogger.Logger) (config Configuration, err error) {
 	configPath, err := getConfigurationPath(cliArguments, logger)
 	if err != nil {

@@ -1,3 +1,4 @@
+// A tool for CloudFormation template validation and conversion.
 package main
 
 import (

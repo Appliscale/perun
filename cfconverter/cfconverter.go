@@ -1,3 +1,4 @@
+// Package cfconverter provides tools for JSON/YAML cloudformation templates conversion.
 package cfconverter
 
 import (
@@ -11,6 +12,7 @@ import (
 	"github.com/Appliscale/cftool/cfcontext"
 )
 
+// Read template from the file, convert it and check if it has valid structure. Then save converted template to file.
 func Convert(context *cfcontext.Context) error {
 	rawTemplate, err := ioutil.ReadFile(*context.CliArguments.TemplatePath)
 	if err != nil {

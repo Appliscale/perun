@@ -1,6 +1,8 @@
 # CFTool [![Build Status](https://travis-ci.org/Appliscale/cftool.svg?branch=master)](https://travis-ci.org/Appliscale/cftool)
 A tool for CloudFormation template validation and conversion.
 
+[Documentation](https://godoc.org/github.com/Appliscale/cftool)
+
 ## Goal
 CFTool was created to support work with CloudFormation templates. CloudFormation works in a way that it runs template online
 in AWS infrastructure and fails after first error - in many cases it is related with particular name length (e.g. maximum

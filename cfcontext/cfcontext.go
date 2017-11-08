@@ -1,3 +1,4 @@
+// Package cfcontext provides context for PerunCloud.
 package cfcontext
 
 import (
@@ -12,6 +13,7 @@ type Context struct {
 	Config cfconfiguration.Configuration
 }
 
+// Create PerunCloud context.
 func GetContext() (context Context, err error) {
 	logger := cflogger.CreateDefaultLogger()
 
