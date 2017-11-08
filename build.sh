@@ -27,7 +27,7 @@ echo "Extracting configuration file..."
 if [ ! -f "$HOME/.config/cftool" ]; then
     mkdir -p "$HOME/.config/cftool"
 fi
-cp config.yaml "$HOME/.config/cftool/config.yaml"
+cp config.yaml "$HOME/.config/cftool/main.yaml"
 
 go get -t -v ./...
 if [ $? -ne 0 ]
