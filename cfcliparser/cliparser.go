@@ -1,3 +1,4 @@
+// Package cfcliparser provides tools and structures for parsing and validating PerunCloud CLI arguments.
 package cfcliparser
 
 import (
@@ -24,6 +25,7 @@ type CliArguments struct {
 	MFA               *bool
 }
 
+// Get and validate CLI arguments. Returns error if validation fails.
 func ParseCliArguments() (cliArguments CliArguments, err error) {
 
 	cliArguments.Mode = kingpin.Flag("mode", ValidateMode+"|"+OfflineValidateMode+"|"+ConvertMode).Short('m').String()

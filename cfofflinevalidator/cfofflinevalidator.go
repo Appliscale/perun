@@ -1,3 +1,4 @@
+// Package cfofflinevalidator privides tools for offline cloudformation template validation.
 package cfofflinevalidator
 
 import (
@@ -17,6 +18,7 @@ var validators = map[string]interface{}{
 	"AWS::EC2::VPC": cfvalidators.IsVpcValid,
 }
 
+// Validate cloudformation template.
 func Validate(context *cfcontext.Context) bool {
 	valid := false
 	defer printResult(&valid, context.Logger)

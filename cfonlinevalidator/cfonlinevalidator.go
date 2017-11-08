@@ -1,3 +1,4 @@
+// Package cfonlinevalidator privides tools for online cloudformation template validation using AWS API.
 package cfonlinevalidator
 
 import (
@@ -16,6 +17,7 @@ import (
 
 const dateFormat = "2006-01-02 15:04:05 MST"
 
+// Validate template and get URL for cost estimation.
 func ValidateAndEstimateCosts(context *cfcontext.Context) bool {
 	valid := false
 	defer printResult(&valid, context.Logger)

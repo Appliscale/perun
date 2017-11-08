@@ -1,3 +1,4 @@
+// Package cfspecification privides tools for downloading and parsing AWS CloudFormation Resource Specification.
 package cfspecification
 
 import (
@@ -46,6 +47,7 @@ type Attribute struct {
 	Type string
 }
 
+// Download specification for region specified in config.
 func GetSpecification(context *cfcontext.Context) (specification Specification, err error) {
 	filePath, err := downloadSpecification(context)
 	if err != nil  {
@@ -55,6 +57,7 @@ func GetSpecification(context *cfcontext.Context) (specification Specification, 
 	return GetSpecificationFromFile(filePath)
 }
 
+// Get specification from file.
 func GetSpecificationFromFile(specificationFilePath string) (specification Specification, err error) {
 	specificationFile, err := ioutil.ReadFile(specificationFilePath)
 	if err != nil  {
