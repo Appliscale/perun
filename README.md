@@ -15,7 +15,7 @@ Then install the application by going to cftool directory and typing:
 
 `./build.sh`
 
-Configuration file (config.yaml) will be copied to your home directory under the `~/.config/cftool/config.yaml` path.
+Configuration file (config.yaml) will be copied to your home directory under the `~/.config/cftool/main.yaml` path.
 
 The application should be compiled to `cftool` binary file to the `bin` directory in your GO workspace.
 
@@ -33,13 +33,26 @@ To convert your template from JSON to YAML and form YAML to JSON type:
 --format=[JSON or YAML]`
 
 ## Configuration file
-You can find example configuration file in the main directory of the repository - config.yml.
+You can find example configuration file in the main directory of the repository (`config.yml`).
 
-The application will be looking for the configuration file in following order:
+It is possible to have multiple configuration files in different locations. Configuration files take precedence, according to the standard `Unix` convention. The application will be looking for the configuration file in the following order:
+1. CLI argument (`-c, --config=CONFIG`)
+2. Current working directory search (`.cftool` file)
+3. Current user local config (`~/.config/cftool/main.yaml`)
+4. Global system config (`/etc/cftool/main.yaml`)
 
-* path specified in the command line by --config flag,
-* user home directory under the `~/.config/cftool/config.yaml` path,
-* `/etc/.Appliscale/cftool/config.yaml`.
+Configuration file is mandatory. Minimal configuration file includes AWS CloudFormation Resource Specification URLs, listed under `SpecificationURL` key:
+```
+SpecificationURL:
+  us-east-2: "https://dnwj8swjjbsbt.cloudfront.net"
+  us-east-1: "https://d1uauaxba7bl26.cloudfront.net"
+  us-west-1: "https://d68hl49wbnanq.cloudfront.net"
+  ...
+```
+
+There are two optional parameters:
+* `Profile` (`default` by default)
+* `Region` (`us-east-1` by default)
 
 ## AWS MFA
 If you want to use MFA add `--mfa` flag to the command:
