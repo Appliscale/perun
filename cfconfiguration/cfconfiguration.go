@@ -5,7 +5,6 @@ import (
 	"errors"
 	"github.com/ghodss/yaml"
 	"os"
-	"os/user"
 	"github.com/Appliscale/cftool/cfcliparser"
 	"github.com/Appliscale/cftool/cflogger"
 )
@@ -15,9 +14,6 @@ type Configuration struct {
 	Region string
 	SpecificationURL map[string]string
 }
-
-const GlobalConfigFile string = "/etc/.Appliscale/cftool/config.yaml"
-const UserConfigFile string = "/.config/cftool/config.yaml"
 
 func (config Configuration) GetSpecificationFileURLForCurrentRegion() (string, error) {
 	if url, ok := config.SpecificationURL[config.Region]; ok {
@@ -40,25 +36,35 @@ func GetConfiguration(cliArguments cfcliparser.CliArguments, logger *cflogger.Lo
 		return
 	}
 
+	if config.Profile == "" {
+		config.Profile = "default"
+	}
+
+	if config.Region == "" {
+		config.Region = "us-east-1"
+	}
+
 	return
 }
 
 func getConfigurationPath(cliArguments cfcliparser.CliArguments, logger *cflogger.Logger) (configPath string, err error) {
-	user, err := user.Current()
-	usersHomeConfiguration := user.HomeDir + UserConfigFile
 	if _, err := os.Stat(*cliArguments.ConfigurationPath); err == nil {
 		notifyUserAboutConfigurationFile(*cliArguments.ConfigurationPath, logger)
 		return *cliArguments.ConfigurationPath, nil
-	} else if _, err := os.Stat(usersHomeConfiguration); err == nil {
-		notifyUserAboutConfigurationFile(usersHomeConfiguration, logger)
-		return usersHomeConfiguration, nil
-	} else if _, err := os.Stat(GlobalConfigFile); err == nil {
-		notifyUserAboutConfigurationFile(GlobalConfigFile, logger)
-		return GlobalConfigFile, nil
+	} else if path, ok := getConfigFileFromCurrentWorkingDirectory(os.Stat); ok {
+		notifyUserAboutConfigurationFile(path, logger)
+		return path, nil
+	} else if path, ok := getUserConfigFile(os.Stat); ok {
+		notifyUserAboutConfigurationFile(path, logger)
+		return path, nil
+	} else if path, ok := getGlobalConfigFile(os.Stat); ok {
+		notifyUserAboutConfigurationFile(path, logger)
+		return path, nil
 	} else {
-		return "", errors.New("There is no configuration file!")
+		return "", errors.New("Configuration file could not be read!")
 	}
 }
+
 func notifyUserAboutConfigurationFile(configurationFilePath string, logger *cflogger.Logger) {
-	logger.Info("Configuration file from the following location will be use: " + configurationFilePath)
+	logger.Info("Configuration file from the following location will be used: " + configurationFilePath)
 }
