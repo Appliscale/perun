@@ -40,20 +40,5 @@ func getGlobalConfigFile(existenceChecker myStat) (val string, ok bool) {
 }
 
 func getConfigFileFromCurrentWorkingDirectory(existenceChecker myStat) (val string, ok bool) {
-	var err error
-	var dir string
-
-	dir, err = os.Getwd()
-	if err != nil {
-		return "", false
-	}
-
-	configPath := dir + "/.cftool"
-
-	_, err = existenceChecker(configPath)
-	if err != nil {
-		return "", false
-	}
-
-	return configPath, true
+	return getConfigFileFromCurrentWorkingDirectory_(existenceChecker, "/.cftool")
 }
