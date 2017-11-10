@@ -35,11 +35,11 @@ import (
 	"github.com/Appliscale/perun/context"
 )
 
-var validators = map[string]interface{}{
+var validatorsMap = map[string]interface{}{
 	"AWS::EC2::VPC": validators.IsVpcValid,
 }
 
-// Validate cloudformation template.
+// Validate CloudFormation template.
 func Validate(context *context.Context) bool {
 	valid := false
 	defer printResult(&valid, context.Logger)
@@ -83,19 +83,19 @@ func printResult(valid *bool, logger *logger.Logger) {
 	}
 }
 
-func validateResources(resources map[string]template.Resource, specification *specification.Specification, logger *logger.Logger) (bool) {
+func validateResources(resources map[string]template.Resource, specification *specification.Specification, sink *logger.Logger) (bool) {
 	valid := true
 	for resourceName, resourceValue := range resources {
 		if resourceSpecification, ok := specification.ResourceTypes[resourceValue.Type]; ok {
-			if !areRequiredPropertiesPresent(resourceSpecification, resourceValue, resourceName, logger) {
+			if !areRequiredPropertiesPresent(resourceSpecification, resourceValue, resourceName, sink) {
 				valid = false
 			}
 		} else {
-			logger.ValidationError(resourceName, "Type needs to be specified")
+			sink.ValidationError(resourceName, "Type needs to be specified")
 			valid = false
 		}
-		if validator, ok := validators[resourceValue.Type]; ok {
-			if !validator.(func(string, template.Resource, *logger.Logger)(bool))(resourceName, resourceValue, logger) {
+		if validator, ok := validatorsMap[resourceValue.Type]; ok {
+			if !validator.(func(string, template.Resource, *logger.Logger)(bool))(resourceName, resourceValue, sink) {
 				valid = false
 			}
 		}

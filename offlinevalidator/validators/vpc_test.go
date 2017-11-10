@@ -28,10 +28,10 @@ import (
 	"os"
 )
 
-var logger logger.Logger
+var sink logger.Logger
 
 func setup() {
-	logger = logger.Logger{}
+	sink = logger.Logger{}
 }
 
 func TestMain(m *testing.M) {
@@ -42,12 +42,12 @@ func TestMain(m *testing.M) {
 
 func TestValidVpc(t *testing.T) {
 	vpc := createVpc("10.0.0.0/16")
-	assert.True(t, IsVpcValid("Example", vpc, &logger))
+	assert.True(t, IsVpcValid("Example", vpc, &sink))
 }
 
 func TestInvalidVpc(t *testing.T) {
 	vpc := createVpc("10.0.0.0")
-	assert.False(t, IsVpcValid("Example", vpc, &logger))
+	assert.False(t, IsVpcValid("Example", vpc, &sink))
 }
 
 func createVpc(cidrBlock string) template.Resource {

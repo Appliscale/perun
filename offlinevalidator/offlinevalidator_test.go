@@ -29,13 +29,13 @@ import (
 	"github.com/Appliscale/perun/logger"
 )
 
-var specification specification.Specification
-var logger logger.Logger
+var spec specification.Specification
+var sink logger.Logger
 
 func setup() {
 	var err error
-	logger = logger.Logger{}
-	specification, err = specification.GetSpecificationFromFile("test_resources/test_specification.json")
+	sink = logger.Logger{}
+	spec, err = specification.GetSpecificationFromFile("test_resources/test_specification.json")
 	if err != nil {
 		panic(err)
 	}
@@ -51,21 +51,21 @@ func TestValidResource(t *testing.T) {
 	resources := make(map[string]template.Resource)
 	resources["ExampleResource"] = createResourceWithOneProperty("ExampleResourceType", "ExampleProperty", "Property value")
 
-	assert.True(t, validateResources(resources, &specification, &logger), "This resource should be valid")
+	assert.True(t, validateResources(resources, &spec, &sink), "This resource should be valid")
 }
 
 func TestInvalidResourceType(t *testing.T) {
 	resources := make(map[string]template.Resource)
 	resources["ExampleResource"] = createResourceWithOneProperty("InvalidType", "ExampleProperty", "Property value")
 
-	assert.False(t, validateResources(resources, &specification, &logger), "This resource should be valid, it has invalid resource type")
+	assert.False(t, validateResources(resources, &spec, &sink), "This resource should be valid, it has invalid resource type")
 }
 
 func TestLackOfRequiredPropertyInResource(t *testing.T) {
 	resources := make(map[string]template.Resource)
 	resources["ExampleResource"] = createResourceWithOneProperty("ExampleResourceType", "SomeProperty", "Property value")
 
-	assert.False(t, validateResources(resources, &specification, &logger), "This resource should not be valid, it do not have required property")
+	assert.False(t, validateResources(resources, &spec, &sink), "This resource should not be valid, it do not have required property")
 }
 
 func createResourceWithOneProperty(resourceType string, propertyName string, propertyValue string) (template.Resource) {

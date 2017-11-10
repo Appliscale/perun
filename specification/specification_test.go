@@ -26,11 +26,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var specification Specification
+var spec Specification
 
 func setup() {
 	var err error
-	specification, err = GetSpecificationFromFile("test_resources/test_specification.json")
+	spec, err = GetSpecificationFromFile("test_resources/test_specification.json")
 	if err != nil {
 		panic(err)
 	}
@@ -43,66 +43,66 @@ func TestMain(m *testing.M) {
 }
 
 func TestResouceSpecificationVersion(t *testing.T) {
-	assert.Equal(t,"1.2.3", specification.ResourceSpecificationVersion, "Invalid ResouceSpecificationVersion")
+	assert.Equal(t, "1.2.3", spec.ResourceSpecificationVersion, "Invalid ResouceSpecificationVersion")
 }
 
 func TestPropertyTypes(t *testing.T) {
 
-	assert.Equal(t, "Documentation string", specification.PropertyTypes["ExampleProperties"].Documentation,
+	assert.Equal(t, "Documentation string", spec.PropertyTypes["ExampleProperties"].Documentation,
 		getErrorMessage("PropertyTypes:ExampleProperties:Documentation"))
 
-	assert.Equal(t, "Documentation string", specification.PropertyTypes["ExampleProperties"].Properties["ExampleProperty"].Documentation,
+	assert.Equal(t, "Documentation string", spec.PropertyTypes["ExampleProperties"].Properties["ExampleProperty"].Documentation,
 		getErrorMessage("PropertyTypes:ExampleProperties:ExampleProperty:Documentation"))
 
-	assert.Equal(t, true, specification.PropertyTypes["ExampleProperties"].Properties["ExampleProperty"].Required,
+	assert.Equal(t, true, spec.PropertyTypes["ExampleProperties"].Properties["ExampleProperty"].Required,
 		getErrorMessage("PropertyTypes:ExampleProperties:ExampleProperty:Required"))
 
-	assert.Equal(t, "String", specification.PropertyTypes["ExampleProperties"].Properties["ExampleProperty"].PrimitiveType,
+	assert.Equal(t, "String", spec.PropertyTypes["ExampleProperties"].Properties["ExampleProperty"].PrimitiveType,
 		getErrorMessage("PropertyTypes:ExampleProperties:ExampleProperty:PrimitiveType"))
 
-	assert.Equal(t, "Mutable", specification.PropertyTypes["ExampleProperties"].Properties["ExampleProperty"].UpdateType,
+	assert.Equal(t, "Mutable", spec.PropertyTypes["ExampleProperties"].Properties["ExampleProperty"].UpdateType,
 		getErrorMessage("PropertyTypes:ExampleProperties:ExampleProperty:UpdateType"))
 
-	assert.Equal(t, true, specification.PropertyTypes["ExampleProperties"].Properties["AnotherExampleProperty"].DuplicatesAllowed,
+	assert.Equal(t, true, spec.PropertyTypes["ExampleProperties"].Properties["AnotherExampleProperty"].DuplicatesAllowed,
 		getErrorMessage("PropertyTypes:ExampleProperties:AnotherExampleProperty:DuplicatesAllowed"))
 
-	assert.Equal(t, "List", specification.PropertyTypes["ExampleProperties"].Properties["AnotherExampleProperty"].Type,
+	assert.Equal(t, "List", spec.PropertyTypes["ExampleProperties"].Properties["AnotherExampleProperty"].Type,
 		getErrorMessage("PropertyTypes:ExampleProperties:AnotherExampleProperty:Type"))
 
-	assert.Equal(t, "Tag", specification.PropertyTypes["ExampleProperties"].Properties["AnotherExampleProperty"].ItemType,
+	assert.Equal(t, "Tag", spec.PropertyTypes["ExampleProperties"].Properties["AnotherExampleProperty"].ItemType,
 		getErrorMessage("PropertyTypes:ExampleProperties:AnotherExampleProperty:ItemType"))
 
-	assert.Equal(t, "String", specification.PropertyTypes["ExampleProperties"].Properties["AnotherExampleProperty"].PrimitiveItemType,
+	assert.Equal(t, "String", spec.PropertyTypes["ExampleProperties"].Properties["AnotherExampleProperty"].PrimitiveItemType,
 		getErrorMessage("PropertyTypes:ExampleProperties:AnotherExampleProperty:PrimitiveItemType"))
 }
 
 func TestResourceTypes(t *testing.T) {
 
-	assert.Equal(t, "Documentation string", specification.ResourceTypes["ExampleResourceType"].Documentation,
+	assert.Equal(t, "Documentation string", spec.ResourceTypes["ExampleResourceType"].Documentation,
 		getErrorMessage("ResourceTypes:ExampleResourceType:Documentation"))
 
-	assert.Equal(t, "String", specification.ResourceTypes["ExampleResourceType"].Attributes["ExampleAttribute"].PrimitiveItemType,
+	assert.Equal(t, "String", spec.ResourceTypes["ExampleResourceType"].Attributes["ExampleAttribute"].PrimitiveItemType,
 		getErrorMessage("ResourceTypes:ExampleResourceType:ExampleAttribute:PrimitiveType"))
 
-	assert.Equal(t, "List", specification.ResourceTypes["ExampleResourceType"].Attributes["ExampleAttribute"].Type,
+	assert.Equal(t, "List", spec.ResourceTypes["ExampleResourceType"].Attributes["ExampleAttribute"].Type,
 		getErrorMessage("ResourceTypes:ExampleResourceType:ExampleAttribute:Type"))
 
-	assert.Equal(t, "Tag", specification.ResourceTypes["ExampleResourceType"].Attributes["AnotherExampleAttribute"].ItemType,
+	assert.Equal(t, "Tag", spec.ResourceTypes["ExampleResourceType"].Attributes["AnotherExampleAttribute"].ItemType,
 		getErrorMessage("ResourceTypes:ExampleResourceType:AnotherExampleAttribute:ItemType"))
 
-	assert.Equal(t, "String", specification.ResourceTypes["ExampleResourceType"].Attributes["AnotherExampleAttribute"].PrimitiveType,
+	assert.Equal(t, "String", spec.ResourceTypes["ExampleResourceType"].Attributes["AnotherExampleAttribute"].PrimitiveType,
 		getErrorMessage("ResourceTypes:ExampleResourceType:AnotherExampleAttribute:PrimitiveType"))
 
-	assert.Equal(t, "Documentation string", specification.ResourceTypes["ExampleResourceType"].Properties["ExampleProperty"].Documentation,
+	assert.Equal(t, "Documentation string", spec.ResourceTypes["ExampleResourceType"].Properties["ExampleProperty"].Documentation,
 		getErrorMessage("ResourceTypes:ExampleResourceType:ExampleProperty:Documentation"))
 
-	assert.Equal(t, "String", specification.ResourceTypes["ExampleResourceType"].Properties["ExampleProperty"].PrimitiveType,
+	assert.Equal(t, "String", spec.ResourceTypes["ExampleResourceType"].Properties["ExampleProperty"].PrimitiveType,
 		getErrorMessage("ResourceTypes:ExampleResourceType:ExampleProperty:PrimitiveType"))
 
-	assert.Equal(t, true, specification.ResourceTypes["ExampleResourceType"].Properties["ExampleProperty"].Required,
+	assert.Equal(t, true, spec.ResourceTypes["ExampleResourceType"].Properties["ExampleProperty"].Required,
 		getErrorMessage("ResourceTypes:ExampleResourceType:ExampleProperty:Required"))
 
-	assert.Equal(t, "Immutable", specification.ResourceTypes["ExampleResourceType"].Properties["ExampleProperty"].UpdateType,
+	assert.Equal(t, "Immutable", spec.ResourceTypes["ExampleResourceType"].Properties["ExampleProperty"].UpdateType,
 		getErrorMessage("ResourceTypes:ExampleResourceType:ExampleProperty:UpdateType"))
 }
 

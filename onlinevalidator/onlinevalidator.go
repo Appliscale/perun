@@ -76,11 +76,11 @@ func ValidateAndEstimateCosts(context *context.Context) bool {
 }
 
 func isTemplateValid(session *session.Session, template *string) (bool, error) {
-	cloudformation := cloudformation.New(session)
+	api := cloudformation.New(session)
 	templateStruct := cloudformation.ValidateTemplateInput{
 		TemplateBody: template,
 	}
-	_, error := cloudformation.ValidateTemplate(&templateStruct)
+	_, error := api.ValidateTemplate(&templateStruct)
 	if error != nil {
 		return false, error
 	}
@@ -89,11 +89,11 @@ func isTemplateValid(session *session.Session, template *string) (bool, error) {
 }
 
 func estimateCosts(session *session.Session, template *string, logger *logger.Logger) {
-	cloudformation := cloudformation.New(session)
+	api := cloudformation.New(session)
 	templateCostInput := cloudformation.EstimateTemplateCostInput{
 		TemplateBody: template,
 	}
-	output, err := cloudformation.EstimateTemplateCost(&templateCostInput)
+	output, err := api.EstimateTemplateCost(&templateCostInput)
 
 	if err != nil {
 		logger.Error(err.Error())
