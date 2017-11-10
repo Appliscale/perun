@@ -10,7 +10,8 @@ config-install:
 
 get-deps:
 	go get -t -v .
-	go test -i
+	go get github.com/stretchr/testify
+	go install github.com/stretchr/testify
 	go install github.com/Appliscale/cftool
 
 code-analysis: get-deps
