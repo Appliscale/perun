@@ -25,7 +25,7 @@ func TestGetUserConfigFile(t *testing.T) {
 		assert.True(t, ok, "Should exist")
 	})
 
-	t.Run("File do not exist", func(t *testing.T) {
+	t.Run("File does not exist", func(t *testing.T) {
 		_, ok := getUserConfigFile(notExistStub)
 		assert.False(t, ok, "Should not exist")
 	})
@@ -39,7 +39,7 @@ func TestGetGlobalConfigFile(t *testing.T) {
 		assert.True(t, ok, "Should exist")
 	})
 
-	t.Run("File do not exist", func(t *testing.T) {
+	t.Run("File does not exist", func(t *testing.T) {
 		_, ok := getGlobalConfigFile(notExistStub)
 		assert.False(t, ok, "Should not exist")
 	})
@@ -53,7 +53,7 @@ func TestGetConfigFileFromCurrentWorkingDirectory(t *testing.T) {
 		assert.True(t, ok, "Should exist")
 	})
 
-	t.Run("File do not exist", func(t *testing.T) {
+	t.Run("File does not exist", func(t *testing.T) {
 		_, ok := getConfigFileFromCurrentWorkingDirectory(notExistStub)
 		assert.False(t, ok, "Should not exist")
 	})
