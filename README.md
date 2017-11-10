@@ -1,8 +1,6 @@
-# Perun [![Build Status](https://travis-ci.org/Appliscale/perun.svg?branch=master)](https://travis-ci.org/Appliscale/perun)
+# Perun [![Build Status](https://travis-ci.org/Appliscale/perun.svg?branch=master)](https://travis-ci.org/Appliscale/perun) [![GoDoc](https://godoc.org/github.com/Appliscale/perun?status.svg)](https://godoc.org/github.com/Appliscale/perun)
 
-A tool for CloudFormation template validation and conversion.
-
-[Documentation](https://godoc.org/github.com/Appliscale/perun)
+A swiss army knife for *AWS CloudFormation* templates - validation, conversion, generators and other various stuff.
 
 ## Goal
 
