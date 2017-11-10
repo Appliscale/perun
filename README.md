@@ -1,51 +1,51 @@
-# CFTool [![Build Status](https://travis-ci.org/Appliscale/cftool.svg?branch=master)](https://travis-ci.org/Appliscale/cftool)
+# Perun [![Build Status](https://travis-ci.org/Appliscale/perun.svg?branch=master)](https://travis-ci.org/Appliscale/perun)
 
 A tool for CloudFormation template validation and conversion.
 
-[Documentation](https://godoc.org/github.com/Appliscale/cftool)
+[Documentation](https://godoc.org/github.com/Appliscale/perun)
 
 ## Goal
 
-CFTool was created to support work with CloudFormation templates. CloudFormation works in a way that it runs template online in AWS infrastructure and fails after first error - in many cases it is related with particular name length (e.g. maximum length is 64 characters). Instead of doing a round-trip, we would like to detect such cases locally.
+Perun was created to support work with CloudFormation templates. CloudFormation works in a way that it runs template online in AWS infrastructure and fails after first error - in many cases it is related with particular name length (e.g. maximum length is 64 characters). Instead of doing a round-trip, we would like to detect such cases locally.
 
 ## Building and Installation
 
-First of all you need to download CFTool to your GO workspace:
+First of all you need to download Perun to your GO workspace:
 
 ```bash
-$GOPATH $ go get github.com/Appliscale/cftool
-$GOPATH $ cd cftool
+$GOPATH $ go get github.com/Appliscale/perun
+$GOPATH $ cd perun
 ```
 
-Then build and install configuration for the application inside cftool directory by executing:
+Then build and install configuration for the application inside perun directory by executing:
 
 ```bash
-cftool $ make config-install
-cftool $ make all
+perun $ make config-install
+perun $ make all
 ```
 
-With first command a default configuration file (`defaults/main.yaml`) will be copied to your home directory under the `~/.config/cftool/main.yaml` path. After second command application will be compiled as a `cftool` binary inside `bin` directory in your `$GOPATH/cftool` workspace.
+With first command a default configuration file (`defaults/main.yaml`) will be copied to your home directory under the `~/.config/perun/main.yaml` path. After second command application will be compiled as a `perun` binary inside `bin` directory in your `$GOPATH/perun` workspace.
 
-## Working with CFTool
+## Working with Perun
 
 ### Commands
 
 To validate your template with AWS API (*online validation*), just type:
 
 ```bash
-~ $ cftool --mode=validate --template=<PATH TO YOUR TEMPLATE>
+~ $ perun --mode=validate --template=<PATH TO YOUR TEMPLATE>
 ```
 
 To validate your template offline (*well*, almost offline :wink: - *AWS CloudFormation Resource Specification* still needs to be downloaded for a fresh installation) use `validate_offline` mode:
 
 ```bash
-~ $ cftool --mode=validate_offline --template=<PATH TO YOUR TEMPLATE>
+~ $ perun --mode=validate_offline --template=<PATH TO YOUR TEMPLATE>
 ```
 
 To convert your template between JSON and YAML formats you have to type:
 
 ```bash
-~ $ cftool --mode=convert
+~ $ perun --mode=convert
            --template=<PATH TO YOUR INCOMING TEMPLATE>
            --output=<PATH FOR A CONVERTED FILE, INCLUDING FILE NAME>
            --format=<JSON or YAML>
@@ -55,12 +55,12 @@ To convert your template between JSON and YAML formats you have to type:
 
 You can find an example configuration file in the main directory of the repository in file `defaults/main.yml`.
 
-CFtool supports multiple configuration files for different locations. Configuration files take precedence, according to the typical `UNIX` convention. The application will be looking for the configuration file in the following order:
+perun supports multiple configuration files for different locations. Configuration files take precedence, according to the typical `UNIX` convention. The application will be looking for the configuration file in the following order:
 
 1. CLI argument (`-c=<CONFIG FILE>, --config=<CONFIG FILE>`).
-2. Current working directory (`.cftool` file).
-3. Current user local configuration (`~/.config/cftool/main.yaml`).
-4. System global configuration (`/etc/cftool/main.yaml`).
+2. Current working directory (`.perun` file).
+3. Current user local configuration (`~/.config/perun/main.yaml`).
+4. System global configuration (`/etc/perun/main.yaml`).
 
 Having a configuration file is mandatory. Minimal configuration file requires only *AWS CloudFormation Resource Specification* URLs, listed under `SpecificationURL` key:
 
@@ -80,7 +80,7 @@ There are two optional parameters:
 If you account is using *MFA* (which we strongly recommend to enable) you should add `--mfa` flag to the each executed command.
 
 ```bash
-~ $ cftool --mode=validate --template=<PATH TO YOUR TEMPLATE> --mfa
+~ $ perun --mode=validate --template=<PATH TO YOUR TEMPLATE> --mfa
 ```
 
 In that case application will use `[profile]-long-term` from the `~/.aws/credentials` file (`[profile]` is a placeholder filled with adequate value taken from configuration files).

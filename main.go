@@ -22,22 +22,22 @@
 package main
 
 import (
-	"github.com/Appliscale/cftool/cfcliparser"
-	"github.com/Appliscale/cftool/cfconverter"
-	"github.com/Appliscale/cftool/cfofflinevalidator"
-	"github.com/Appliscale/cftool/cfonlinevalidator"
-	"github.com/Appliscale/cftool/cfcontext"
+	"github.com/Appliscale/perun/cliparser"
+	"github.com/Appliscale/perun/converter"
+	"github.com/Appliscale/perun/offlinevalidator"
+	"github.com/Appliscale/perun/onlinevalidator"
+	"github.com/Appliscale/perun/context"
 	"os"
 )
 
 func main() {
-	context, err := cfcontext.GetContext()
+	context, err := context.GetContext()
 	if err != nil {
 		os.Exit(1)
 	}
 
-	if *context.CliArguments.Mode == cfcliparser.ValidateMode {
-		valid := cfonlinevalidator.ValidateAndEstimateCosts(&context)
+	if *context.CliArguments.Mode == cliparser.ValidateMode {
+		valid := onlinevalidator.ValidateAndEstimateCosts(&context)
 		if valid {
 			os.Exit(0)
 		} else {
@@ -45,8 +45,8 @@ func main() {
 		}
 	}
 
-	if *context.CliArguments.Mode == cfcliparser.ConvertMode {
-		err := cfconverter.Convert(&context)
+	if *context.CliArguments.Mode == cliparser.ConvertMode {
+		err := converter.Convert(&context)
 		if err == nil {
 			os.Exit(0)
 		} else {
@@ -55,8 +55,8 @@ func main() {
 		}
 	}
 
-	if *context.CliArguments.Mode == cfcliparser.OfflineValidateMode {
-		valid := cfofflinevalidator.Validate(&context)
+	if *context.CliArguments.Mode == cliparser.OfflineValidateMode {
+		valid := offlinevalidator.Validate(&context)
 		if valid {
 			os.Exit(0)
 		} else {
