@@ -1,74 +1,109 @@
 # CFTool [![Build Status](https://travis-ci.org/Appliscale/cftool.svg?branch=master)](https://travis-ci.org/Appliscale/cftool)
+
 A tool for CloudFormation template validation and conversion.
 
 [Documentation](https://godoc.org/github.com/Appliscale/cftool)
 
 ## Goal
-CFTool was created to support work with CloudFormation templates. CloudFormation works in a way that it runs template online
-in AWS infrastructure and fails after first error - in many cases it is related with particular name length (e.g. maximum
-length is 64 characters). Instead of doing a round-trip, we would like to detect such cases locally. 
 
-## Working with CFTool
+CFTool was created to support work with CloudFormation templates. CloudFormation works in a way that it runs template online in AWS infrastructure and fails after first error - in many cases it is related with particular name length (e.g. maximum length is 64 characters). Instead of doing a round-trip, we would like to detect such cases locally.
+
+## Building and Installation
+
 First of all you need to download CFTool to your GO workspace:
 
-`go get github.com/Appliscale/cftool`
-
-Then install the application by going to cftool directory and typing:
-
-`./build.sh`
-
-Configuration file (config.yaml) will be copied to your home directory under the `~/.config/cftool/main.yaml` path.
-
-The application should be compiled to `cftool` binary file to the `bin` directory in your GO workspace.
-
-To validate your template online, with AWS API, just type:
-
-`cftool --mode=validate --template=[path to your template]`
-
-To validate template offline (well, almost offline - AWS CloudFormation Resource Specification still needs be downloaded) use validate_offline mode:
-
-`cftool --mode=validate_offline --template=[path to your template]`
-
-To convert your template from JSON to YAML and form YAML to JSON type:
-
-`cftool --mode=convert --template=[path to your template] --output=[path to place, where you want to save converted file]
---format=[JSON or YAML]`
-
-## Configuration file
-You can find example configuration file in the main directory of the repository (`config.yml`).
-
-It is possible to have multiple configuration files in different locations. Configuration files take precedence, according to the standard `Unix` convention. The application will be looking for the configuration file in the following order:
-1. CLI argument (`-c, --config=CONFIG`)
-2. Current working directory search (`.cftool` file)
-3. Current user local config (`~/.config/cftool/main.yaml`)
-4. Global system config (`/etc/cftool/main.yaml`)
-
-Configuration file is mandatory. Minimal configuration file includes AWS CloudFormation Resource Specification URLs, listed under `SpecificationURL` key:
+```bash
+$GOPATH $ go get github.com/Appliscale/cftool
+$GOPATH $ cd cftool
 ```
+
+Then build and install configuration for the application inside cftool directory by executing:
+
+```bash
+cftool $ make config-install
+cftool $ make all
+```
+
+With first command a default configuration file (`defaults/main.yaml`) will be copied to your home directory under the `~/.config/cftool/main.yaml` path. After second command application will be compiled as a `cftool` binary inside `bin` directory in your `$GOPATH/cftool` workspace.
+
+## Working with CFTool
+
+### Commands
+
+To validate your template with AWS API (*online validation*), just type:
+
+```bash
+~ $ cftool --mode=validate --template=<PATH TO YOUR TEMPLATE>
+```
+
+To validate your template offline (*well*, almost offline :wink: - *AWS CloudFormation Resource Specification* still needs to be downloaded for a fresh installation) use `validate_offline` mode:
+
+```bash
+~ $ cftool --mode=validate_offline --template=<PATH TO YOUR TEMPLATE>
+```
+
+To convert your template between JSON and YAML formats you have to type:
+
+```bash
+~ $ cftool --mode=convert
+           --template=<PATH TO YOUR INCOMING TEMPLATE>
+           --output=<PATH FOR A CONVERTED FILE, INCLUDING FILE NAME>
+           --format=<JSON or YAML>
+```
+
+### Configuration file
+
+You can find an example configuration file in the main directory of the repository in file `defaults/main.yml`.
+
+CFtool supports multiple configuration files for different locations. Configuration files take precedence, according to the typical `UNIX` convention. The application will be looking for the configuration file in the following order:
+
+1. CLI argument (`-c=<CONFIG FILE>, --config=<CONFIG FILE>`).
+2. Current working directory (`.cftool` file).
+3. Current user local configuration (`~/.config/cftool/main.yaml`).
+4. System global configuration (`/etc/cftool/main.yaml`).
+
+Having a configuration file is mandatory. Minimal configuration file requires only *AWS CloudFormation Resource Specification* URLs, listed under `SpecificationURL` key:
+
+```yaml
 SpecificationURL:
   us-east-2: "https://dnwj8swjjbsbt.cloudfront.net"
-  us-east-1: "https://d1uauaxba7bl26.cloudfront.net"
-  us-west-1: "https://d68hl49wbnanq.cloudfront.net"
   ...
 ```
 
 There are two optional parameters:
-* `Profile` (`default` by default)
-* `Region` (`us-east-1` by default)
 
-## AWS MFA
-If you want to use MFA add `--mfa` flag to the command:
+* `Profile` (`default` taken by default, when no value found inside configuration files).
+* `Region` (`us-east-1` taken by default, when no value found inside configuration files).
 
-`cftool --mode=validate --template=[path to your template] --mfa`
+### Supporting  MFA
 
-Application will use `[profile]-long-term` from the `~/.aws/credentials` file (`[profile]` - profile specified in config.yaml file.).
+If you account is using *MFA* (which we strongly recommend to enable) you should add `--mfa` flag to the each executed command.
 
-Example - profile `default`:
+```bash
+~ $ cftool --mode=validate --template=<PATH TO YOUR TEMPLATE> --mfa
+```
 
-> \[default-long-term]
+In that case application will use `[profile]-long-term` from the `~/.aws/credentials` file (`[profile]` is a placeholder filled with adequate value taken from configuration files).
 
-> aws_access_key_id = your access key
+Example profile you need to setup - in this case `default`:
 
-> aws_secret_access_key = your secret access key
+```ini
+[default-long-term]
+aws_access_key_id = <YOUR ACCESS KEY>
+aws_secret_access_key = <YOUR SECRET ACCESS KEY>
+mfa_serial = <IDENTIFICATION NUMBER FOR MFA DEVICE>
+```
 
-> mfa_serial = the identification number of the MFA device
+## License
+
+[Apache License 2.0](LICENSE)
+
+## Maintainers
+
+- [Piotr Figwer](https://github.com/pfigwer)
+- [Wojciech Gawroński](https://github.com/afronski)
+- [Kacper Patro](https://github.com/morfeush22)
+
+## Contributors
+
+- *Here is a place for you!*

@@ -1,4 +1,25 @@
-// Package cfonlinevalidator privides tools for online cloudformation template validation using AWS API.
+// Copyright 2017 Appliscale
+//
+// Maintainers and Contributors:
+//
+//   - Piotr Figwer (piotr.figwer@appliscale.io)
+//   - Wojciech Gawroński (wojciech.gawronski@appliscale.io)
+//   - Kacper Patro (kacper.patro@appliscale.io)
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Package cfonlinevalidator privides tools for online cloudformation template
+// validation using AWS API.
 package cfonlinevalidator
 
 import (
@@ -80,9 +101,6 @@ func estimateCosts(session *session.Session, template *string, logger *cflogger.
 	}
 
 	logger.Info("Costs estimation: " + *output.Url)
-	/*resp, _ := http.Get(*output.Url)
-	bytes, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println("HTML:\n\n", string(bytes))*/
 }
 
 func createSession(region *string, profile string, logger *cflogger.Logger) (*session.Session, error) {
@@ -134,8 +152,7 @@ func updateSessionToken(profile string, region string, logger *cflogger.Logger) 
 	expirationDate, err := time.Parse(dateFormat, section.Key("expiration").Value())
 	if err == nil {
 		logger.Info("Session token will expire in " +
-			time.Since(expirationDate).Truncate(time.Duration(1) * time.Second).String() +
-			" (" + expirationDate.Truncate(time.Duration(1) * time.Second).Format(dateFormat) + ")")
+								truncate(time.Since(expirationDate)).String() + " (" + expirationDate.Format(dateFormat) + ")")
 	}
 
 	mfaDevice := sectionLongTerm.Key("mfa_serial").Value()
@@ -190,8 +207,12 @@ func updateSessionToken(profile string, region string, logger *cflogger.Logger) 
 
 func printResult(valid *bool, logger *cflogger.Logger) {
 	if !*valid {
-		logger.Info("Template is invalid!")
+		logger.Error("Template is invalid!")
 	} else {
 		logger.Info("Template is valid!")
 	}
+}
+
+func truncate(d time.Duration) time.Duration {
+	return -(d - d % (time.Duration(1) * time.Second))
 }
