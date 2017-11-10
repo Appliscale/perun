@@ -101,9 +101,6 @@ func estimateCosts(session *session.Session, template *string, logger *cflogger.
 	}
 
 	logger.Info("Costs estimation: " + *output.Url)
-	/*resp, _ := http.Get(*output.Url)
-	bytes, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println("HTML:\n\n", string(bytes))*/
 }
 
 func createSession(region *string, profile string, logger *cflogger.Logger) (*session.Session, error) {
@@ -155,8 +152,7 @@ func updateSessionToken(profile string, region string, logger *cflogger.Logger) 
 	expirationDate, err := time.Parse(dateFormat, section.Key("expiration").Value())
 	if err == nil {
 		logger.Info("Session token will expire in " +
-			time.Since(expirationDate).Truncate(time.Duration(1) * time.Second).String() +
-			" (" + expirationDate.Truncate(time.Duration(1) * time.Second).Format(dateFormat) + ")")
+								truncate(time.Since(expirationDate)).String() + " (" + expirationDate.Format(dateFormat) + ")")
 	}
 
 	mfaDevice := sectionLongTerm.Key("mfa_serial").Value()
@@ -211,8 +207,12 @@ func updateSessionToken(profile string, region string, logger *cflogger.Logger) 
 
 func printResult(valid *bool, logger *cflogger.Logger) {
 	if !*valid {
-		logger.Info("Template is invalid!")
+		logger.Error("Template is invalid!")
 	} else {
 		logger.Info("Template is valid!")
 	}
+}
+
+func truncate(d time.Duration) time.Duration {
+	return -(d - d % (time.Duration(1) * time.Second))
 }

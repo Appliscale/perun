@@ -77,7 +77,7 @@ func Validate(context *cfcontext.Context) bool {
 func printResult(valid *bool, logger *cflogger.Logger) {
 	logger.PrintValidationErrors()
 	if !*valid {
-		logger.Info("Template is invalid!")
+		logger.Error("Template is invalid!")
 	} else {
 		logger.Info("Template is valid!")
 	}
