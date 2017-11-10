@@ -11,7 +11,7 @@ config-install:
 get-deps:
 	go get -t -v .
 	go install github.com/Appliscale/cftool
-	go install github.com/stretchr/testify/assert
+	go install github.com/stretchr/testify
 
 code-analysis: get-deps
 	go tool vet -v .
