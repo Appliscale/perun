@@ -63,15 +63,20 @@ func GetConfiguration(cliArguments cliparser.CliArguments, logger *logger.Logger
 		return
 	}
 
+	postProcessing(&config, cliArguments)
+
+	return
+}
+func postProcessing(config *Configuration, cliArguments cliparser.CliArguments) {
 	if config.Profile == "" {
 		config.Profile = "default"
 	}
-
 	if config.Region == "" {
 		config.Region = "us-east-1"
 	}
-
-	return
+	if *cliArguments.Profile != "" {
+		config.Profile = *cliArguments.Profile
+	}
 }
 
 func getConfigurationPath(cliArguments cliparser.CliArguments, logger *logger.Logger) (configPath string, err error) {

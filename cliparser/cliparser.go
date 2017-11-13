@@ -45,6 +45,7 @@ type CliArguments struct {
 	Yes               *bool
 	Verbosity         *string
 	MFA               *bool
+	Profile           *string
 }
 
 // Get and validate CLI arguments. Returns error if validation fails.
@@ -59,6 +60,7 @@ func ParseCliArguments() (cliArguments CliArguments, err error) {
 	cliArguments.Yes = kingpin.Flag("yes", "Always say yes").Short('y').Bool()
 	cliArguments.Verbosity = kingpin.Flag("verbosity", "TRACE|DEBUG|INFO|ERROR").Short('v').String()
 	cliArguments.MFA = kingpin.Flag("mfa", "Enable AWS MFA").Bool()
+	cliArguments.Profile = kingpin.Flag("profile", "An AWS profile.").Short('p').String()
 
 	kingpin.Parse()
 

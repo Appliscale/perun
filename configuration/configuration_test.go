@@ -30,11 +30,11 @@ import (
 
 var configuration Configuration
 
-func setup() {
+func setup(osArgs []string) {
 	oldArgs := os.Args
 	defer func() { os.Args = oldArgs }()
 
-	os.Args = []string{"cmd", "--mode=validate_offline", "--template=some_path", "--config=test_resources/test_config.yaml"}
+	os.Args = osArgs
 	cliArgs, err := cliparser.ParseCliArguments()
 	if err != nil {
 		panic(err)
@@ -49,21 +49,22 @@ func setup() {
 	}
 }
 
-func TestMain(m *testing.M) {
-	setup()
-	retCode := m.Run()
-	os.Exit(retCode)
-}
-
 func TestSpecificationFileURL(t *testing.T) {
+	setup([]string{"cmd", "--mode=validate_offline", "--template=some_path", "--config=test_resources/test_config.yaml"})
 	url, _ := configuration.GetSpecificationFileURLForCurrentRegion()
 	assert.Equal(t, "https://d1uauaxba7bl26.cloudfront.net/latest/gzip/CloudFormationResourceSpecification.json", url)
 }
 
 func TestNoSpecificationForRegion(t *testing.T) {
+	setup([]string{"cmd", "--mode=validate_offline", "--template=some_path", "--config=test_resources/test_config.yaml"})
 	localConfiguration := Configuration{
 		Region: "someRegion",
 	}
 	_, err := localConfiguration.GetSpecificationFileURLForCurrentRegion()
 	assert.NotNil(t, err)
+}
+
+func TestProfileOverride(t *testing.T) {
+	setup([]string{"cmd", "--mode=validate_offline", "--template=some_path", "--config=test_resources/test_config.yaml", "--profile=cliProfile"})
+	assert.Equal(t, "cliProfile", configuration.Profile)
 }
