@@ -1,10 +1,6 @@
 // Copyright 2017 Appliscale
 //
-// Maintainers and Contributors:
-//
-//   - Piotr Figwer (piotr.figwer@appliscale.io)
-//   - Wojciech Gawroński (wojciech.gawronski@appliscale.io)
-//   - Kacper Patro (kacper.patro@appliscale.io)
+// Maintainers and contributors are listed in README file inside repository.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
