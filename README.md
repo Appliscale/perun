@@ -10,6 +10,8 @@ Perun was created to support work with CloudFormation templates. CloudFormation 
 
 ### OSX
 
+If you are using homebrew just run:
+
 ```brew install Appliscale/perun/perun```
 
 ### Building from sources
