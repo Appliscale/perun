@@ -18,18 +18,24 @@
 package main
 
 import (
+	"os"
+	"github.com/Appliscale/perun/context"
+	"github.com/Appliscale/perun/utilities"
 	"github.com/Appliscale/perun/cliparser"
 	"github.com/Appliscale/perun/converter"
 	"github.com/Appliscale/perun/offlinevalidator"
 	"github.com/Appliscale/perun/onlinevalidator"
-	"github.com/Appliscale/perun/context"
-	"os"
 )
 
 func main() {
 	context, err := context.GetContext()
 	if err != nil {
 		os.Exit(1)
+	}
+
+	if *context.CliArguments.Version {
+		context.Logger.Always(utilities.VersionStatus())
+		os.Exit(0)
 	}
 
 	if *context.CliArguments.Mode == cliparser.ValidateMode {

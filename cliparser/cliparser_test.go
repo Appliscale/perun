@@ -71,6 +71,10 @@ func TestValidArgs(t *testing.T) {
 	assert.Nil(t, parseCliArguments([]string{"cmd", "--mode=validate_offline", "--template=some_path"}))
 }
 
+func TestVersionShortcut(t *testing.T) {
+	assert.Nil(t, parseCliArguments([]string{"cmd", "--version"}))
+}
+
 func parseCliArguments(args []string) error {
 	oldArgs := os.Args
 	defer func() { os.Args = oldArgs }()

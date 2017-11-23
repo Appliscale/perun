@@ -16,3 +16,6 @@ perun
 
 # Project-local glide cache (https://github.com/Masterminds/glide/issues/736):
 .glide/
+
+# Local perun configuration:
+.perun

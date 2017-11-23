@@ -19,8 +19,18 @@
 package utilities
 
 import (
+	"fmt"
 	"time"
 )
+
+const Motto = "Swiss army knife for AWS CloudFormation templates"
+
+const ReleaseName = "Nimbostratus"
+const VersionNumber = "1.1.0-beta"
+
+func VersionStatus() string {
+	return fmt.Sprintf("       perun %s (%s release) - %s", VersionNumber, ReleaseName, Motto)
+}
 
 func TruncateDuration(d time.Duration) time.Duration {
 	return -(d - d % (time.Duration(1) * time.Second))
