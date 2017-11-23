@@ -39,9 +39,9 @@ type Configuration struct {
 	// Map of resource specification CloudFront URL per region.
 	SpecificationURL map[string]string
 	// Decision regarding if we use MFA token or not.
-	DefaultDecisionForMFA *bool
+	DefaultDecisionForMFA bool
 	// Duration for MFA token.
-	DefaultDurationForMFA *int64
+	DefaultDurationForMFA int64
 	// Logger verbosity.
 	DefaultVerbosity string
 }
@@ -74,6 +74,7 @@ func GetConfiguration(cliArguments cliparser.CliArguments, logger *logger.Logger
 
 	return
 }
+
 func postProcessing(config *Configuration, cliArguments cliparser.CliArguments, logger *logger.Logger) {
 	if config.DefaultProfile == "" {
 		config.DefaultProfile = "default"
@@ -93,15 +94,19 @@ func postProcessing(config *Configuration, cliArguments cliparser.CliArguments, 
 	if *cliArguments.Profile != "" {
 		config.DefaultProfile = *cliArguments.Profile
 	}
-	if *cliArguments.MFA != *config.DefaultDecisionForMFA {
-		config.DefaultDecisionForMFA = cliArguments.MFA
+	if *cliArguments.MFA != config.DefaultDecisionForMFA {
+		config.DefaultDecisionForMFA = *cliArguments.MFA
 	}
 	if *cliArguments.DurationForMFA > 0 {
-		config.DefaultDurationForMFA = cliArguments.DurationForMFA
+		config.DefaultDurationForMFA = *cliArguments.DurationForMFA
 	}
 }
 
 func getConfigurationPath(cliArguments cliparser.CliArguments, logger *logger.Logger) (configPath string, err error) {
+	if *cliArguments.Sandbox {
+		return "", errors.New("No configuration file should be used.")
+	}
+
 	if _, err := os.Stat(*cliArguments.ConfigurationPath); err == nil {
 		notifyUserAboutConfigurationFile(*cliArguments.ConfigurationPath, logger)
 		return *cliArguments.ConfigurationPath, nil

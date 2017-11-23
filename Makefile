@@ -12,7 +12,7 @@ get-deps:
 	go get -t -v .
 	go get github.com/stretchr/testify
 	go install github.com/stretchr/testify
-	go install github.com/Appliscale/perun
+	go build
 
 code-analysis: get-deps
 	go tool vet -v .

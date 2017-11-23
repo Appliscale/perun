@@ -56,6 +56,21 @@ func TestInvalidOutputFormatInConvertMode(t *testing.T) {
 		parseCliArguments([]string{"cmd", "--mode=convert", "--template=some_path", "--output=some_path", "--format=wrong_format"}).Error())
 }
 
+func TestInvalidVerbosity(t *testing.T) {
+	assert.Equal(t, "You specified invalid value for --verbosity flag",
+		parseCliArguments([]string{"cmd", "--mode=validate", "--template=some_path", "--verbosity=TEST"}).Error())
+}
+
+func TestTooSmallDurationForMFA(t *testing.T) {
+	assert.Equal(t, "You should specify value for duration of MFA token greater than zero",
+		parseCliArguments([]string{"cmd", "--mode=validate", "--template=some_path", "--duration=-1"}).Error())
+}
+
+func TestTooBigDurationForMFA(t *testing.T) {
+	assert.Equal(t, "You should specify value for duration of MFA token smaller than 129600 (3 hours)",
+		parseCliArguments([]string{"cmd", "--mode=validate", "--template=some_path", "--duration=50000000"}).Error())
+}
+
 func TestValidArgs(t *testing.T) {
 	assert.Nil(t, parseCliArguments([]string{"cmd", "--mode=validate_offline", "--template=some_path"}))
 }

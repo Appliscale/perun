@@ -48,7 +48,7 @@ func ValidateAndEstimateCosts(context *context.Context) bool {
 	valid := false
 	defer printResult(&valid, context.Logger)
 
-	if *context.Config.DefaultDecisionForMFA {
+	if context.Config.DefaultDecisionForMFA {
 		err := updateSessionToken(context.Config.DefaultProfile, context.Config.DefaultRegion, context.Config.DefaultDurationForMFA, context.Logger)
 		if err != nil {
 			context.Logger.Error(err.Error())
@@ -127,7 +127,7 @@ func createSession(profile string, region *string, logger *logger.Logger) (*sess
 	return session, nil
 }
 
-func updateSessionToken(profile string, region string, defaultDuration *int64, logger *logger.Logger) error {
+func updateSessionToken(profile string, region string, defaultDuration int64, logger *logger.Logger) error {
 	user, err := user.Current()
 	if err != nil {
 		return err
@@ -186,13 +186,13 @@ func updateSessionToken(profile string, region string, defaultDuration *int64, l
 		}
 
 		var duration int64
-		if defaultDuration == nil || *defaultDuration == 0 {
+		if defaultDuration == 0 {
 			err = logger.GetInput("Duration", &duration)
 			if err != nil {
 				return err
 			}
 		} else {
-			duration = *defaultDuration
+			duration = defaultDuration
 		}
 
 		stsSession := sts.New(session)

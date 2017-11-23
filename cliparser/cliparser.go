@@ -49,6 +49,7 @@ type CliArguments struct {
 	DurationForMFA    *int64
 	Profile           *string
 	Region            *string
+	Sandbox           *bool
 }
 
 // Get and validate CLI arguments. Returns error if validation fails.
@@ -66,6 +67,7 @@ func ParseCliArguments() (cliArguments CliArguments, err error) {
 	cliArguments.DurationForMFA = kingpin.Flag("duration", "Duration for AWS MFA token").Short('d').Int64()
 	cliArguments.Profile = kingpin.Flag("profile", "An AWS profile.").Short('p').String()
 	cliArguments.Region = kingpin.Flag("region", "An AWS region to use.").Short('r').String()
+	cliArguments.Sandbox = kingpin.Flag("sandbox", "Do not use configuration files hierarchy.").Bool()
 
 	kingpin.Parse()
 
