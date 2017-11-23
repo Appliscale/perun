@@ -13,7 +13,7 @@ Perun was created to support work with CloudFormation templates. CloudFormation 
 If you are using *homebrew* just run:
 
 ```bash
-brew install Appliscale/taps/perun
+brew install Appliscale/tap/perun
 ```
 
 ### Building from sources
