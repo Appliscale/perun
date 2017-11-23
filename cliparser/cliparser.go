@@ -46,26 +46,32 @@ type CliArguments struct {
 	Profile           *string
 	Region            *string
 	Sandbox           *bool
+	Version           *bool
 }
 
 // Get and validate CLI arguments. Returns error if validation fails.
 func ParseCliArguments() (cliArguments CliArguments, err error) {
 
-	cliArguments.Mode = kingpin.Flag("mode", ValidateMode + "|" + OfflineValidateMode + "|" + ConvertMode).Short('m').String()
-	cliArguments.TemplatePath = kingpin.Flag("template", "A path to the template").Short('t').String()
-	cliArguments.OutputFilePath = kingpin.Flag("output", "A path, where converted file will be saved").Short('o').String()
-	cliArguments.OutputFileFormat = kingpin.Flag("format", "Output format: " + strings.ToUpper(JSON) + "|" + strings.ToUpper(YAML)).Short('x').String()
+	cliArguments.Mode = kingpin.Flag("mode", "Main command from a given list: " + ValidateMode + " | " + OfflineValidateMode + " | " + ConvertMode + ".").Short('m').String()
+	cliArguments.TemplatePath = kingpin.Flag("template", "A path to the template file.").Short('t').String()
+	cliArguments.OutputFilePath = kingpin.Flag("output", "A path where converted file will be saved.").Short('o').String()
+	cliArguments.OutputFileFormat = kingpin.Flag("format", "Output format: " + strings.ToUpper(JSON) + " | " + strings.ToUpper(YAML) + ".").Short('x').String()
 	cliArguments.ConfigurationPath = kingpin.Flag("config", "A path to the configuration file").Short('c').String()
-	cliArguments.Quiet = kingpin.Flag("quiet", "No console output, just return code").Short('q').Bool()
-	cliArguments.Yes = kingpin.Flag("yes", "Always say yes").Short('y').Bool()
-	cliArguments.Verbosity = kingpin.Flag("verbosity", "TRACE|DEBUG|INFO|ERROR").Short('v').String()
-	cliArguments.MFA = kingpin.Flag("mfa", "Enable AWS MFA").Bool()
-	cliArguments.DurationForMFA = kingpin.Flag("duration", "Duration for AWS MFA token").Short('d').Int64()
-	cliArguments.Profile = kingpin.Flag("profile", "An AWS profile.").Short('p').String()
+	cliArguments.Quiet = kingpin.Flag("quiet", "No console output, just return code.").Short('q').Bool()
+	cliArguments.Yes = kingpin.Flag("yes", "Always say yes.").Short('y').Bool()
+	cliArguments.Verbosity = kingpin.Flag("verbosity", "Logger verbosity: TRACE | DEBUG | INFO | ERROR.").Short('v').String()
+	cliArguments.MFA = kingpin.Flag("mfa", "Enable AWS MFA.").Bool()
+	cliArguments.DurationForMFA = kingpin.Flag("duration", "Duration for AWS MFA token (seconds value from range [1, 129600]).").Short('d').Int64()
+	cliArguments.Profile = kingpin.Flag("profile", "An AWS profile name.").Short('p').String()
 	cliArguments.Region = kingpin.Flag("region", "An AWS region to use.").Short('r').String()
 	cliArguments.Sandbox = kingpin.Flag("sandbox", "Do not use configuration files hierarchy.").Bool()
+	cliArguments.Version = kingpin.Flag("version", "Print version number together with release name and exit immediately.").Bool()
 
 	kingpin.Parse()
+
+	if *cliArguments.Version {
+		return
+	}
 
 	if *cliArguments.Mode == "" {
 		err = errors.New("You should specify what you want to do with --mode flag")

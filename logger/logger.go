@@ -42,7 +42,7 @@ const (
 var verboseModes = [...]string{
 	"TRACE",
 	"DEBUG",
-	"INFO",
+	" INFO",
 	"ERROR",
 }
 
@@ -66,6 +66,11 @@ func CreateQuietLogger() Logger {
 		Yes:       false,
 		Verbosity: INFO,
 	}
+}
+
+// Log always - no matter the verbosity level.
+func (logger *Logger) Always(message string) {
+	fmt.Println(message)
 }
 
 // Log error.
