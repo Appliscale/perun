@@ -23,17 +23,22 @@
 package onlinevalidator
 
 import (
+	"errors"
+	"time"
+
+	"os/user"
+	"io/ioutil"
+
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/sts"
+
+	"github.com/go-ini/ini"
+
+	"github.com/Appliscale/perun/utilities"
 	"github.com/Appliscale/perun/logger"
 	"github.com/Appliscale/perun/context"
-	"github.com/aws/aws-sdk-go/service/sts"
-	"github.com/go-ini/ini"
-	"os/user"
-	"time"
-	"io/ioutil"
-	"errors"
 )
 
 const dateFormat = "2006-01-02 15:04:05 MST"
@@ -43,15 +48,15 @@ func ValidateAndEstimateCosts(context *context.Context) bool {
 	valid := false
 	defer printResult(&valid, context.Logger)
 
-	if *context.CliArguments.MFA {
-		err := updateSessionToken(context.Config.Profile, context.Config.Region, context.Logger)
+	if *context.Config.DefaultDecisionForMFA {
+		err := updateSessionToken(context.Config.DefaultProfile, context.Config.DefaultRegion, context.Config.DefaultDurationForMFA, context.Logger)
 		if err != nil {
 			context.Logger.Error(err.Error())
 			return false
 		}
 	}
 
-	session, err := createSession(&context.Config.Region, context.Config.Profile, context.Logger)
+	session, err := createSession(context.Config.DefaultProfile, &context.Config.DefaultRegion, context.Logger)
 	if err != nil {
 		context.Logger.Error(err.Error())
 		return false
@@ -103,9 +108,10 @@ func estimateCosts(session *session.Session, template *string, logger *logger.Lo
 	logger.Info("Costs estimation: " + *output.Url)
 }
 
-func createSession(region *string, profile string, logger *logger.Logger) (*session.Session, error) {
+func createSession(profile string, region *string, logger *logger.Logger) (*session.Session, error) {
 	logger.Info("Profile: " + profile)
 	logger.Info("Region: " + *region)
+
 	session, err := session.NewSessionWithOptions(
 		session.Options{
 			Config: aws.Config{
@@ -113,6 +119,7 @@ func createSession(region *string, profile string, logger *logger.Logger) (*sess
 			},
 			Profile: profile,
 		})
+
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +127,7 @@ func createSession(region *string, profile string, logger *logger.Logger) (*sess
 	return session, nil
 }
 
-func updateSessionToken(profile string, region string, logger *logger.Logger) error {
+func updateSessionToken(profile string, region string, defaultDuration *int64, logger *logger.Logger) error {
 	user, err := user.Current()
 	if err != nil {
 		return err
@@ -152,7 +159,7 @@ func updateSessionToken(profile string, region string, logger *logger.Logger) er
 	expirationDate, err := time.Parse(dateFormat, section.Key("expiration").Value())
 	if err == nil {
 		logger.Info("Session token will expire in " +
-								truncate(time.Since(expirationDate)).String() + " (" + expirationDate.Format(dateFormat) + ")")
+								utilities.TruncateDuration(time.Since(expirationDate)).String() + " (" + expirationDate.Format(dateFormat) + ")")
 	}
 
 	mfaDevice := sectionLongTerm.Key("mfa_serial").Value()
@@ -179,9 +186,13 @@ func updateSessionToken(profile string, region string, logger *logger.Logger) er
 		}
 
 		var duration int64
-		err = logger.GetInput("Duration", &duration)
-		if err != nil {
-			return err
+		if defaultDuration == nil || *defaultDuration == 0 {
+			err = logger.GetInput("Duration", &duration)
+			if err != nil {
+				return err
+			}
+		} else {
+			duration = *defaultDuration
 		}
 
 		stsSession := sts.New(session)
@@ -211,8 +222,4 @@ func printResult(valid *bool, logger *logger.Logger) {
 	} else {
 		logger.Info("Template is valid!")
 	}
-}
-
-func truncate(d time.Duration) time.Duration {
-	return -(d - d % (time.Duration(1) * time.Second))
 }

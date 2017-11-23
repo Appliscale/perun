@@ -63,6 +63,15 @@ func CreateDefaultLogger() Logger {
 	}
 }
 
+// Create quiet logger.
+func CreateQuietLogger() Logger {
+	return Logger{
+		Quiet:     true,
+		Yes:       false,
+		Verbosity: INFO,
+	}
+}
+
 // Log error.
 func (logger *Logger) Error(err string) {
 	logger.log(ERROR, err)
@@ -120,4 +129,16 @@ func (logger *Logger) SetVerbosity(verbosity string) {
 			logger.Verbosity = Verbosity(index)
 		}
 	}
+}
+
+func IsVerbosityValid(verbosity string) bool {
+    switch verbosity {
+    case
+        "TRACE",
+        "DEBUG",
+        "INFO",
+        "ERROR":
+        return true
+    }
+    return false
 }

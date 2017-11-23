@@ -36,7 +36,6 @@ func TestInvalidMode(t *testing.T) {
 		parseCliArguments([]string{"cmd", "-m=some_mode"}).Error())
 }
 
-
 func TestNoTemplatePath(t *testing.T) {
 	assert.Equal(t, "You should specify a source of the template file with --template flag",
 		parseCliArguments([]string{"cmd", "--mode=validate"}).Error())

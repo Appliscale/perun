@@ -40,7 +40,7 @@ func setup(osArgs []string) {
 		panic(err)
 	}
 
-	logger := logger.CreateDefaultLogger()
+	logger := logger.CreateQuietLogger()
 
 	configuration, err = GetConfiguration(cliArgs, &logger)
 
@@ -57,14 +57,61 @@ func TestSpecificationFileURL(t *testing.T) {
 
 func TestNoSpecificationForRegion(t *testing.T) {
 	setup([]string{"cmd", "--mode=validate_offline", "--template=some_path", "--config=test_resources/test_config.yaml"})
+
 	localConfiguration := Configuration{
-		Region: "someRegion",
+		DefaultRegion: "someRegion",
 	}
+
 	_, err := localConfiguration.GetSpecificationFileURLForCurrentRegion()
 	assert.NotNil(t, err)
 }
 
-func TestProfileOverride(t *testing.T) {
+func TestGettingMFADecisionFromConfigurationFile(t *testing.T) {
+	setup([]string{"cmd", "--mode=validate_offline", "--template=some_path", "--config=test_resources/test_config.yaml"})
+	assert.Equal(t, false, *configuration.DefaultDecisionForMFA)
+}
+
+func TestOverrideForMFADecision(t *testing.T) {
+	setup([]string{"cmd", "--mode=validate_offline", "--template=some_path", "--config=test_resources/test_config.yaml", "--mfa"})
+	assert.Equal(t, true, *configuration.DefaultDecisionForMFA)
+}
+
+func TestGettingDefaultRegionFromConfigurationFile(t *testing.T) {
+	setup([]string{"cmd", "--mode=validate_offline", "--template=some_path", "--config=test_resources/test_config.yaml"})
+	assert.Equal(t, "us-west-2", configuration.DefaultRegion)
+}
+
+func TestCLIOverrideForRegion(t *testing.T) {
+	setup([]string{"cmd", "--mode=validate_offline", "--template=some_path", "--config=test_resources/test_config.yaml", "--region=ap-southeast-1"})
+	assert.Equal(t, "ap-southeast-1", configuration.DefaultRegion)
+}
+
+func TestGettingDurationForMFAFromConfigurationFile(t *testing.T) {
+	setup([]string{"cmd", "--mode=validate_offline", "--template=some_path", "--config=test_resources/test_config.yaml"})
+	assert.Equal(t, int64(2600), *configuration.DefaultDurationForMFA)
+}
+
+func TestCLIOverrideForDurationForMFA(t *testing.T) {
+	setup([]string{"cmd", "--mode=validate_offline", "--template=some_path", "--config=test_resources/test_config.yaml", "--duration=1600"})
+	assert.Equal(t, int64(1600), *configuration.DefaultDurationForMFA)
+}
+
+func TestGettingProfileFromConfigurationFile(t *testing.T) {
+	setup([]string{"cmd", "--mode=validate_offline", "--template=some_path", "--config=test_resources/test_config.yaml"})
+	assert.Equal(t, "profile", configuration.DefaultProfile)
+}
+
+func TestCLIOverrideForProfile(t *testing.T) {
 	setup([]string{"cmd", "--mode=validate_offline", "--template=some_path", "--config=test_resources/test_config.yaml", "--profile=cliProfile"})
-	assert.Equal(t, "cliProfile", configuration.Profile)
+	assert.Equal(t, "cliProfile", configuration.DefaultProfile)
+}
+
+func TestGettingVerbosityFromConfigurationFile(t *testing.T) {
+	setup([]string{"cmd", "--mode=validate_offline", "--template=some_path", "--config=test_resources/test_config.yaml"})
+	assert.Equal(t, "ERROR", configuration.DefaultVerbosity)
+}
+
+func TestCLIOverrideForVerbosity(t *testing.T) {
+	setup([]string{"cmd", "--mode=validate_offline", "--template=some_path", "--config=test_resources/test_config.yaml", "--verbosity=INFO"})
+	assert.Equal(t, "INFO", configuration.DefaultVerbosity)
 }
