@@ -111,6 +111,7 @@ mfa_serial = <IDENTIFICATION NUMBER FOR MFA DEVICE>
 - [Piotr Figwer](https://github.com/pfigwer)
 - [Wojciech Gawroński](https://github.com/afronski)
 - [Kacper Patro](https://github.com/morfeush22)
+- [Paweł Pikuła](https://github.com/ppikula)
 
 ## Contributors
 
