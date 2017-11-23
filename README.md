@@ -8,6 +8,16 @@ Perun was created to support work with CloudFormation templates. CloudFormation 
 
 ## Building and Installation
 
+### OSX
+
+If you are using *homebrew* just run:
+
+```bash
+brew install Appliscale/taps/perun
+```
+
+### Building from sources
+
 First of all you need to download Perun to your GO workspace:
 
 ```bash
