@@ -33,19 +33,26 @@ import (
 // Perun configuration.
 type Configuration struct {
 	// AWS credentials profile.
-	Profile string
+	DefaultProfile string
 	// AWS region (e.g. us-east-1).
-	Region string
+	DefaultRegion string
 	// Map of resource specification CloudFront URL per region.
 	SpecificationURL map[string]string
+	// Decision regarding if we use MFA token or not.
+	DefaultDecisionForMFA bool
+	// Duration for MFA token.
+	DefaultDurationForMFA int64
+	// Logger verbosity.
+	DefaultVerbosity string
 }
 
 // Return URL to specification file. If there is no specification file for selected region, return error.
 func (config Configuration) GetSpecificationFileURLForCurrentRegion() (string, error) {
-	if url, ok := config.SpecificationURL[config.Region]; ok {
+	if url, ok := config.SpecificationURL[config.DefaultRegion]; ok {
 		return url + "/latest/gzip/CloudFormationResourceSpecification.json", nil
 	}
-	return "", errors.New("There is no specification file for region " + config.Region)
+
+	return "", errors.New("There is no specification file for region " + config.DefaultRegion)
 }
 
 // Return perun configuration read from file.
@@ -63,23 +70,43 @@ func GetConfiguration(cliArguments cliparser.CliArguments, logger *logger.Logger
 		return
 	}
 
-	postProcessing(&config, cliArguments)
+	postProcessing(&config, cliArguments, logger)
 
 	return
 }
-func postProcessing(config *Configuration, cliArguments cliparser.CliArguments) {
-	if config.Profile == "" {
-		config.Profile = "default"
+
+func postProcessing(config *Configuration, cliArguments cliparser.CliArguments, logger *logger.Logger) {
+	if config.DefaultProfile == "" {
+		config.DefaultProfile = "default"
 	}
-	if config.Region == "" {
-		config.Region = "us-east-1"
+	if config.DefaultRegion == "" {
+		config.DefaultRegion = "us-east-1"
+	}
+	if config.DefaultVerbosity == "" {
+		config.DefaultVerbosity = "INFO"
+	}
+	if *cliArguments.Verbosity != "" {
+		config.DefaultVerbosity = *cliArguments.Verbosity
+	}
+	if *cliArguments.Region != "" {
+		config.DefaultRegion = *cliArguments.Region
 	}
 	if *cliArguments.Profile != "" {
-		config.Profile = *cliArguments.Profile
+		config.DefaultProfile = *cliArguments.Profile
+	}
+	if *cliArguments.MFA != config.DefaultDecisionForMFA {
+		config.DefaultDecisionForMFA = *cliArguments.MFA
+	}
+	if *cliArguments.DurationForMFA > 0 {
+		config.DefaultDurationForMFA = *cliArguments.DurationForMFA
 	}
 }
 
 func getConfigurationPath(cliArguments cliparser.CliArguments, logger *logger.Logger) (configPath string, err error) {
+	if *cliArguments.Sandbox {
+		return "", errors.New("No configuration file should be used.")
+	}
+
 	if _, err := os.Stat(*cliArguments.ConfigurationPath); err == nil {
 		notifyUserAboutConfigurationFile(*cliArguments.ConfigurationPath, logger)
 		return *cliArguments.ConfigurationPath, nil

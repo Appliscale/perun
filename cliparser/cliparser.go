@@ -26,6 +26,7 @@ import (
 	"errors"
 	"strings"
 	"gopkg.in/alecthomas/kingpin.v2"
+	"github.com/Appliscale/perun/logger"
 )
 
 const ValidateMode string = "validate"
@@ -45,22 +46,28 @@ type CliArguments struct {
 	Yes               *bool
 	Verbosity         *string
 	MFA               *bool
+	DurationForMFA    *int64
 	Profile           *string
+	Region            *string
+	Sandbox           *bool
 }
 
 // Get and validate CLI arguments. Returns error if validation fails.
 func ParseCliArguments() (cliArguments CliArguments, err error) {
 
-	cliArguments.Mode = kingpin.Flag("mode", ValidateMode+"|"+OfflineValidateMode+"|"+ConvertMode).Short('m').String()
+	cliArguments.Mode = kingpin.Flag("mode", ValidateMode + "|" + OfflineValidateMode + "|" + ConvertMode).Short('m').String()
 	cliArguments.TemplatePath = kingpin.Flag("template", "A path to the template").Short('t').String()
 	cliArguments.OutputFilePath = kingpin.Flag("output", "A path, where converted file will be saved").Short('o').String()
-	cliArguments.OutputFileFormat = kingpin.Flag("format", "Output format: "+strings.ToUpper(JSON)+"|"+strings.ToUpper(YAML)).Short('x').String()
+	cliArguments.OutputFileFormat = kingpin.Flag("format", "Output format: " + strings.ToUpper(JSON) + "|" + strings.ToUpper(YAML)).Short('x').String()
 	cliArguments.ConfigurationPath = kingpin.Flag("config", "A path to the configuration file").Short('c').String()
 	cliArguments.Quiet = kingpin.Flag("quiet", "No console output, just return code").Short('q').Bool()
 	cliArguments.Yes = kingpin.Flag("yes", "Always say yes").Short('y').Bool()
 	cliArguments.Verbosity = kingpin.Flag("verbosity", "TRACE|DEBUG|INFO|ERROR").Short('v').String()
 	cliArguments.MFA = kingpin.Flag("mfa", "Enable AWS MFA").Bool()
+	cliArguments.DurationForMFA = kingpin.Flag("duration", "Duration for AWS MFA token").Short('d').Int64()
 	cliArguments.Profile = kingpin.Flag("profile", "An AWS profile.").Short('p').String()
+	cliArguments.Region = kingpin.Flag("region", "An AWS region to use.").Short('r').String()
+	cliArguments.Sandbox = kingpin.Flag("sandbox", "Do not use configuration files hierarchy.").Bool()
 
 	kingpin.Parse()
 
@@ -95,6 +102,21 @@ func ParseCliArguments() (cliArguments CliArguments, err error) {
 			err = errors.New("Invalid output file format. Use JSON or YAML")
 			return
 		}
+	}
+
+	if *cliArguments.DurationForMFA < 0 {
+		err = errors.New("You should specify value for duration of MFA token greater than zero")
+		return
+	}
+
+	if *cliArguments.DurationForMFA > 129600 {
+		err = errors.New("You should specify value for duration of MFA token smaller than 129600 (3 hours)")
+		return
+	}
+
+	if *cliArguments.Verbosity != "" && !logger.IsVerbosityValid(*cliArguments.Verbosity) {
+		err = errors.New("You specified invalid value for --verbosity flag")
+		return
 	}
 
 	return

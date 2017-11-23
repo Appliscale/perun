@@ -1,5 +1,8 @@
-Profile: default
-Region: us-east-1
+DefaultProfile: default
+DefaultRegion: us-east-1
+DefaultDurationForMFA: 3600
+DefaultDecisionForMFA: true
+DefaultVerbosity: INFO
 SpecificationURL:
   us-east-2: "https://dnwj8swjjbsbt.cloudfront.net"
   us-east-1: "https://d1uauaxba7bl26.cloudfront.net"

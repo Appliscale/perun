@@ -2,6 +2,7 @@
 .idea
 
 # Binaries for programs and plug-ins:
+perun
 *.exe
 *.dll
 *.so

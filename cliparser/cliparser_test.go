@@ -36,7 +36,6 @@ func TestInvalidMode(t *testing.T) {
 		parseCliArguments([]string{"cmd", "-m=some_mode"}).Error())
 }
 
-
 func TestNoTemplatePath(t *testing.T) {
 	assert.Equal(t, "You should specify a source of the template file with --template flag",
 		parseCliArguments([]string{"cmd", "--mode=validate"}).Error())
@@ -55,6 +54,21 @@ func TestNoOutputFormatInConvertMode(t *testing.T) {
 func TestInvalidOutputFormatInConvertMode(t *testing.T) {
 	assert.Equal(t, "Invalid output file format. Use JSON or YAML",
 		parseCliArguments([]string{"cmd", "--mode=convert", "--template=some_path", "--output=some_path", "--format=wrong_format"}).Error())
+}
+
+func TestInvalidVerbosity(t *testing.T) {
+	assert.Equal(t, "You specified invalid value for --verbosity flag",
+		parseCliArguments([]string{"cmd", "--mode=validate", "--template=some_path", "--verbosity=TEST"}).Error())
+}
+
+func TestTooSmallDurationForMFA(t *testing.T) {
+	assert.Equal(t, "You should specify value for duration of MFA token greater than zero",
+		parseCliArguments([]string{"cmd", "--mode=validate", "--template=some_path", "--duration=-1"}).Error())
+}
+
+func TestTooBigDurationForMFA(t *testing.T) {
+	assert.Equal(t, "You should specify value for duration of MFA token smaller than 129600 (3 hours)",
+		parseCliArguments([]string{"cmd", "--mode=validate", "--template=some_path", "--duration=50000000"}).Error())
 }
 
 func TestValidArgs(t *testing.T) {

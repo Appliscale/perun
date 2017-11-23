@@ -45,13 +45,14 @@ func GetContext() (context Context, err error) {
 
 	logger.Quiet = *cliArguments.Quiet
 	logger.Yes = *cliArguments.Yes
-	logger.SetVerbosity(*cliArguments.Verbosity)
 
 	config, err := configuration.GetConfiguration(cliArguments, &logger)
 	if err != nil {
 		logger.Error(err.Error())
 		return
 	}
+
+	logger.SetVerbosity(config.DefaultVerbosity)
 
 	context = Context{
 		CliArguments: cliArguments,
