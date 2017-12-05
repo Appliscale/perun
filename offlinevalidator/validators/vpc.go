@@ -31,13 +31,14 @@ type VpcProperties struct {
 	Tags               []Tag
 }
 
-func IsVpcValid(name string, vpc template.Resource, logger *logger.Logger) bool {
+// IsVpcValid : Checks if CIDR block is valid
+func IsVpcValid(vpc template.Resource, resourceValidation *logger.ResourceValidation) bool {
 	valid := true
 	var properties VpcProperties
 	mapstructure.Decode(vpc.Properties, &properties)
 
 	if properties.CidrBlock != "" && !govalidator.IsCIDR(properties.CidrBlock) {
-		logger.ValidationError(name, "Invalid CIDR format - "+properties.CidrBlock)
+		resourceValidation.AddValidationError("Invalid CIDR format - " + properties.CidrBlock)
 		valid = false
 	}
 

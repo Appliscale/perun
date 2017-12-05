@@ -20,3 +20,6 @@ perun
 
 # Local perun configuration:
 .perun
+preprocessed.yml
+
+.vscode
