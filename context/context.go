@@ -19,30 +19,38 @@ package context
 
 import (
 	"github.com/Appliscale/perun/cliparser"
-	"github.com/Appliscale/perun/logger"
 	"github.com/Appliscale/perun/configuration"
+	"github.com/Appliscale/perun/logger"
 )
 
 type Context struct {
 	CliArguments cliparser.CliArguments
-	Logger* logger.Logger
-	Config configuration.Configuration
+	Logger       *logger.Logger
+	Config       configuration.Configuration
 }
 
+type cliArgumentsParser func() (cliparser.CliArguments, error)
+type configurationReader func(cliparser.CliArguments, *logger.Logger) (configuration.Configuration, error)
+
 // Create CLI context.
-func GetContext() (context Context, err error) {
+func GetContext(cliArgParser cliArgumentsParser, confReader configurationReader) (context Context, err error) {
 	logger := logger.CreateDefaultLogger()
 
-	cliArguments, err := cliparser.ParseCliArguments()
+	cliArguments, err := cliArgParser()
 	if err != nil {
 		logger.Error(err.Error())
 		return
 	}
 
-	logger.Quiet = *cliArguments.Quiet
-	logger.Yes = *cliArguments.Yes
+	if cliArguments.Quiet != nil {
+		logger.Quiet = *cliArguments.Quiet
+	}
 
-	config, err := configuration.GetConfiguration(cliArguments, &logger)
+	if cliArguments.Yes != nil {
+		logger.Yes = *cliArguments.Yes
+	}
+
+	config, err := confReader(cliArguments, &logger)
 	if err != nil {
 		logger.Error(err.Error())
 		return
@@ -52,8 +60,8 @@ func GetContext() (context Context, err error) {
 
 	context = Context{
 		CliArguments: cliArguments,
-		Logger: &logger,
-		Config: config,
+		Logger:       &logger,
+		Config:       config,
 	}
 
 	return
