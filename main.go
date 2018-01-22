@@ -25,6 +25,7 @@ import (
 	"github.com/Appliscale/perun/converter"
 	"github.com/Appliscale/perun/offlinevalidator"
 	"github.com/Appliscale/perun/onlinevalidator"
+	"github.com/Appliscale/perun/configurevalidator"
 )
 
 func main() {
@@ -66,5 +67,19 @@ func main() {
 		}
 	}
 
-	os.Exit(0)
+	if *context.CliArguments.Mode == cliparser.ConfigureMode {
+		if !configurevalidator.GetExist() {
+			configurevalidator.ShowRegions()
+			configurevalidator.MakeMapRegion()
+			configurevalidator.MakeYaml()
+		}
+			valid := offlinevalidator.Validate(&context)
+			if valid {
+				os.Exit(0)
+			} else {
+				os.Exit(1)
+			}
+
+		os.Exit(0)
+	}
 }

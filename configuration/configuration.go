@@ -24,6 +24,8 @@ import (
 	"os"
 	"github.com/Appliscale/perun/cliparser"
 	"github.com/Appliscale/perun/logger"
+	"fmt"
+	"github.com/Appliscale/perun/configurevalidator"
 )
 
 // Perun configuration.
@@ -116,8 +118,20 @@ func getConfigurationPath(cliArguments cliparser.CliArguments, logger *logger.Lo
 		notifyUserAboutConfigurationFile(path, logger)
 		return path, nil
 	} else {
-		return "", errors.New("Configuration file could not be read!")
+		answer:=""
+		fmt.Println("File not found. Make new configuration file? Y/N")
+		fmt.Scan(&answer)
+		if answer=="Y" {
+			configurevalidator.ShowRegions()
+			configurevalidator.MakeMapRegion()
+			configurevalidator.MakeYaml()
+			path := configurevalidator.GetPath()
+configurevalidator.IsFileExist(true)
+
+			return path, nil
+		}
 	}
+	return "", errors.New("Configuration file could not be read!")
 }
 
 func notifyUserAboutConfigurationFile(configurationFilePath string, logger *logger.Logger) {
