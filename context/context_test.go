@@ -50,18 +50,18 @@ func TestCheckContextBody(t *testing.T) {
 	t.Run("CLI arguments returned from cliArgumentsParser are the same as the ones contained in context", func(t *testing.T) {
 		cliArguments := cliparser.CliArguments{}
 		config := configuration.Configuration{}
-		cliParserStub := parseCliArgumentsValidStub(cliArguments)
-		configurationStub := getConfigurationValidStub(config)
-		context, _ := GetContext(cliParserStub, configurationStub)
+		cliArgParserStub := parseCliArgumentsValidStub(cliArguments)
+		confReaderStub := getConfigurationValidStub(config)
+		context, _ := GetContext(cliArgParserStub, confReaderStub)
 		assert.Equal(t, cliArguments, context.CliArguments)
 	})
 
 	t.Run("Config returned from configurationReader is the same as the one contained in context", func(t *testing.T) {
 		cliArguments := cliparser.CliArguments{}
 		config := configuration.Configuration{}
-		cliParserStub := parseCliArgumentsValidStub(cliArguments)
-		configurationStub := getConfigurationValidStub(config)
-		context, _ := GetContext(cliParserStub, configurationStub)
+		cliArgsParserStub := parseCliArgumentsValidStub(cliArguments)
+		confReaderStub := getConfigurationValidStub(config)
+		context, _ := GetContext(cliArgsParserStub, confReaderStub)
 		assert.Equal(t, config, context.Config)
 	})
 }
@@ -69,15 +69,15 @@ func TestCheckContextBody(t *testing.T) {
 func TestCheckErroneousDependencyReturn(t *testing.T) {
 	t.Run("Should return an error if cliArgumentsParser returns the error", func(t *testing.T) {
 		config := configuration.Configuration{}
-		configurationStub := getConfigurationValidStub(config)
-		_, err := GetContext(parseCliArgumentsErroneous, configurationStub)
+		confReaderStub := getConfigurationValidStub(config)
+		_, err := GetContext(parseCliArgumentsErroneous, confReaderStub)
 		assert.NotNil(t, err)
 	})
 
 	t.Run("Should return an error if configurationReader returns the error", func(t *testing.T) {
 		cliArguments := cliparser.CliArguments{}
-		cliParserStub := parseCliArgumentsValidStub(cliArguments)
-		_, err := GetContext(cliParserStub, getConfigurationErroneous)
+		cliArgParserStub := parseCliArgumentsValidStub(cliArguments)
+		_, err := GetContext(cliArgParserStub, getConfigurationErroneous)
 		assert.NotNil(t, err)
 	})
 }
