@@ -20,15 +20,15 @@ package offlinevalidator
 
 import (
 	"encoding/json"
-	"github.com/Appliscale/perun/specification"
-	"io/ioutil"
-	"path"
 	"errors"
-	"github.com/ghodss/yaml"
+	"github.com/Appliscale/perun/context"
+	"github.com/Appliscale/perun/logger"
 	"github.com/Appliscale/perun/offlinevalidator/template"
 	"github.com/Appliscale/perun/offlinevalidator/validators"
-	"github.com/Appliscale/perun/logger"
-	"github.com/Appliscale/perun/context"
+	"github.com/Appliscale/perun/specification"
+	"github.com/ghodss/yaml"
+	"io/ioutil"
+	"path"
 )
 
 var validatorsMap = map[string]interface{}{
@@ -56,7 +56,7 @@ func Validate(context *context.Context) bool {
 	templateFileExtension := path.Ext(*context.CliArguments.TemplatePath)
 	if templateFileExtension == ".json" {
 		template, err = parseJSON(rawTemplate)
-	} else if templateFileExtension == ".yaml" ||  templateFileExtension == ".yml" {
+	} else if templateFileExtension == ".yaml" || templateFileExtension == ".yml" {
 		template, err = parseYAML(rawTemplate)
 	} else {
 		err = errors.New("Invalid template file format.")
@@ -79,7 +79,7 @@ func printResult(valid *bool, logger *logger.Logger) {
 	}
 }
 
-func validateResources(resources map[string]template.Resource, specification *specification.Specification, sink *logger.Logger) (bool) {
+func validateResources(resources map[string]template.Resource, specification *specification.Specification, sink *logger.Logger) bool {
 	valid := true
 	for resourceName, resourceValue := range resources {
 		if resourceSpecification, ok := specification.ResourceTypes[resourceValue.Type]; ok {
@@ -91,7 +91,7 @@ func validateResources(resources map[string]template.Resource, specification *sp
 			valid = false
 		}
 		if validator, ok := validatorsMap[resourceValue.Type]; ok {
-			if !validator.(func(string, template.Resource, *logger.Logger)(bool))(resourceName, resourceValue, sink) {
+			if !validator.(func(string, template.Resource, *logger.Logger) bool)(resourceName, resourceValue, sink) {
 				valid = false
 			}
 		}
@@ -104,7 +104,7 @@ func areRequiredPropertiesPresent(resourceSpecification specification.Resource, 
 	for propertyName, propertyValue := range resourceSpecification.Properties {
 		if propertyValue.Required {
 			if _, ok := resourceValue.Properties[propertyName]; !ok {
-				logger.ValidationError(resourceName, "Property " + propertyName + " is required")
+				logger.ValidationError(resourceName, "Property "+propertyName+" is required")
 				valid = false
 			}
 		}

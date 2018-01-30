@@ -19,14 +19,14 @@ package context
 
 import (
 	"github.com/Appliscale/perun/cliparser"
-	"github.com/Appliscale/perun/logger"
 	"github.com/Appliscale/perun/configuration"
+	"github.com/Appliscale/perun/logger"
 )
 
 type Context struct {
 	CliArguments cliparser.CliArguments
-	Logger* logger.Logger
-	Config configuration.Configuration
+	Logger       *logger.Logger
+	Config       configuration.Configuration
 }
 
 // Create CLI context.
@@ -52,8 +52,8 @@ func GetContext() (context Context, err error) {
 
 	context = Context{
 		CliArguments: cliArguments,
-		Logger: &logger,
-		Config: config,
+		Logger:       &logger,
+		Config:       config,
 	}
 
 	return

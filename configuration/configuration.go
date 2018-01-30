@@ -18,14 +18,12 @@
 package configuration
 
 import (
-	"io/ioutil"
 	"errors"
-	"github.com/ghodss/yaml"
-	"os"
 	"github.com/Appliscale/perun/cliparser"
 	"github.com/Appliscale/perun/logger"
-	"fmt"
-	"github.com/Appliscale/perun/configurevalidator"
+	"github.com/ghodss/yaml"
+	"io/ioutil"
+	"os"
 )
 
 // Perun configuration.
@@ -55,25 +53,35 @@ func (config Configuration) GetSpecificationFileURLForCurrentRegion() (string, e
 
 // Return perun configuration read from file.
 func GetConfiguration(cliArguments cliparser.CliArguments, logger *logger.Logger) (config Configuration, err error) {
-	configPath, err := getConfigurationPath(cliArguments, logger)
-	if err != nil {
-		return
-	}
-	rawConfiguration, err := ioutil.ReadFile(configPath)
-	if err != nil {
-		return
-	}
-	err = yaml.Unmarshal(rawConfiguration, &config)
-	if err != nil {
-		return
-	}
+	if getMode(cliArguments) != cliparser.ConfigureMode {
+		var configPath string
+		configPath, err = getConfigurationPath(cliArguments, logger)
+		if err != nil {
+			return
+		}
+		var rawConfiguration []byte
+		rawConfiguration, err = ioutil.ReadFile(configPath)
+		if err != nil {
+			return
+		}
+		err = yaml.Unmarshal(rawConfiguration, &config)
+		if err != nil {
+			return
+		}
 
-	postProcessing(&config, cliArguments, logger)
+		postProcessing(&config, cliArguments)
 
+		return
+	}
 	return
 }
 
-func postProcessing(config *Configuration, cliArguments cliparser.CliArguments, logger *logger.Logger) {
+func getMode(cliArguments cliparser.CliArguments) (mode string) {
+	mode = *cliArguments.Mode
+	return
+}
+
+func postProcessing(config *Configuration, cliArguments cliparser.CliArguments) {
 	if config.DefaultProfile == "" {
 		config.DefaultProfile = "default"
 	}
@@ -118,22 +126,24 @@ func getConfigurationPath(cliArguments cliparser.CliArguments, logger *logger.Lo
 		notifyUserAboutConfigurationFile(path, logger)
 		return path, nil
 	} else {
-		answer:=""
-		fmt.Println("File not found. Make new configuration file? Y/N")
-		fmt.Scan(&answer)
-		if answer=="Y" {
-			configurevalidator.ShowRegions()
-			configurevalidator.MakeMapRegion()
-			configurevalidator.MakeYaml()
-			path := configurevalidator.GetPath()
-configurevalidator.IsFileExist(true)
-
-			return path, nil
-		}
+		return "", errors.New("Configuration file could not be read!")
 	}
-	return "", errors.New("Configuration file could not be read!")
+
 }
 
 func notifyUserAboutConfigurationFile(configurationFilePath string, logger *logger.Logger) {
 	logger.Info("Configuration file from the following location will be used: " + configurationFilePath)
+}
+
+func PrepareYaml(config Configuration, path string, logger logger.Logger) {
+	file, err := os.Create(path)
+	defer file.Close()
+	if err != nil {
+		logger.Error("Could not create file")
+		return
+	}
+
+	obj, _ := yaml.Marshal(config)
+	_, err = file.Write(obj)
+
 }

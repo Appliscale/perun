@@ -33,5 +33,5 @@ func VersionStatus() string {
 }
 
 func TruncateDuration(d time.Duration) time.Duration {
-	return -(d - d % (time.Duration(1) * time.Second))
+	return -(d - d%(time.Duration(1)*time.Second))
 }

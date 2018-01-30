@@ -20,18 +20,18 @@ package cliparser
 
 import (
 	"errors"
-	"strings"
-	"gopkg.in/alecthomas/kingpin.v2"
 	"github.com/Appliscale/perun/logger"
+	"gopkg.in/alecthomas/kingpin.v2"
+	"strings"
 )
 
-const ValidateMode string = "validate"
-const ConvertMode string = "convert"
+const ValidateMode = "validate"
+const ConvertMode = "convert"
 const OfflineValidateMode = "validate_offline"
 const ConfigureMode = "configure"
 
-const JSON string = "json"
-const YAML string = "yaml"
+const JSON = "json"
+const YAML = "yaml"
 
 type CliArguments struct {
 	Mode              *string
@@ -53,10 +53,10 @@ type CliArguments struct {
 // Get and validate CLI arguments. Returns error if validation fails.
 func ParseCliArguments() (cliArguments CliArguments, err error) {
 
-	cliArguments.Mode = kingpin.Flag("mode", "Main command from a given list: " + ValidateMode + " | " + OfflineValidateMode + " | " + ConvertMode + " | " + ConfigureMode +".").Short('m').String()
+	cliArguments.Mode = kingpin.Flag("mode", "Main command from a given list: "+ValidateMode+" | "+OfflineValidateMode+" | "+ConvertMode+" | "+ConfigureMode+".").Short('m').String()
 	cliArguments.TemplatePath = kingpin.Flag("template", "A path to the template file.").Short('t').String()
 	cliArguments.OutputFilePath = kingpin.Flag("output", "A path where converted file will be saved.").Short('o').String()
-	cliArguments.OutputFileFormat = kingpin.Flag("format", "Output format: " + strings.ToUpper(JSON) + " | " + strings.ToUpper(YAML) + ".").Short('x').String()
+	cliArguments.OutputFileFormat = kingpin.Flag("format", "Output format: "+strings.ToUpper(JSON)+" | "+strings.ToUpper(YAML)+".").Short('x').String()
 	cliArguments.ConfigurationPath = kingpin.Flag("config", "A path to the configuration file").Short('c').String()
 	cliArguments.Quiet = kingpin.Flag("quiet", "No console output, just return code.").Short('q').Bool()
 	cliArguments.Yes = kingpin.Flag("yes", "Always say yes.").Short('y').Bool()
@@ -79,12 +79,12 @@ func ParseCliArguments() (cliArguments CliArguments, err error) {
 		return
 	}
 
-	if *cliArguments.Mode != ValidateMode && *cliArguments.Mode != ConvertMode && *cliArguments.Mode != OfflineValidateMode && *cliArguments.Mode !=ConfigureMode{
+	if *cliArguments.Mode != ValidateMode && *cliArguments.Mode != ConvertMode && *cliArguments.Mode != OfflineValidateMode && *cliArguments.Mode != ConfigureMode {
 		err = errors.New("Invalid mode. Use validate, validate_offline, convert or configure")
 		return
 	}
 
-	if *cliArguments.TemplatePath == "" {
+	if *cliArguments.TemplatePath == "" && *cliArguments.Mode != ConfigureMode {
 		err = errors.New("You should specify a source of the template file with --template flag")
 		return
 	}

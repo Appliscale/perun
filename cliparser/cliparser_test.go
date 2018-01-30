@@ -17,9 +17,9 @@
 package cliparser
 
 import (
-	"testing"
-	"os"
 	"github.com/stretchr/testify/assert"
+	"os"
+	"testing"
 )
 
 func TestModeNotSpecified(t *testing.T) {

@@ -19,14 +19,14 @@
 package converter
 
 import (
-	"github.com/ghodss/yaml"
-	"github.com/asaskevich/govalidator"
 	"errors"
-	"io/ioutil"
 	"github.com/Appliscale/perun/cliparser"
-	"os"
-	"github.com/Appliscale/perun/logger"
 	"github.com/Appliscale/perun/context"
+	"github.com/Appliscale/perun/logger"
+	"github.com/asaskevich/govalidator"
+	"github.com/ghodss/yaml"
+	"io/ioutil"
+	"os"
 )
 
 // Read template from the file, convert it and check if it has valid structure.

@@ -17,11 +17,11 @@
 package validators
 
 import (
-	"testing"
+	"github.com/Appliscale/perun/logger"
 	"github.com/Appliscale/perun/offlinevalidator/template"
 	"github.com/stretchr/testify/assert"
-	"github.com/Appliscale/perun/logger"
 	"os"
+	"testing"
 )
 
 var sink logger.Logger
