@@ -17,12 +17,14 @@
 package offlinevalidator
 
 import (
-	"testing"
 	"os"
-	"github.com/Appliscale/perun/specification"
-	"github.com/stretchr/testify/assert"
-	"github.com/Appliscale/perun/offlinevalidator/template"
+	"testing"
+
 	"github.com/Appliscale/perun/logger"
+	"github.com/Appliscale/perun/offlinevalidator/template"
+	"github.com/Appliscale/perun/specification"
+	"github.com/awslabs/goformation/cloudformation"
+	"github.com/stretchr/testify/assert"
 )
 
 var spec specification.Specification
@@ -44,27 +46,33 @@ func TestMain(m *testing.M) {
 }
 
 func TestValidResource(t *testing.T) {
+	var goFormationTemplate cloudformation.Template
+	var originalPerunTemplate template.Template
 	resources := make(map[string]template.Resource)
 	resources["ExampleResource"] = createResourceWithOneProperty("ExampleResourceType", "ExampleProperty", "Property value")
 
-	assert.True(t, validateResources(resources, &spec, &sink), "This resource should be valid")
+	assert.True(t, validateResources(goFormationTemplate, originalPerunTemplate, &spec, &sink), "This resource should be valid")
 }
 
 func TestInvalidResourceType(t *testing.T) {
+	var goFormationTemplate cloudformation.Template
+	var originalPerunTemplate template.Template
 	resources := make(map[string]template.Resource)
 	resources["ExampleResource"] = createResourceWithOneProperty("InvalidType", "ExampleProperty", "Property value")
 
-	assert.False(t, validateResources(resources, &spec, &sink), "This resource should be valid, it has invalid resource type")
+	assert.False(t, validateResources(goFormationTemplate, originalPerunTemplate, &spec, &sink), "This resource should be valid, it has invalid resource type")
 }
 
 func TestLackOfRequiredPropertyInResource(t *testing.T) {
+	var goFormationTemplate cloudformation.Template
+	var originalPerunTemplate template.Template
 	resources := make(map[string]template.Resource)
 	resources["ExampleResource"] = createResourceWithOneProperty("ExampleResourceType", "SomeProperty", "Property value")
 
-	assert.False(t, validateResources(resources, &spec, &sink), "This resource should not be valid, it do not have required property")
+	assert.False(t, validateResources(goFormationTemplate, originalPerunTemplate, &spec, &sink), "This resource should not be valid, it do not have required property")
 }
 
-func createResourceWithOneProperty(resourceType string, propertyName string, propertyValue string) (template.Resource) {
+func createResourceWithOneProperty(resourceType string, propertyName string, propertyValue string) template.Resource {
 	resource := template.Resource{}
 	resource.Type = resourceType
 	resource.Properties = make(map[string]interface{})

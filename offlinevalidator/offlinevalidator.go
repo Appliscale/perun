@@ -25,11 +25,15 @@ import (
 	"path"
 
 	"github.com/Appliscale/perun/context"
+	"github.com/Appliscale/perun/intrinsicsolver"
 	"github.com/Appliscale/perun/logger"
 	"github.com/Appliscale/perun/offlinevalidator/template"
 	"github.com/Appliscale/perun/offlinevalidator/validators"
 	"github.com/Appliscale/perun/specification"
-	"gopkg.in/yaml.v2"
+	"github.com/awslabs/goformation"
+	"github.com/awslabs/goformation/cloudformation"
+	"github.com/ghodss/yaml"
+	"github.com/mitchellh/mapstructure"
 )
 
 var validatorsMap = map[string]interface{}{
@@ -53,12 +57,14 @@ func Validate(context *context.Context) bool {
 		return false
 	}
 
-	var template template.Template
+	var perunTemplate template.Template
+	var goFormationTemplate cloudformation.Template
+
 	templateFileExtension := path.Ext(*context.CliArguments.TemplatePath)
 	if templateFileExtension == ".json" {
-		template, err = parseJSON(rawTemplate)
+		goFormationTemplate, err = parseJSON(rawTemplate, perunTemplate, context)
 	} else if templateFileExtension == ".yaml" || templateFileExtension == ".yml" {
-		template, err = parseYAML(rawTemplate)
+		goFormationTemplate, err = parseYAML(rawTemplate, perunTemplate, context)
 	} else {
 		err = errors.New("Invalid template file format.")
 	}
@@ -67,7 +73,7 @@ func Validate(context *context.Context) bool {
 		return false
 	}
 
-	valid = validateResources(template.Resources, &specification, context.Logger)
+	valid = validateResources(goFormationTemplate, perunTemplate, &specification, context.Logger)
 	return valid
 }
 
@@ -80,9 +86,19 @@ func printResult(valid *bool, logger *logger.Logger) {
 	}
 }
 
-func validateResources(resources map[string]template.Resource, specification *specification.Specification, sink *logger.Logger) bool {
+//func validateResources(resources map[string]template.Resource, specification *specification.Specification, sink *logger.Logger) bool {
+func validateResources(templ cloudformation.Template, origTempl template.Template, specification *specification.Specification, sink *logger.Logger) bool {
 	valid := true
-	for resourceName, resourceValue := range resources {
+
+	origResources := origTempl.Resources
+	newResources := templ.Resources
+
+	errDecode := mapstructure.Decode(newResources, &origResources)
+	if errDecode != nil {
+		//don't log
+	}
+
+	for resourceName, resourceValue := range origResources {
 		if resourceSpecification, ok := specification.ResourceTypes[resourceValue.Type]; ok {
 			if !areRequiredPropertiesPresent(resourceSpecification, resourceValue, resourceName, sink) {
 				valid = false
@@ -113,20 +129,38 @@ func areRequiredPropertiesPresent(resourceSpecification specification.Resource, 
 	return valid
 }
 
-func parseJSON(templateFile []byte) (template template.Template, err error) {
-	err = json.Unmarshal(templateFile, &template)
+func parseJSON(templateFile []byte, refTemplate template.Template, context *context.Context) (template cloudformation.Template, err error) {
+
+	err = json.Unmarshal(templateFile, &refTemplate)
 	if err != nil {
 		return template, err
 	}
 
-	return template, nil
+	tempJSON, err := goformation.ParseJSON(templateFile)
+	if err != nil {
+		context.Logger.Error(err.Error())
+	}
+
+	returnTemplate := *tempJSON
+
+	return returnTemplate, nil
 }
 
-func parseYAML(templateFile []byte) (template template.Template, err error) {
-	err = yaml.Unmarshal(templateFile, &template)
+func parseYAML(templateFile []byte, refTemplate template.Template, context *context.Context) (template cloudformation.Template, err error) {
+
+	err = yaml.Unmarshal(templateFile, &refTemplate)
 	if err != nil {
 		return template, err
 	}
 
-	return template, nil
+	preprocessed := intrinsicsolver.FixFunctions(templateFile)
+	tempYAML, err := goformation.ParseYAML(preprocessed)
+	if err != nil {
+		context.Logger.Error(err.Error())
+		return template, err
+	}
+
+	returnTemplate := *tempYAML
+
+	return returnTemplate, nil
 }
