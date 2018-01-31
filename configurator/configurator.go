@@ -63,32 +63,44 @@ func showRegions(context *context.Context) {
 	}
 }
 
-func setRegions(context *context.Context) (region string) {
+func setRegions(context *context.Context) (region string, err bool) {
 	var numberRegion int
 	context.Logger.GetInput("Choose region", &numberRegion)
 	regions := makeArrayRegions()
 	if numberRegion >= 0 && numberRegion < 14 {
 		region = regions[numberRegion]
 		context.Logger.Always("Your region is: " + region)
+		err = true
 	} else {
 		context.Logger.Error("Invalid region")
+		err = false
 	}
 	return
 }
 
-func setProfile(context *context.Context) (profile string) {
+func setProfile(context *context.Context) (profile string, err bool) {
 	context.Logger.GetInput("Input name of profile", &profile)
 	if profile != "" {
 		context.Logger.Always("Your profile is: " + profile)
+		err = true
 	} else {
 		context.Logger.Error("Invalid profile")
+		err = false
 	}
 	return
 }
 
 func createConfig(context *context.Context) configuration.Configuration {
-	myRegion := setRegions(context)
-	myProfile := setProfile(context)
+	myRegion, err := setRegions(context)
+	for !err {
+		context.Logger.Always("Try again, invalid region")
+		myRegion, err = setRegions(context)
+	}
+	myProfile, err1 := setProfile(context)
+	for !err1 {
+		context.Logger.Always("Try again, invalid profile")
+		myProfile, err1 = setProfile(context)
+	}
 	myResourceSpecificationURL := resourceSpecificationURL
 
 	myConfig := configuration.Configuration{
