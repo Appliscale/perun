@@ -47,7 +47,6 @@ func (config Configuration) GetSpecificationFileURLForCurrentRegion() (string, e
 	if url, ok := config.SpecificationURL[config.DefaultRegion]; ok {
 		return url + "/latest/gzip/CloudFormationResourceSpecification.json", nil
 	}
-
 	return "", errors.New("There is no specification file for region " + config.DefaultRegion)
 }
 
@@ -70,7 +69,6 @@ func GetConfiguration(cliArguments cliparser.CliArguments, logger *logger.Logger
 		}
 
 		postProcessing(&config, cliArguments)
-
 		return
 	}
 	return
@@ -128,22 +126,19 @@ func getConfigurationPath(cliArguments cliparser.CliArguments, logger *logger.Lo
 	} else {
 		return "", errors.New("Configuration file could not be read!")
 	}
-
 }
 
 func notifyUserAboutConfigurationFile(configurationFilePath string, logger *logger.Logger) {
 	logger.Info("Configuration file from the following location will be used: " + configurationFilePath)
 }
 
-func PrepareYaml(config Configuration, path string, logger logger.Logger) {
+func SaveToFile(config Configuration, path string, logger logger.Logger) {
 	file, err := os.Create(path)
 	defer file.Close()
 	if err != nil {
 		logger.Error("Could not create file")
 		return
 	}
-
 	obj, _ := yaml.Marshal(config)
 	_, err = file.Write(obj)
-
 }

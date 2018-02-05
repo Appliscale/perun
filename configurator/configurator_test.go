@@ -38,12 +38,12 @@ func TestSetProfile(t *testing.T) {
 
 func TestCreateConfig(t *testing.T) {
 	myconfig := configuration.Configuration{
-		"profile",
-		"region",
-		resourceSpecificationURL,
-		false,
-		3600,
-		"INFO"}
+		DefaultProfile:        "profile",
+		DefaultRegion:         "region",
+		SpecificationURL:      resourceSpecificationURL,
+		DefaultDecisionForMFA: false,
+		DefaultDurationForMFA: 3600,
+		DefaultVerbosity:      "INFO"}
 	assert.NotEmptyf(t, myconfig.DefaultProfile, "Default profile could not be empty")
 	assert.NotEmptyf(t, myconfig.DefaultRegion, "Default Region could not be empty")
 	assert.NotEmptyf(t, myconfig.SpecificationURL, "SpecificationURL could not be empty")

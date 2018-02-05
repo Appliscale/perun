@@ -25,14 +25,13 @@ var resourceSpecificationURL = map[string]string{
 	"sa-east-1":      "https://d3c9jyj3w509b0.cloudfront.net",
 }
 
-func CreateConfiguration(context *context.Context) {
+func FileName(context *context.Context) {
 	context.Logger.Always("Configure file could be in \n  " + makeUserPath() + "\n  /etc/perun")
 	var yourPath string
 	var yourName string
 	context.Logger.GetInput("Your path ", &yourPath)
 	context.Logger.GetInput("Filename ", &yourName)
 	findFile(yourPath+"/"+yourName, context)
-
 }
 
 func findFile(path string, context *context.Context) {
@@ -41,7 +40,7 @@ func findFile(path string, context *context.Context) {
 	if os.IsNotExist(err) {
 		showRegions(context)
 		con := createConfig(context)
-		configuration.PrepareYaml(con, path, *context.Logger)
+		configuration.SaveToFile(con, path, *context.Logger)
 	} else {
 		context.Logger.Always("File already exists in this path")
 	}
@@ -104,12 +103,12 @@ func createConfig(context *context.Context) configuration.Configuration {
 	myResourceSpecificationURL := resourceSpecificationURL
 
 	myConfig := configuration.Configuration{
-		myProfile,
-		myRegion,
-		myResourceSpecificationURL,
-		false,
-		3600,
-		"INFO"}
+		DefaultProfile:        myProfile,
+		DefaultRegion:         myRegion,
+		SpecificationURL:      myResourceSpecificationURL,
+		DefaultDecisionForMFA: false,
+		DefaultDurationForMFA: 3600,
+		DefaultVerbosity:      "INFO"}
 
 	return myConfig
 }
@@ -132,5 +131,4 @@ func makeArrayRegions() [14]string {
 	regions[13] = "sa-east-1"
 
 	return regions
-
 }

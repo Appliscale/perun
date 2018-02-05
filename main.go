@@ -68,8 +68,7 @@ func main() {
 	}
 
 	if *context.CliArguments.Mode == cliparser.ConfigureMode {
-		configurator.CreateConfiguration(&context)
-
+		configurator.FileName(&context)
 		os.Exit(0)
 	}
 }

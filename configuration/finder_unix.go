@@ -18,8 +18,8 @@
 
 package configuration
 
-import "os"
 import (
+	"os"
 	"os/user"
 )
 
