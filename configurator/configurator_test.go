@@ -13,9 +13,7 @@ func TestConfigurePath(t *testing.T) {
 	input := ""
 	subproc.Stdin = strings.NewReader(input)
 	output, _ := subproc.Output()
-
 	assert.IsTypef(t, string(output), input, "Invalid type of input")
-
 	subproc.Wait()
 }
 
@@ -30,9 +28,7 @@ func TestSetProfile(t *testing.T) {
 	input := ""
 	subproc.Stdin = strings.NewReader(input)
 	output, _ := subproc.Output()
-
 	assert.IsTypef(t, string(output), input, "Name could not be empty")
-
 	subproc.Wait()
 }
 
@@ -52,7 +48,6 @@ func TestCreateConfig(t *testing.T) {
 
 func TestMakeArrayRegions(t *testing.T) {
 	region := makeArrayRegions()
-
 	for i := 0; i < len(region); i++ {
 		assert.NotEmptyf(t, region[i], "Incorrect region and URL")
 	}

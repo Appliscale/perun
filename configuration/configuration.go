@@ -67,7 +67,6 @@ func GetConfiguration(cliArguments cliparser.CliArguments, logger *logger.Logger
 		if err != nil {
 			return
 		}
-
 		postProcessing(&config, cliArguments)
 		return
 	}

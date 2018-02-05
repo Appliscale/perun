@@ -28,7 +28,7 @@ func TestModeNotSpecified(t *testing.T) {
 }
 
 func TestInvalidMode(t *testing.T) {
-	assert.Equal(t, "Invalid mode. Use validate, validate_offline or convert",
+	assert.Equal(t, "Invalid mode. Use validate, validate_offline, convert or configure",
 		parseCliArguments([]string{"cmd", "-m=some_mode"}).Error())
 }
 
