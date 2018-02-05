@@ -17,6 +17,6 @@
 package validators
 
 type Tag struct {
-	Key string
+	Key   string
 	Value string
 }

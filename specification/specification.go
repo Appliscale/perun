@@ -20,54 +20,54 @@ package specification
 
 import (
 	"encoding/json"
-	"io/ioutil"
-	"os"
+	"github.com/Appliscale/perun/context"
 	"io"
+	"io/ioutil"
 	"net/http"
+	"os"
 	"os/user"
 	"strings"
-	"github.com/Appliscale/perun/context"
 )
 
 type Specification struct {
-	PropertyTypes map[string]PropertyType
+	PropertyTypes                map[string]PropertyType
 	ResourceSpecificationVersion string
-	ResourceTypes map[string]Resource
+	ResourceTypes                map[string]Resource
 }
 
 type PropertyType struct {
 	Documentation string
-	Properties map[string]Property
+	Properties    map[string]Property
 }
 
 type Property struct {
-	Documentation string
+	Documentation     string
 	DuplicatesAllowed bool
-	ItemType string
+	ItemType          string
 	PrimitiveItemType string
-	PrimitiveType string
-	Required bool
-	Type string
-	UpdateType string
+	PrimitiveType     string
+	Required          bool
+	Type              string
+	UpdateType        string
 }
 
 type Resource struct {
 	Documentation string
-	Attributes map[string]Attribute
-	Properties map[string]Property
+	Attributes    map[string]Attribute
+	Properties    map[string]Property
 }
 
 type Attribute struct {
-	ItemType string
+	ItemType          string
 	PrimitiveItemType string
-	PrimitiveType string
-	Type string
+	PrimitiveType     string
+	Type              string
 }
 
 // Download specification for region specified in config.
 func GetSpecification(context *context.Context) (specification Specification, err error) {
 	filePath, err := downloadSpecification(context)
-	if err != nil  {
+	if err != nil {
 		return specification, err
 	}
 
@@ -77,7 +77,7 @@ func GetSpecification(context *context.Context) (specification Specification, er
 // Get specification from file.
 func GetSpecificationFromFile(specificationFilePath string) (specification Specification, err error) {
 	specificationFile, err := ioutil.ReadFile(specificationFilePath)
-	if err != nil  {
+	if err != nil {
 		return specification, err
 	}
 
@@ -86,13 +86,13 @@ func GetSpecificationFromFile(specificationFilePath string) (specification Speci
 
 func downloadSpecification(context *context.Context) (filePath string, err error) {
 	user, err := user.Current()
-	if err != nil  {
+	if err != nil {
 		return
 	}
 
 	specificationDir := user.HomeDir + "/.config/perun/specification"
 	specificationFileUrl, err := context.Config.GetSpecificationFileURLForCurrentRegion()
-	if err != nil  {
+	if err != nil {
 		return
 	}
 	fileName := strings.Replace(specificationFileUrl, "https://", "", -1)
@@ -107,7 +107,7 @@ func downloadSpecification(context *context.Context) (filePath string, err error
 		os.MkdirAll(specificationDir, os.ModePerm)
 	}
 	out, err := os.Create(specificationFilePath)
-	if err != nil  {
+	if err != nil {
 		return
 	}
 	defer out.Close()
@@ -119,7 +119,7 @@ func downloadSpecification(context *context.Context) (filePath string, err error
 	defer resp.Body.Close()
 
 	_, err = io.Copy(out, resp.Body)
-	if err != nil  {
+	if err != nil {
 		return
 	}
 

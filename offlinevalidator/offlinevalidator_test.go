@@ -17,12 +17,12 @@
 package offlinevalidator
 
 import (
-	"testing"
-	"os"
+	"github.com/Appliscale/perun/logger"
+	"github.com/Appliscale/perun/offlinevalidator/template"
 	"github.com/Appliscale/perun/specification"
 	"github.com/stretchr/testify/assert"
-	"github.com/Appliscale/perun/offlinevalidator/template"
-	"github.com/Appliscale/perun/logger"
+	"os"
+	"testing"
 )
 
 var spec specification.Specification
@@ -64,7 +64,7 @@ func TestLackOfRequiredPropertyInResource(t *testing.T) {
 	assert.False(t, validateResources(resources, &spec, &sink), "This resource should not be valid, it do not have required property")
 }
 
-func createResourceWithOneProperty(resourceType string, propertyName string, propertyValue string) (template.Resource) {
+func createResourceWithOneProperty(resourceType string, propertyName string, propertyValue string) template.Resource {
 	resource := template.Resource{}
 	resource.Type = resourceType
 	resource.Properties = make(map[string]interface{})

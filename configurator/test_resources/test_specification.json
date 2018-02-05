@@ -1,0 +1,12 @@
+{
+  "ResourceTypes": {
+    "ExampleResourceType": {
+      "Properties": {
+        "ExampleProperty": {
+          "Required": true
+        }
+      }
+    }
+  },
+  "ResourceSpecificationVersion": "1.2.3"
+}

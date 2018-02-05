@@ -13,6 +13,7 @@ get-deps:
 	go get github.com/stretchr/testify
 	go install github.com/stretchr/testify
 	go build
+	go fmt ...
 
 code-analysis: get-deps
 	go tool vet -v .

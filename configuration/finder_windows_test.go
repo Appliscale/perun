@@ -37,7 +37,7 @@ func TestGetUserConfigFile(t *testing.T) {
 	t.Run("File exist", func(t *testing.T) {
 		path, ok := getUserConfigFile(existStub)
 		envVal, _ := os.LookupEnv("LOCALAPPDATA")
-		assert.Equal(t, envVal + "\\perun\\main.yaml", path, "Should contain Local")
+		assert.Equal(t, envVal+"\\perun\\main.yaml", path, "Should contain Local")
 		assert.True(t, ok, "Should exist")
 	})
 
@@ -51,7 +51,7 @@ func TestGetGlobalConfigFile(t *testing.T) {
 	t.Run("File exist", func(t *testing.T) {
 		path, ok := getGlobalConfigFile(existStub)
 		envVal, _ := os.LookupEnv("ALLUSERSPROFILE")
-		assert.Equal(t, envVal + "\\perun\\main.yaml", path, "Should contain ProgramData")
+		assert.Equal(t, envVal+"\\perun\\main.yaml", path, "Should contain ProgramData")
 		assert.True(t, ok, "Should exist")
 	})
 
@@ -65,7 +65,7 @@ func TestGetConfigFileFromCurrentWorkingDirectory(t *testing.T) {
 	t.Run("File exist", func(t *testing.T) {
 		path, ok := getConfigFileFromCurrentWorkingDirectory(existStub)
 		dir, _ := os.Getwd()
-		assert.Equal(t, dir + "\\.perun", path, "Should contain current working directory")
+		assert.Equal(t, dir+"\\.perun", path, "Should contain current working directory")
 		assert.True(t, ok, "Should exist")
 	})
 

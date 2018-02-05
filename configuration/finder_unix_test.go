@@ -38,7 +38,7 @@ func TestGetUserConfigFile(t *testing.T) {
 	t.Run("File exist", func(t *testing.T) {
 		path, ok := getUserConfigFile(existStub)
 		usr, _ := user.Current()
-		assert.Equal(t, usr.HomeDir + "/.config/perun/main.yaml", path, "Should contain user home")
+		assert.Equal(t, usr.HomeDir+"/.config/perun/main.yaml", path, "Should contain user home")
 		assert.True(t, ok, "Should exist")
 	})
 
@@ -65,7 +65,7 @@ func TestGetConfigFileFromCurrentWorkingDirectory(t *testing.T) {
 	t.Run("File exist", func(t *testing.T) {
 		path, ok := getConfigFileFromCurrentWorkingDirectory(existStub)
 		dir, _ := os.Getwd()
-		assert.Equal(t, dir + "/.perun", path, "Should contain current working directory")
+		assert.Equal(t, dir+"/.perun", path, "Should contain current working directory")
 		assert.True(t, ok, "Should exist")
 	})
 

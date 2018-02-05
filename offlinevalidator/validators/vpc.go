@@ -17,18 +17,18 @@
 package validators
 
 import (
+	"github.com/Appliscale/perun/logger"
+	"github.com/Appliscale/perun/offlinevalidator/template"
 	"github.com/asaskevich/govalidator"
 	"github.com/mitchellh/mapstructure"
-	"github.com/Appliscale/perun/offlinevalidator/template"
-	"github.com/Appliscale/perun/logger"
 )
 
 type VpcProperties struct {
-	CidrBlock string
-	EnableDnsSupport bool
+	CidrBlock          string
+	EnableDnsSupport   bool
 	EnableDnsHostnames bool
-	InstanceTenancy string
-	Tags []Tag
+	InstanceTenancy    string
+	Tags               []Tag
 }
 
 func IsVpcValid(name string, vpc template.Resource, logger *logger.Logger) bool {
@@ -37,7 +37,7 @@ func IsVpcValid(name string, vpc template.Resource, logger *logger.Logger) bool 
 	mapstructure.Decode(vpc.Properties, &properties)
 
 	if properties.CidrBlock != "" && !govalidator.IsCIDR(properties.CidrBlock) {
-		logger.ValidationError(name, "Invalid CIDR format - " + properties.CidrBlock)
+		logger.ValidationError(name, "Invalid CIDR format - "+properties.CidrBlock)
 		valid = false
 	}
 
