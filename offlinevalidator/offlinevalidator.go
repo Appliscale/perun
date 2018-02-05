@@ -21,14 +21,14 @@ package offlinevalidator
 import (
 	"encoding/json"
 	"errors"
+	"io/ioutil"
+	"path"
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/logger"
 	"github.com/Appliscale/perun/offlinevalidator/template"
 	"github.com/Appliscale/perun/offlinevalidator/validators"
 	"github.com/Appliscale/perun/specification"
-	"github.com/ghodss/yaml"
-	"io/ioutil"
-	"path"
+	"gopkg.in/yaml.v2"
 )
 
 var validatorsMap = map[string]interface{}{

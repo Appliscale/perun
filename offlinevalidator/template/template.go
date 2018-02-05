@@ -17,18 +17,18 @@
 package template
 
 type Template struct {
-	AWSTemplateFormatVersion string
-	Description              string
-	Metadata                 map[string]interface{}
-	Parameters               map[string]interface{}
-	Mappings                 map[string]interface{}
-	Conditions               map[string]interface{}
-	Transform                map[string]interface{}
-	Resources                map[string]Resource
-	Outputs                  map[string]interface{}
+	AWSTemplateFormatVersion string                 `yaml:"AWSTemplateFormatVersion"`
+	Description              string                 `yaml:"Description"`
+	Metadata                 map[string]interface{} `yaml:"Metadata"`
+	Parameters               map[string]interface{} `yaml:"Parameters"`
+	Mappings                 map[string]interface{} `yaml:"Mappings"`
+	Conditions               map[string]interface{} `yaml:"Conditions"`
+	Transform                map[string]interface{} `yaml:"Transform"`
+	Resources                map[string]Resource    `yaml:"Resources"`
+	Outputs                  map[string]interface{} `yaml:"Outputs"`
 }
 
 type Resource struct {
-	Type       string
-	Properties map[string]interface{}
+	Type       string                 `yaml:"Type"`
+	Properties map[string]interface{} `yaml:"Properties"`
 }

@@ -18,18 +18,18 @@
 package main
 
 import (
+	"os"
 	"github.com/Appliscale/perun/cliparser"
-	"github.com/Appliscale/perun/configurator"
+	"github.com/Appliscale/perun/configuration"
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/converter"
 	"github.com/Appliscale/perun/offlinevalidator"
 	"github.com/Appliscale/perun/onlinevalidator"
 	"github.com/Appliscale/perun/utilities"
-	"os"
 )
 
 func main() {
-	context, err := context.GetContext()
+	context, err := context.GetContext(cliparser.ParseCliArguments, configuration.GetConfiguration)
 	if err != nil {
 		os.Exit(1)
 	}
