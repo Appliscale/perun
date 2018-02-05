@@ -18,6 +18,7 @@
 package main
 
 import (
+	"github.com/Appliscale/perun/configurator"
 	"os"
 	"github.com/Appliscale/perun/cliparser"
 	"github.com/Appliscale/perun/configuration"
