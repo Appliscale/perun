@@ -58,7 +58,7 @@ To convert your template between JSON and YAML formats you have to type:
            --output=<PATH FOR A CONVERTED FILE, INCLUDING FILE NAME>
            --format=<JSON or YAML>
 ```
-To create your own configuration file use mode configure:
+To create your own configuration file use `configure` mode:
 
 ```bash
 ~ $ perun --mode=configure
