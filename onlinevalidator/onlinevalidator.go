@@ -20,21 +20,17 @@ package onlinevalidator
 
 import (
 	"errors"
-	"time"
-
-	"io/ioutil"
-	"os/user"
-
+	"github.com/Appliscale/perun/context"
+	"github.com/Appliscale/perun/logger"
+	"github.com/Appliscale/perun/utilities"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/sts"
-
 	"github.com/go-ini/ini"
-
-	"github.com/Appliscale/perun/context"
-	"github.com/Appliscale/perun/logger"
-	"github.com/Appliscale/perun/utilities"
+	"io/ioutil"
+	"os/user"
+	"time"
 )
 
 const dateFormat = "2006-01-02 15:04:05 MST"

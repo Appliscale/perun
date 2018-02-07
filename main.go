@@ -25,6 +25,7 @@ import (
 	"github.com/Appliscale/perun/converter"
 	"github.com/Appliscale/perun/offlinevalidator"
 	"github.com/Appliscale/perun/onlinevalidator"
+	"github.com/Appliscale/perun/stack"
 	"github.com/Appliscale/perun/utilities"
 	"os"
 )
@@ -70,6 +71,16 @@ func main() {
 
 	if *context.CliArguments.Mode == cliparser.ConfigureMode {
 		configurator.FileName(&context)
+		os.Exit(0)
+	}
+
+	if *context.CliArguments.Mode == cliparser.CreateStack {
+		stack.NewStack(&context)
+		os.Exit(0)
+	}
+
+	if *context.CliArguments.Mode == cliparser.DestroyStack {
+		stack.DestroyStack(&context)
 		os.Exit(0)
 	}
 }
