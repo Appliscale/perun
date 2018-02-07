@@ -41,27 +41,27 @@ With first command a default configuration file (`defaults/main.yaml`) will be c
 To validate your template with AWS API (*online validation*), just type:
 
 ```bash
-~ $ perun --mode=validate --template=<PATH TO YOUR TEMPLATE>
+~ $ perun validate <PATH TO YOUR TEMPLATE>
 ```
 
 To validate your template offline (*well*, almost offline :wink: - *AWS CloudFormation Resource Specification* still needs to be downloaded for a fresh installation) use `validate_offline` mode:
 
 ```bash
-~ $ perun --mode=validate_offline --template=<PATH TO YOUR TEMPLATE>
+~ $ perun validate_offline <PATH TO YOUR TEMPLATE>
 ```
 
 To convert your template between JSON and YAML formats you have to type:
 
 ```bash
-~ $ perun --mode=convert
-           --template=<PATH TO YOUR INCOMING TEMPLATE>
-           --output=<PATH FOR A CONVERTED FILE, INCLUDING FILE NAME>
-           --format=<JSON or YAML>
+~ $ perun convert
+           <PATH TO YOUR INCOMING TEMPLATE>
+           <PATH FOR A CONVERTED FILE, INCLUDING FILE NAME>
+           <JSON or YAML>
 ```
 To create your own configuration file use `configure` mode:
 
 ```bash
-~ $ perun --mode=configure
+~ $ perun configure
 ```
 Then type path and name of new configuration file.
 
@@ -107,7 +107,7 @@ There are two optional parameters:
 If you account is using *MFA* (which we strongly recommend to enable) you should add `--mfa` flag to the each executed command.
 
 ```bash
-~ $ perun --mode=validate --template=<PATH TO YOUR TEMPLATE> --mfa
+~ $ perun validate <PATH TO YOUR TEMPLATE> --mfa
 ```
 
 In that case application will use `[profile]-long-term` from the `~/.aws/credentials` file (`[profile]` is a placeholder filled with adequate value taken from configuration files).

@@ -29,7 +29,7 @@ const ReleaseName = "Nimbostratus"
 const VersionNumber = "1.1.0-beta"
 
 func VersionStatus() string {
-	return fmt.Sprintf("       perun %s (%s release) - %s", VersionNumber, ReleaseName, Motto)
+	return fmt.Sprintf("perun %s (%s release) - %s", VersionNumber, ReleaseName, Motto)
 }
 
 func TruncateDuration(d time.Duration) time.Duration {

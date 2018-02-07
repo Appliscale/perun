@@ -21,16 +21,17 @@ package cliparser
 import (
 	"errors"
 	"github.com/Appliscale/perun/logger"
+	"github.com/Appliscale/perun/utilities"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"strings"
 )
 
-const ValidateMode = "validate"
-const ConvertMode = "convert"
-const OfflineValidateMode = "validate_offline"
-const ConfigureMode = "configure"
-const CreateStack = "create-stack"
-const DestroyStack = "delete-stack"
+var ValidateMode = "validate"
+var ConvertMode = "convert"
+var OfflineValidateMode = "validate_offline"
+var ConfigureMode = "configure"
+var CreateStackMode = "create-stack"
+var DestroyStackMode = "delete-stack"
 
 const JSON = "json"
 const YAML = "yaml"
@@ -49,71 +50,95 @@ type CliArguments struct {
 	Profile           *string
 	Region            *string
 	Sandbox           *bool
-	Version           *bool
 	Stack             *string
 }
 
+func availableFormats() []string {
+	return []string{JSON, YAML}
+}
+
 // Get and validate CLI arguments. Returns error if validation fails.
-func ParseCliArguments() (cliArguments CliArguments, err error) {
+func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
+	var (
+		app = kingpin.New("Perun", "Swiss army knife for AWS CloudFormation templates - validation, conversion, generators and other various stuff.")
 
-	cliArguments.Mode = kingpin.Flag("mode", "Main command from a given list: "+ValidateMode+" | "+OfflineValidateMode+" | "+ConvertMode+" | "+ConfigureMode+" | "+CreateStack+" | "+DestroyStack+".").Short('m').String()
-	cliArguments.TemplatePath = kingpin.Flag("template", "A path to the template file.").Short('t').String()
-	cliArguments.OutputFilePath = kingpin.Flag("output", "A path where converted file will be saved.").Short('o').String()
-	cliArguments.OutputFileFormat = kingpin.Flag("format", "Output format: "+strings.ToUpper(JSON)+" | "+strings.ToUpper(YAML)+".").Short('x').String()
-	cliArguments.ConfigurationPath = kingpin.Flag("config", "A path to the configuration file").Short('c').String()
-	cliArguments.Quiet = kingpin.Flag("quiet", "No console output, just return code.").Short('q').Bool()
-	cliArguments.Yes = kingpin.Flag("yes", "Always say yes.").Short('y').Bool()
-	cliArguments.Verbosity = kingpin.Flag("verbosity", "Logger verbosity: TRACE | DEBUG | INFO | ERROR.").Short('v').String()
-	cliArguments.MFA = kingpin.Flag("mfa", "Enable AWS MFA.").Bool()
-	cliArguments.DurationForMFA = kingpin.Flag("duration", "Duration for AWS MFA token (seconds value from range [1, 129600]).").Short('d').Int64()
-	cliArguments.Profile = kingpin.Flag("profile", "An AWS profile name.").Short('p').String()
-	cliArguments.Region = kingpin.Flag("region", "An AWS region to use.").Short('r').String()
-	cliArguments.Sandbox = kingpin.Flag("sandbox", "Do not use configuration files hierarchy.").Bool()
-	cliArguments.Version = kingpin.Flag("version", "Print version number together with release name and exit immediately.").Bool()
-	cliArguments.Stack = kingpin.Flag("stack", "An AWS stack name.").String()
+		quiet             = app.Flag("quiet", "No console output, just return code.").Short('q').Bool()
+		yes               = app.Flag("yes", "Always say yes.").Short('y').Bool()
+		verbosity         = app.Flag("verbosity", "Logger verbosity: TRACE | DEBUG | INFO | ERROR.").Short('v').String()
+		mfa               = app.Flag("mfa", "Enable AWS MFA.").Bool()
+		DurationForMFA    = app.Flag("duration", "Duration for AWS MFA token (seconds value from range [1, 129600]).").Short('d').Int64()
+		profile           = app.Flag("profile", "An AWS profile name.").Short('p').String()
+		region            = app.Flag("region", "An AWS region to use.").Short('r').String()
+		sandbox           = app.Flag("sandbox", "Do not use configuration files hierarchy.").Bool()
+		configurationPath = app.Flag("config", "A path to the configuration file").Short('c').String()
 
-	kingpin.Parse()
+		onlineValidate         = app.Command(ValidateMode, "Online template Validation")
+		onlineValidateTemplate = onlineValidate.Arg("template", "A path to the template file.").Required().String()
 
-	if *cliArguments.Version {
-		return
+		offlineValidate         = app.Command(OfflineValidateMode, "Offline Template Validation")
+		offlineValidateTemplate = offlineValidate.Arg("template", "A path to the template file.").Required().String()
+
+		convert             = app.Command(ConvertMode, "Convertion between JSON and YAML of template files")
+		convertTemplate     = convert.Arg("template", "A path to the template file.").Required().String()
+		convertOutputFile   = convert.Arg("output", "A path where converted file will be saved.").Required().String()
+		convertOutputFormat = convert.Arg("format", "Output format: "+strings.ToUpper(JSON)+" | "+strings.ToUpper(YAML)+".").HintAction(availableFormats).Required().String()
+
+		configure = app.Command(ConfigureMode, "Create your own configuration mode")
+
+		createStack     = app.Command(CreateStackMode, "Creates a stack on aws")
+		createStackName = createStack.Arg("stack", "An AWS stack name.").Required().String()
+
+		deleteStack     = app.Command(DestroyStackMode, "Deletes a stack on aws")
+		deleteStackName = deleteStack.Arg("stack", "An AWS stack name.").Required().String()
+	)
+	app.HelpFlag.Short('h')
+	app.Version(utilities.VersionStatus())
+
+	switch kingpin.MustParse(app.Parse(args[1:])) {
+
+	//online validate
+	case onlineValidate.FullCommand():
+		cliArguments.Mode = &ValidateMode
+		cliArguments.TemplatePath = onlineValidateTemplate
+
+		// offline validation
+	case offlineValidate.FullCommand():
+		cliArguments.Mode = &OfflineValidateMode
+		cliArguments.TemplatePath = offlineValidateTemplate
+
+		// convert
+	case convert.FullCommand():
+		cliArguments.Mode = &ConvertMode
+		cliArguments.TemplatePath = convertTemplate
+		cliArguments.OutputFilePath = convertOutputFile
+		cliArguments.OutputFileFormat = convertOutputFormat
+
+		// configure
+	case configure.FullCommand():
+		cliArguments.Mode = &ConfigureMode
+
+		// create Stack
+
+	case createStack.FullCommand():
+		cliArguments.Mode = &CreateStackMode
+		cliArguments.Stack = createStackName
+
+		// delete Stack
+	case deleteStack.FullCommand():
+		cliArguments.Mode = &DestroyStackMode
+		cliArguments.Stack = deleteStackName
 	}
 
-	if *cliArguments.Mode == "" {
-		err = errors.New("You should specify what you want to do with --mode flag")
-		return
-	}
-
-	if *cliArguments.Mode != ValidateMode && *cliArguments.Mode != ConvertMode && *cliArguments.Mode != OfflineValidateMode && *cliArguments.Mode != ConfigureMode && *cliArguments.Mode != CreateStack && *cliArguments.Mode != DestroyStack {
-		err = errors.New("Invalid mode. Use validate, validate_offline, convert or configure")
-		return
-	}
-
-	if *cliArguments.Stack == "" && (*cliArguments.Mode == CreateStack || *cliArguments.Mode == DestroyStack) {
-		err = errors.New("You should specify a name of the stack")
-	}
-
-	if *cliArguments.TemplatePath == "" && *cliArguments.Mode != ConfigureMode && *cliArguments.Mode != DestroyStack {
-		err = errors.New("You should specify a source of the template file with --template flag")
-		return
-	}
-
-	if *cliArguments.Mode == ConvertMode {
-		if *cliArguments.OutputFilePath == "" {
-			err = errors.New("You should specify a output file path with --output flag")
-			return
-		}
-
-		if *cliArguments.OutputFileFormat == "" {
-			err = errors.New("You should specify a output file format with --format flag")
-			return
-		}
-
-		*cliArguments.OutputFileFormat = strings.ToLower(*cliArguments.OutputFileFormat)
-		if *cliArguments.OutputFileFormat != JSON && *cliArguments.OutputFileFormat != YAML {
-			err = errors.New("Invalid output file format. Use JSON or YAML")
-			return
-		}
-	}
+	// OTHER FLAGS
+	cliArguments.Quiet = quiet
+	cliArguments.Yes = yes
+	cliArguments.Verbosity = verbosity
+	cliArguments.MFA = mfa
+	cliArguments.DurationForMFA = DurationForMFA
+	cliArguments.Profile = profile
+	cliArguments.Region = region
+	cliArguments.Sandbox = sandbox
+	cliArguments.ConfigurationPath = configurationPath
 
 	if *cliArguments.DurationForMFA < 0 {
 		err = errors.New("You should specify value for duration of MFA token greater than zero")
@@ -128,6 +153,15 @@ func ParseCliArguments() (cliArguments CliArguments, err error) {
 	if *cliArguments.Verbosity != "" && !logger.IsVerbosityValid(*cliArguments.Verbosity) {
 		err = errors.New("You specified invalid value for --verbosity flag")
 		return
+	}
+
+	if *cliArguments.Mode == ConvertMode {
+		*cliArguments.OutputFileFormat = strings.ToLower(*cliArguments.OutputFileFormat)
+		if *cliArguments.OutputFileFormat != JSON && *cliArguments.OutputFileFormat != YAML {
+			err = errors.New("Invalid output file format. Use JSON or YAML")
+			return
+		}
+
 	}
 
 	return

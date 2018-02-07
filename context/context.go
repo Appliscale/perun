@@ -21,6 +21,7 @@ import (
 	"github.com/Appliscale/perun/cliparser"
 	"github.com/Appliscale/perun/configuration"
 	"github.com/Appliscale/perun/logger"
+	"os"
 )
 
 type Context struct {
@@ -29,14 +30,14 @@ type Context struct {
 	Config       configuration.Configuration
 }
 
-type cliArgumentsParser func() (cliparser.CliArguments, error)
+type cliArgumentsParser func(args []string) (cliparser.CliArguments, error)
 type configurationReader func(cliparser.CliArguments, *logger.Logger) (configuration.Configuration, error)
 
 // Create CLI context.
 func GetContext(cliArgParser cliArgumentsParser, confReader configurationReader) (context Context, err error) {
 	logger := logger.CreateDefaultLogger()
 
-	cliArguments, err := cliArgParser()
+	cliArguments, err := cliArgParser(os.Args)
 	if err != nil {
 		logger.Error(err.Error())
 		return
