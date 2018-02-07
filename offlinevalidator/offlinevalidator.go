@@ -21,14 +21,19 @@ package offlinevalidator
 import (
 	"encoding/json"
 	"errors"
+	"io/ioutil"
+	"path"
+
 	"github.com/Appliscale/perun/context"
+	"github.com/Appliscale/perun/intrinsicsolver"
 	"github.com/Appliscale/perun/logger"
 	"github.com/Appliscale/perun/offlinevalidator/template"
 	"github.com/Appliscale/perun/offlinevalidator/validators"
 	"github.com/Appliscale/perun/specification"
-	"gopkg.in/yaml.v2"
-	"io/ioutil"
-	"path"
+	"github.com/awslabs/goformation"
+	"github.com/awslabs/goformation/cloudformation"
+	"github.com/ghodss/yaml"
+	"github.com/mitchellh/mapstructure"
 )
 
 var validatorsMap = map[string]interface{}{
@@ -52,12 +57,14 @@ func Validate(context *context.Context) bool {
 		return false
 	}
 
-	var template template.Template
+	var perunTemplate template.Template
+	var goFormationTemplate cloudformation.Template
+
 	templateFileExtension := path.Ext(*context.CliArguments.TemplatePath)
 	if templateFileExtension == ".json" {
-		template, err = parseJSON(rawTemplate)
+		goFormationTemplate, err = parseJSON(rawTemplate, perunTemplate, context.Logger)
 	} else if templateFileExtension == ".yaml" || templateFileExtension == ".yml" {
-		template, err = parseYAML(rawTemplate)
+		goFormationTemplate, err = parseYAML(rawTemplate, perunTemplate, context.Logger)
 	} else {
 		err = errors.New("Invalid template file format.")
 	}
@@ -66,7 +73,9 @@ func Validate(context *context.Context) bool {
 		return false
 	}
 
-	valid = validateResources(template.Resources, &specification, context.Logger)
+	resources := obtainResources(goFormationTemplate, perunTemplate)
+
+	valid = validateResources(resources, &specification, context.Logger)
 	return valid
 }
 
@@ -112,20 +121,61 @@ func areRequiredPropertiesPresent(resourceSpecification specification.Resource, 
 	return valid
 }
 
-func parseJSON(templateFile []byte) (template template.Template, err error) {
-	err = json.Unmarshal(templateFile, &template)
+func parseJSON(templateFile []byte, refTemplate template.Template, logger *logger.Logger) (template cloudformation.Template, err error) {
+
+	err = json.Unmarshal(templateFile, &refTemplate)
 	if err != nil {
 		return template, err
 	}
 
-	return template, nil
+	tempJSON, err := goformation.ParseJSON(templateFile)
+	if err != nil {
+		logger.Error(err.Error())
+	}
+
+	returnTemplate := *tempJSON
+
+	return returnTemplate, nil
 }
 
-func parseYAML(templateFile []byte) (template template.Template, err error) {
-	err = yaml.Unmarshal(templateFile, &template)
+func parseYAML(templateFile []byte, refTemplate template.Template, logger *logger.Logger) (template cloudformation.Template, err error) {
+
+	err = yaml.Unmarshal(templateFile, &refTemplate)
 	if err != nil {
 		return template, err
 	}
 
-	return template, nil
+	preprocessed, preprocessingError := intrinsicsolver.FixFunctions(templateFile, logger)
+	if preprocessingError != nil {
+		logger.Error(preprocessingError.Error())
+	}
+	tempYAML, err := goformation.ParseYAML(preprocessed)
+	if err != nil {
+		logger.Error(err.Error())
+	}
+
+	returnTemplate := *tempYAML
+
+	return returnTemplate, nil
+}
+
+func obtainResources(goformationTemplate cloudformation.Template, perunTemplate template.Template) map[string]template.Resource {
+	perunResources := perunTemplate.Resources
+	goformationResources := goformationTemplate.Resources
+
+	errDecode := mapstructure.Decode(goformationResources, &perunResources)
+	if errDecode != nil {
+		/*
+			Printing errDecode would log:
+
+			ERROR error(s) decoding:
+			[template.Resource name] expected a map, got 'bool'
+
+			whenever a value of a property would be a boolean value (e.g. evaluated by !Equals intrinsic function; or e.g. 'got string', 'got float' etc. in other options).
+			But after logging all the decoding errors, it would log if template is valid or not and eventually log the missing property as it should do
+			and the error doesn't stand as obstacle of validation.
+		*/
+	}
+
+	return perunResources
 }

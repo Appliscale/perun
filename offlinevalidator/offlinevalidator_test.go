@@ -17,12 +17,13 @@
 package offlinevalidator
 
 import (
+	"os"
+	"testing"
+
 	"github.com/Appliscale/perun/logger"
 	"github.com/Appliscale/perun/offlinevalidator/template"
 	"github.com/Appliscale/perun/specification"
 	"github.com/stretchr/testify/assert"
-	"os"
-	"testing"
 )
 
 var spec specification.Specification
