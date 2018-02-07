@@ -48,9 +48,9 @@ func TestIndentations(t *testing.T) {
 func TestFixFunctions(t *testing.T) {
 	rawTemplate, _ := ioutil.ReadFile("./test_resources/test_map.yaml")
 	expectedTemplate, _ := ioutil.ReadFile("./test_resources/manual_test_map.yaml")
-	fixed := FixFunctions(rawTemplate)
-	expected := parseFileIntoLines(expectedTemplate)
-	actual := parseFileIntoLines(fixed)
+	fixed, _ := FixFunctions(rawTemplate, &sink)
+	expected, _ := parseFileIntoLines(expectedTemplate, &sink)
+	actual, _ := parseFileIntoLines(fixed, &sink)
 
 	assert.Equal(t, expected, actual, "MSG")
 }

@@ -62,9 +62,9 @@ func Validate(context *context.Context) bool {
 
 	templateFileExtension := path.Ext(*context.CliArguments.TemplatePath)
 	if templateFileExtension == ".json" {
-		goFormationTemplate, err = parseJSON(rawTemplate, perunTemplate, context)
+		goFormationTemplate, err = parseJSON(rawTemplate, perunTemplate, context.Logger)
 	} else if templateFileExtension == ".yaml" || templateFileExtension == ".yml" {
-		goFormationTemplate, err = parseYAML(rawTemplate, perunTemplate, context)
+		goFormationTemplate, err = parseYAML(rawTemplate, perunTemplate, context.Logger)
 	} else {
 		err = errors.New("Invalid template file format.")
 	}
@@ -121,7 +121,7 @@ func areRequiredPropertiesPresent(resourceSpecification specification.Resource, 
 	return valid
 }
 
-func parseJSON(templateFile []byte, refTemplate template.Template, context *context.Context) (template cloudformation.Template, err error) {
+func parseJSON(templateFile []byte, refTemplate template.Template, logger *logger.Logger) (template cloudformation.Template, err error) {
 
 	err = json.Unmarshal(templateFile, &refTemplate)
 	if err != nil {
@@ -130,7 +130,7 @@ func parseJSON(templateFile []byte, refTemplate template.Template, context *cont
 
 	tempJSON, err := goformation.ParseJSON(templateFile)
 	if err != nil {
-		context.Logger.Error(err.Error())
+		logger.Error(err.Error())
 	}
 
 	returnTemplate := *tempJSON
@@ -138,18 +138,20 @@ func parseJSON(templateFile []byte, refTemplate template.Template, context *cont
 	return returnTemplate, nil
 }
 
-func parseYAML(templateFile []byte, refTemplate template.Template, context *context.Context) (template cloudformation.Template, err error) {
+func parseYAML(templateFile []byte, refTemplate template.Template, logger *logger.Logger) (template cloudformation.Template, err error) {
 
 	err = yaml.Unmarshal(templateFile, &refTemplate)
 	if err != nil {
 		return template, err
 	}
 
-	preprocessed := intrinsicsolver.FixFunctions(templateFile)
+	preprocessed, preprocessingError := intrinsicsolver.FixFunctions(templateFile, logger)
+	if preprocessingError != nil {
+		logger.Error(preprocessingError.Error())
+	}
 	tempYAML, err := goformation.ParseYAML(preprocessed)
 	if err != nil {
-		context.Logger.Error(err.Error())
-		return template, err
+		logger.Error(err.Error())
 	}
 
 	returnTemplate := *tempYAML
@@ -157,14 +159,23 @@ func parseYAML(templateFile []byte, refTemplate template.Template, context *cont
 	return returnTemplate, nil
 }
 
-func obtainResources(templ cloudformation.Template, origTempl template.Template) map[string]template.Resource {
-	origResources := origTempl.Resources
-	newResources := templ.Resources
+func obtainResources(goformationTemplate cloudformation.Template, perunTemplate template.Template) map[string]template.Resource {
+	perunResources := perunTemplate.Resources
+	goformationResources := goformationTemplate.Resources
 
-	errDecode := mapstructure.Decode(newResources, &origResources)
+	errDecode := mapstructure.Decode(goformationResources, &perunResources)
 	if errDecode != nil {
-		// Printing errDecode would log: ERROR error(s) decoding: `[template.Resource name] expected a map, got 'bool'` whenever a value of a property would be a boolean value (e.g. evaluated by !Equals intrinsic function; or e.g. 'got string', 'got float' etc. in other options). But after logging all the decoding errors, it would log if template is valid or not and eventually log the missing property as it should do and the error doesn't stand as obstacle of validation.
+		/*
+			Printing errDecode would log:
+
+			ERROR error(s) decoding:
+			[template.Resource name] expected a map, got 'bool'
+
+			whenever a value of a property would be a boolean value (e.g. evaluated by !Equals intrinsic function; or e.g. 'got string', 'got float' etc. in other options).
+			But after logging all the decoding errors, it would log if template is valid or not and eventually log the missing property as it should do
+			and the error doesn't stand as obstacle of validation.
+		*/
 	}
 
-	return origResources
+	return perunResources
 }

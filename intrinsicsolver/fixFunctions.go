@@ -5,23 +5,30 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"strings"
+
+	"github.com/Appliscale/perun/logger"
 )
 
-// FixFunctions : takes []byte file and firstly converts all single quotation marks to double ones (anything between single ones is treated as the rune in GoLang), then deconstructs file into lines, checks for intrinsic functions of a map nature where the function name is located in one line and it's body (map elements) are located in the following lines (if this would be not fixed an error would be thrown: `json: unsupported type: map[interface {}]interface {}`). The function changes the notation by putting function name in the next line with proper indentation and saves the result to temporary file, then opens it and returns []byte array.
-func FixFunctions(template []byte) []byte {
+/*
+FixFunctions : takes []byte file and firstly converts all single quotation marks to double ones (anything between single ones is treated as the rune in GoLang),
+then deconstructs file into lines, checks for intrinsic functions of a map nature where the function name is located in one line and it's body (map elements)
+are located in the following lines (if this would be not fixed an error would be thrown: `json: unsupported type: map[interface {}]interface {}`).
+The function changes the notation by putting function name in the next line with proper indentation and saves the result to temporary file,
+then opens it and returns []byte array.
+*/
+func FixFunctions(template []byte, logger *logger.Logger) ([]byte, error) {
 	var quotationProcessed, temporaryResult []string
-	preLines := parseFileIntoLines(template)
+	preLines, err := parseFileIntoLines(template, logger)
 
 	// All single quotation marks are transformed to double ones.
-	for _, e := range preLines {
+	for _, line := range preLines {
 		var fixed string
-		if strings.Contains(e, "'") {
-			fixed = strings.Replace(e, "'", "\"", -1)
+		if strings.Contains(line, "'") {
+			fixed = strings.Replace(line, "'", "\"", -1)
 		} else {
-			fixed = e
+			fixed = line
 		}
 
 		quotationProcessed = append(quotationProcessed, fixed)
@@ -33,8 +40,8 @@ func FixFunctions(template []byte) []byte {
 	multiLiners := []string{"!FindInMap", "!Join", "!Select", "!Split", "!Sub", "!And", "!Equals", "!If", "!Not", "!Or"}
 
 	for idx, d := range lines {
-		for _, ml := range multiLiners {
-			fixMultiLineMap(&d, &lines, idx, ml)
+		for _, function := range multiLiners {
+			fixMultiLineMap(&d, &lines, idx, function)
 		}
 
 		temporaryResult = append(temporaryResult, d)
@@ -42,20 +49,22 @@ func FixFunctions(template []byte) []byte {
 
 	// Function writeLines saves the processed result to a file (if there would be any errors, it could be investigated there).
 	if err := writeLines(temporaryResult, "preprocessed.yml"); err != nil {
-		log.Fatalf("writeLines: %s", err)
+		logger.Error(err.Error())
+		return nil, err
 	}
 
 	// Then the temporary result is opened and returned as a []byte.
 	preprocessedTemplate, err := ioutil.ReadFile("preprocessed.yml")
 	if err != nil {
-		fmt.Println(err)
+		logger.Error(err.Error())
+		return preprocessedTemplate, err
 	}
 
-	return preprocessedTemplate
+	return preprocessedTemplate, nil
 }
 
 // Function parseFileIntoLines is reading the []byte file and returns it line by line as []string slice.
-func parseFileIntoLines(template []byte) []string {
+func parseFileIntoLines(template []byte, logger *logger.Logger) ([]string, error) {
 	bytesReader := bytes.NewReader(template)
 	lines := make([]string, 0)
 	scanner := bufio.NewScanner(bytesReader)
@@ -65,10 +74,11 @@ func parseFileIntoLines(template []byte) []string {
 	}
 
 	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
+		logger.Error(err.Error())
+		return nil, err
 	}
 
-	return lines
+	return lines, nil
 }
 
 // Function writeLines takes []string slice and writes it element by element as line by line file
