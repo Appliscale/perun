@@ -18,12 +18,12 @@
 package configuration
 
 import (
-	"io/ioutil"
 	"errors"
-	"github.com/ghodss/yaml"
-	"os"
 	"github.com/Appliscale/perun/cliparser"
 	"github.com/Appliscale/perun/logger"
+	"github.com/ghodss/yaml"
+	"io/ioutil"
+	"os"
 )
 
 // Perun configuration.
@@ -47,31 +47,38 @@ func (config Configuration) GetSpecificationFileURLForCurrentRegion() (string, e
 	if url, ok := config.SpecificationURL[config.DefaultRegion]; ok {
 		return url + "/latest/gzip/CloudFormationResourceSpecification.json", nil
 	}
-
 	return "", errors.New("There is no specification file for region " + config.DefaultRegion)
 }
 
 // Return perun configuration read from file.
 func GetConfiguration(cliArguments cliparser.CliArguments, logger *logger.Logger) (config Configuration, err error) {
-	configPath, err := getConfigurationPath(cliArguments, logger)
-	if err != nil {
+	if getMode(cliArguments) != cliparser.ConfigureMode {
+		var configPath string
+		configPath, err = getConfigurationPath(cliArguments, logger)
+		if err != nil {
+			return
+		}
+		var rawConfiguration []byte
+		rawConfiguration, err = ioutil.ReadFile(configPath)
+		if err != nil {
+			return
+		}
+		err = yaml.Unmarshal(rawConfiguration, &config)
+		if err != nil {
+			return
+		}
+		postProcessing(&config, cliArguments)
 		return
 	}
-	rawConfiguration, err := ioutil.ReadFile(configPath)
-	if err != nil {
-		return
-	}
-	err = yaml.Unmarshal(rawConfiguration, &config)
-	if err != nil {
-		return
-	}
-
-	postProcessing(&config, cliArguments, logger)
-
 	return
 }
 
-func postProcessing(config *Configuration, cliArguments cliparser.CliArguments, logger *logger.Logger) {
+func getMode(cliArguments cliparser.CliArguments) (mode string) {
+	mode = *cliArguments.Mode
+	return
+}
+
+func postProcessing(config *Configuration, cliArguments cliparser.CliArguments) {
 	if config.DefaultProfile == "" {
 		config.DefaultProfile = "default"
 	}
@@ -122,4 +129,15 @@ func getConfigurationPath(cliArguments cliparser.CliArguments, logger *logger.Lo
 
 func notifyUserAboutConfigurationFile(configurationFilePath string, logger *logger.Logger) {
 	logger.Info("Configuration file from the following location will be used: " + configurationFilePath)
+}
+
+func SaveToFile(config Configuration, path string, logger logger.Logger) {
+	file, err := os.Create(path)
+	defer file.Close()
+	if err != nil {
+		logger.Error("Could not create file")
+		return
+	}
+	obj, _ := yaml.Marshal(config)
+	_, err = file.Write(obj)
 }

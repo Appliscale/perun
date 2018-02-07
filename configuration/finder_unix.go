@@ -18,8 +18,10 @@
 
 package configuration
 
-import "os"
-import "os/user"
+import (
+	"os"
+	"os/user"
+)
 
 type myStat func(string) (os.FileInfo, error)
 

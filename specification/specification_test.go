@@ -17,9 +17,9 @@
 package specification
 
 import (
-	"testing"
-	"os"
 	"github.com/stretchr/testify/assert"
+	"os"
+	"testing"
 )
 
 var spec Specification

@@ -17,11 +17,11 @@
 package configuration
 
 import (
-	"testing"
-	"os"
 	"github.com/Appliscale/perun/cliparser"
 	"github.com/Appliscale/perun/logger"
 	"github.com/stretchr/testify/assert"
+	"os"
+	"testing"
 )
 
 var configuration Configuration

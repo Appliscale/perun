@@ -22,19 +22,19 @@ import (
 	"errors"
 	"time"
 
-	"os/user"
 	"io/ioutil"
+	"os/user"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/sts"
 
 	"github.com/go-ini/ini"
 
-	"github.com/Appliscale/perun/utilities"
-	"github.com/Appliscale/perun/logger"
 	"github.com/Appliscale/perun/context"
+	"github.com/Appliscale/perun/logger"
+	"github.com/Appliscale/perun/utilities"
 )
 
 const dateFormat = "2006-01-02 15:04:05 MST"
@@ -155,7 +155,7 @@ func updateSessionToken(profile string, region string, defaultDuration int64, lo
 	expirationDate, err := time.Parse(dateFormat, section.Key("expiration").Value())
 	if err == nil {
 		logger.Info("Session token will expire in " +
-								utilities.TruncateDuration(time.Since(expirationDate)).String() + " (" + expirationDate.Format(dateFormat) + ")")
+			utilities.TruncateDuration(time.Since(expirationDate)).String() + " (" + expirationDate.Format(dateFormat) + ")")
 	}
 
 	mfaDevice := sectionLongTerm.Key("mfa_serial").Value()

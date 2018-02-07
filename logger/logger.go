@@ -133,13 +133,13 @@ func (logger *Logger) SetVerbosity(verbosity string) {
 }
 
 func IsVerbosityValid(verbosity string) bool {
-    switch verbosity {
-    case
-        "TRACE",
-        "DEBUG",
-        "INFO",
-        "ERROR":
-        return true
-    }
-    return false
+	switch verbosity {
+	case
+		"TRACE",
+		"DEBUG",
+		"INFO",
+		"ERROR":
+		return true
+	}
+	return false
 }
