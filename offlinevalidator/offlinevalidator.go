@@ -73,7 +73,9 @@ func Validate(context *context.Context) bool {
 		return false
 	}
 
-	valid = validateResources(goFormationTemplate, perunTemplate, &specification, context.Logger)
+	resources := obtainResources(goFormationTemplate, perunTemplate)
+
+	valid = validateResources(resources, &specification, context.Logger)
 	return valid
 }
 
@@ -86,19 +88,9 @@ func printResult(valid *bool, logger *logger.Logger) {
 	}
 }
 
-//func validateResources(resources map[string]template.Resource, specification *specification.Specification, sink *logger.Logger) bool {
-func validateResources(templ cloudformation.Template, origTempl template.Template, specification *specification.Specification, sink *logger.Logger) bool {
+func validateResources(resources map[string]template.Resource, specification *specification.Specification, sink *logger.Logger) bool {
 	valid := true
-
-	origResources := origTempl.Resources
-	newResources := templ.Resources
-
-	errDecode := mapstructure.Decode(newResources, &origResources)
-	if errDecode != nil {
-		//don't log
-	}
-
-	for resourceName, resourceValue := range origResources {
+	for resourceName, resourceValue := range resources {
 		if resourceSpecification, ok := specification.ResourceTypes[resourceValue.Type]; ok {
 			if !areRequiredPropertiesPresent(resourceSpecification, resourceValue, resourceName, sink) {
 				valid = false
@@ -163,4 +155,16 @@ func parseYAML(templateFile []byte, refTemplate template.Template, context *cont
 	returnTemplate := *tempYAML
 
 	return returnTemplate, nil
+}
+
+func obtainResources(templ cloudformation.Template, origTempl template.Template) map[string]template.Resource {
+	origResources := origTempl.Resources
+	newResources := templ.Resources
+
+	errDecode := mapstructure.Decode(newResources, &origResources)
+	if errDecode != nil {
+		// Printing errDecode would log: ERROR error(s) decoding: `[template.Resource name] expected a map, got 'bool'` whenever a value of a property would be a boolean value (e.g. evaluated by !Equals intrinsic function; or e.g. 'got string', 'got float' etc. in other options). But after logging all the decoding errors, it would log if template is valid or not and eventually log the missing property as it should do and the error doesn't stand as obstacle of validation.
+	}
+
+	return origResources
 }
