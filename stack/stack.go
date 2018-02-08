@@ -16,7 +16,7 @@ import (
 
 const dateFormat = "2006-01-02 15:04:05 MST"
 
-//prepare stackinput from template
+//This function gets template and  name of stack. It creates "CreateStackInput" structure.
 func createStackInput(context *context.Context, template *string, stackName *string) cloudformation.CreateStackInput {
 	templateStruct := cloudformation.CreateStackInput{
 		TemplateBody: template,
@@ -25,18 +25,53 @@ func createStackInput(context *context.Context, template *string, stackName *str
 	return templateStruct
 }
 
-//main function to delete stack
+// This function reads "StackName" from Stack in CliArguments and file from TemplatePath in CliArguments. It converts these to type string.
+func getTemplateFromFile(context *context.Context) (string, string) {
+
+	rawTemplate, readFileError := ioutil.ReadFile(*context.CliArguments.TemplatePath)
+	if readFileError != nil {
+		context.Logger.Error(readFileError.Error())
+	}
+	rawStackName := *context.CliArguments.Stack
+	template := string(rawTemplate)
+	stackName := string(rawStackName)
+	return template, stackName
+}
+
+// This function uses CreateStackInput variable to create Stack.
+func createStack(templateStruct cloudformation.CreateStackInput, session *session.Session) {
+	api := cloudformation.New(session)
+	api.CreateStack(&templateStruct)
+}
+
+//This function uses all functions above and session to create Stack.
+func NewStack(context *context.Context) {
+	tokenError := updateSessionToken(context.Config.DefaultProfile, context.Config.DefaultRegion, context.Config.DefaultDurationForMFA, context)
+	if tokenError != nil {
+		context.Logger.Error(tokenError.Error())
+	}
+	session, createSessionError := createSession(context, context.Config.DefaultProfile, &context.Config.DefaultRegion)
+	if createSessionError != nil {
+		context.Logger.Error(createSessionError.Error())
+	}
+	template, stackName := getTemplateFromFile(context)
+	templateStruct := createStackInput(context, &template, &stackName)
+
+	createStack(templateStruct, session)
+}
+
+//This function bases on "DeleteStackInput" structure and destroys stack. It uses "StackName" to choose which stack will be destroy. Before that it creates session.
 func DestroyStack(context *context.Context) {
 	delStackInput := deleteStackInput(context)
-	session, err := createSession(context, context.Config.DefaultProfile, &context.Config.DefaultRegion)
-	if err != nil {
-		context.Logger.Error(err.Error())
+	session, sessionError := createSession(context, context.Config.DefaultProfile, &context.Config.DefaultRegion)
+	if sessionError != nil {
+		context.Logger.Error(sessionError.Error())
 	}
 	api := cloudformation.New(session)
 	api.DeleteStack(&delStackInput)
 }
 
-// prepare stackinput from --stack
+//This function gets "StackName" from Stack in CliArguments and creates "DeleteStackInput" structure.
 func deleteStackInput(context *context.Context) cloudformation.DeleteStackInput {
 	name := *context.CliArguments.Stack
 	templateStruct := cloudformation.DeleteStackInput{
@@ -45,47 +80,12 @@ func deleteStackInput(context *context.Context) cloudformation.DeleteStackInput 
 	return templateStruct
 }
 
-//template and stackname from file as string
-func getTemplateFromFile(context *context.Context) (string, string) {
-
-	rawTemplate, err := ioutil.ReadFile(*context.CliArguments.TemplatePath)
-	if err != nil {
-		context.Logger.Error(err.Error())
-	}
-	rawStackName := *context.CliArguments.Stack
-	template := string(rawTemplate)
-	stackName := string(rawStackName)
-	return template, stackName
-}
-
-// create stack using stackinput
-func createStack(templateStruct cloudformation.CreateStackInput, session *session.Session) {
-	api := cloudformation.New(session)
-	api.CreateStack(&templateStruct)
-}
-
-//main function to create new stack
-func NewStack(context *context.Context) {
-	err := updateSessionToken(context.Config.DefaultProfile, context.Config.DefaultRegion, context.Config.DefaultDurationForMFA, context)
-	if err != nil {
-		context.Logger.Error(err.Error())
-	}
-	session, err1 := createSession(context, context.Config.DefaultProfile, &context.Config.DefaultRegion)
-	if err1 != nil {
-		context.Logger.Error(err1.Error())
-	}
-	template, stackName := getTemplateFromFile(context)
-	templateStruct := createStackInput(context, &template, &stackName)
-
-	createStack(templateStruct, session)
-}
-
-//****online validator
+//"createSession" and "updateSessionToken" are from onlinevalidator.go file. They allow to connect with AWS.
 func createSession(context *context.Context, profile string, region *string) (*session.Session, error) {
 	context.Logger.Info("Profile: " + profile)
 	context.Logger.Info("Region: " + *region)
 
-	session, err := session.NewSessionWithOptions(
+	session, sessionWithOptionError := session.NewSessionWithOptions(
 		session.Options{
 			Config: aws.Config{
 				Region: region,
@@ -93,44 +93,44 @@ func createSession(context *context.Context, profile string, region *string) (*s
 			Profile: profile,
 		})
 
-	if err != nil {
-		return nil, err
+	if sessionWithOptionError != nil {
+		return nil, sessionWithOptionError
 	}
 
 	return session, nil
 }
 
 func updateSessionToken(profile string, region string, defaultDuration int64, context *context.Context) error {
-	user, err := user.Current()
-	if err != nil {
-		return err
+	user, userError := user.Current()
+	if userError != nil {
+		return userError
 	}
 
 	credentialsFilePath := user.HomeDir + "/.aws/credentials"
-	configuration, err := ini.Load(credentialsFilePath)
-	if err != nil {
-		return err
+	configuration, loadCredentialsError := ini.Load(credentialsFilePath)
+	if loadCredentialsError != nil {
+		return loadCredentialsError
 	}
 
-	section, err := configuration.GetSection(profile)
-	if err != nil {
-		section, err = configuration.NewSection(profile)
-		if err != nil {
-			return err
+	section, sectionError := configuration.GetSection(profile)
+	if sectionError != nil {
+		section, sectionError = configuration.NewSection(profile)
+		if sectionError != nil {
+			return sectionError
 		}
 	}
 
 	profileLongTerm := profile + "-long-term"
-	sectionLongTerm, err := configuration.GetSection(profileLongTerm)
-	if err != nil {
-		return err
+	sectionLongTerm, profileLongTermError := configuration.GetSection(profileLongTerm)
+	if profileLongTermError != nil {
+		return profileLongTermError
 	}
 
 	sessionToken := section.Key("aws_session_token")
 	expiration := section.Key("expiration")
 
-	expirationDate, err := time.Parse(dateFormat, section.Key("expiration").Value())
-	if err == nil {
+	expirationDate, dataError := time.Parse(dateFormat, section.Key("expiration").Value())
+	if dataError == nil {
 		context.Logger.Info("Session token will expire in " + utilities.TruncateDuration(time.Since(expirationDate)).String() + " (" + expirationDate.Format(dateFormat) + ")")
 	}
 
@@ -140,41 +140,41 @@ func updateSessionToken(profile string, region string, defaultDuration int64, co
 	}
 
 	if sessionToken.Value() == "" || expiration.Value() == "" || time.Since(expirationDate).Nanoseconds() > 0 {
-		session, err := session.NewSessionWithOptions(
+		session, sessionError := session.NewSessionWithOptions(
 			session.Options{
 				Config: aws.Config{
 					Region: &region,
 				},
 				Profile: profileLongTerm,
 			})
-		if err != nil {
-			return err
+		if sessionError != nil {
+			return sessionError
 		}
 
 		var tokenCode string
-		err = context.Logger.GetInput("MFA token code", &tokenCode)
-		if err != nil {
-			return err
+		sessionError = context.Logger.GetInput("MFA token code", &tokenCode)
+		if sessionError != nil {
+			return sessionError
 		}
 
 		var duration int64
 		if defaultDuration == 0 {
-			err = context.Logger.GetInput("Duration", &duration)
-			if err != nil {
-				return err
+			sessionError = context.Logger.GetInput("Duration", &duration)
+			if sessionError != nil {
+				return sessionError
 			}
 		} else {
 			duration = defaultDuration
 		}
 
 		stsSession := sts.New(session)
-		newToken, err := stsSession.GetSessionToken(&sts.GetSessionTokenInput{
+		newToken, tokenError := stsSession.GetSessionToken(&sts.GetSessionTokenInput{
 			DurationSeconds: &duration,
 			SerialNumber:    aws.String(mfaDevice),
 			TokenCode:       &tokenCode,
 		})
-		if err != nil {
-			return err
+		if tokenError != nil {
+			return tokenError
 		}
 
 		section.Key("aws_access_key_id").SetValue(*newToken.Credentials.AccessKeyId)
