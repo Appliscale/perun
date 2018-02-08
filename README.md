@@ -65,6 +65,19 @@ To create your own configuration file use `configure` mode:
 ```
 Then type path and name of new configuration file.
 
+To create new stack you have to type:
+
+``~ $ perun --mode=create-stack
+             --template=<PATH TO YOUR TEMPLATE>
+             --stack=<NAME OF YOUR STACK>
+``
+
+To destroy stack just type:
+
+``~ $ perun --mode=delete-stack
+             --stack=<NAME OF YOUR STACK>
+``
+
 ### Configuration file
 
 You can find an example configuration file in the main directory of the repository in file `defaults/main.yml`.
@@ -107,6 +120,27 @@ aws_access_key_id = <YOUR ACCESS KEY>
 aws_secret_access_key = <YOUR SECRET ACCESS KEY>
 mfa_serial = <IDENTIFICATION NUMBER FOR MFA DEVICE>
 ```
+
+### Working with stacks
+
+Perun allows to create and destroy stacks. 
+
+To create stack it uses your template. It can be JSON or YAML format.
+
+Example JSON template which describe S3 Bucket:
+
+```ini
+{
+    "Resources" : {
+        "HelloPerun" : {
+            "Type" : "AWS::S3::Bucket"
+        }
+    }
+}
+```
+
+If you want to destroy stack just type its name. 
+Before you create stack you should validate it with perun :wink:.
 
 ## License
 

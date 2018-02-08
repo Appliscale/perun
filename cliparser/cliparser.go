@@ -29,6 +29,8 @@ const ValidateMode = "validate"
 const ConvertMode = "convert"
 const OfflineValidateMode = "validate_offline"
 const ConfigureMode = "configure"
+const CreateStack = "create-stack"
+const DestroyStack = "delete-stack"
 
 const JSON = "json"
 const YAML = "yaml"
@@ -48,12 +50,13 @@ type CliArguments struct {
 	Region            *string
 	Sandbox           *bool
 	Version           *bool
+	Stack             *string
 }
 
 // Get and validate CLI arguments. Returns error if validation fails.
 func ParseCliArguments() (cliArguments CliArguments, err error) {
 
-	cliArguments.Mode = kingpin.Flag("mode", "Main command from a given list: "+ValidateMode+" | "+OfflineValidateMode+" | "+ConvertMode+" | "+ConfigureMode+".").Short('m').String()
+	cliArguments.Mode = kingpin.Flag("mode", "Main command from a given list: "+ValidateMode+" | "+OfflineValidateMode+" | "+ConvertMode+" | "+ConfigureMode+" | "+CreateStack+" | "+DestroyStack+".").Short('m').String()
 	cliArguments.TemplatePath = kingpin.Flag("template", "A path to the template file.").Short('t').String()
 	cliArguments.OutputFilePath = kingpin.Flag("output", "A path where converted file will be saved.").Short('o').String()
 	cliArguments.OutputFileFormat = kingpin.Flag("format", "Output format: "+strings.ToUpper(JSON)+" | "+strings.ToUpper(YAML)+".").Short('x').String()
@@ -67,6 +70,7 @@ func ParseCliArguments() (cliArguments CliArguments, err error) {
 	cliArguments.Region = kingpin.Flag("region", "An AWS region to use.").Short('r').String()
 	cliArguments.Sandbox = kingpin.Flag("sandbox", "Do not use configuration files hierarchy.").Bool()
 	cliArguments.Version = kingpin.Flag("version", "Print version number together with release name and exit immediately.").Bool()
+	cliArguments.Stack = kingpin.Flag("stack", "An AWS stack name.").String()
 
 	kingpin.Parse()
 
@@ -79,12 +83,16 @@ func ParseCliArguments() (cliArguments CliArguments, err error) {
 		return
 	}
 
-	if *cliArguments.Mode != ValidateMode && *cliArguments.Mode != ConvertMode && *cliArguments.Mode != OfflineValidateMode && *cliArguments.Mode != ConfigureMode {
+	if *cliArguments.Mode != ValidateMode && *cliArguments.Mode != ConvertMode && *cliArguments.Mode != OfflineValidateMode && *cliArguments.Mode != ConfigureMode && *cliArguments.Mode != CreateStack && *cliArguments.Mode != DestroyStack {
 		err = errors.New("Invalid mode. Use validate, validate_offline, convert or configure")
 		return
 	}
 
-	if *cliArguments.TemplatePath == "" && *cliArguments.Mode != ConfigureMode {
+	if *cliArguments.Stack == "" && (*cliArguments.Mode == CreateStack || *cliArguments.Mode == DestroyStack) {
+		err = errors.New("You should specify a name of the stack")
+	}
+
+	if *cliArguments.TemplatePath == "" && *cliArguments.Mode != ConfigureMode && *cliArguments.Mode != DestroyStack {
 		err = errors.New("You should specify a source of the template file with --template flag")
 		return
 	}
