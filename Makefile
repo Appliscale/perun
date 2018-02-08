@@ -1,5 +1,3 @@
-TEST?=./...
-
 .PHONY: config-install get-deps code-analysis test all
 
 all: get-deps code-analysis test
@@ -9,14 +7,14 @@ config-install:
 	cp defaults/main.yaml "$(HOME)/.config/perun/main.yaml"
 
 get-deps:
-	go get -t -v .
-	go get github.com/stretchr/testify
-	go install github.com/stretchr/testify
+	go get -t -v ./...
+	go install ./...
 	go build
-	go fmt ...
+	go fmt ./...
 
 code-analysis: get-deps
-	go tool vet -v .
+	go vet -v ./...
 
 test: get-deps
-	go test -v -cover $(TEST)
+	go test -v -cover ./...
+	

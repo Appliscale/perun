@@ -1,12 +1,10 @@
 language: go
 
 go:
-  - 1.7.x
-  - 1.8.x
   - 1.9.x
 
 install: make config-install get-deps
 
 script:
-  - make test
   - make code-analysis
+- make test

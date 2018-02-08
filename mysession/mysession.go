@@ -1,0 +1,122 @@
+package mysession
+
+import (
+	"errors"
+	"github.com/Appliscale/perun/context"
+	"github.com/Appliscale/perun/utilities"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/sts"
+	"github.com/go-ini/ini"
+	"os/user"
+	"time"
+)
+
+const dateFormat = "2006-01-02 15:04:05 MST"
+
+func CreateSession(context *context.Context, profile string, region *string) (*session.Session, error) {
+	context.Logger.Info("Profile: " + profile)
+	context.Logger.Info("Region: " + *region)
+
+	session, sessionWithOptionError := session.NewSessionWithOptions(
+		session.Options{
+			Config: aws.Config{
+				Region: region,
+			},
+			Profile: profile,
+		})
+
+	if sessionWithOptionError != nil {
+		return nil, sessionWithOptionError
+	}
+
+	return session, nil
+}
+
+func UpdateSessionToken(profile string, region string, defaultDuration int64, context *context.Context) error {
+	user, userError := user.Current()
+	if userError != nil {
+		return userError
+	}
+
+	credentialsFilePath := user.HomeDir + "/.aws/credentials"
+	configuration, loadCredentialsError := ini.Load(credentialsFilePath)
+	if loadCredentialsError != nil {
+		return loadCredentialsError
+	}
+
+	section, sectionError := configuration.GetSection(profile)
+	if sectionError != nil {
+		section, sectionError = configuration.NewSection(profile)
+		if sectionError != nil {
+			return sectionError
+		}
+	}
+
+	profileLongTerm := profile + "-long-term"
+	sectionLongTerm, profileLongTermError := configuration.GetSection(profileLongTerm)
+	if profileLongTermError != nil {
+		return profileLongTermError
+	}
+
+	sessionToken := section.Key("aws_session_token")
+	expiration := section.Key("expiration")
+
+	expirationDate, dataError := time.Parse(dateFormat, section.Key("expiration").Value())
+	if dataError == nil {
+		context.Logger.Info("Session token will expire in " + utilities.TruncateDuration(time.Since(expirationDate)).String() + " (" + expirationDate.Format(dateFormat) + ")")
+	}
+
+	mfaDevice := sectionLongTerm.Key("mfa_serial").Value()
+	if mfaDevice == "" {
+		return errors.New("There is no mfa_serial for the profile " + profileLongTerm)
+	}
+
+	if sessionToken.Value() == "" || expiration.Value() == "" || time.Since(expirationDate).Nanoseconds() > 0 {
+		session, sessionError := session.NewSessionWithOptions(
+			session.Options{
+				Config: aws.Config{
+					Region: &region,
+				},
+				Profile: profileLongTerm,
+			})
+		if sessionError != nil {
+			return sessionError
+		}
+
+		var tokenCode string
+		sessionError = context.Logger.GetInput("MFA token code", &tokenCode)
+		if sessionError != nil {
+			return sessionError
+		}
+
+		var duration int64
+		if defaultDuration == 0 {
+			sessionError = context.Logger.GetInput("Duration", &duration)
+			if sessionError != nil {
+				return sessionError
+			}
+		} else {
+			duration = defaultDuration
+		}
+
+		stsSession := sts.New(session)
+		newToken, tokenError := stsSession.GetSessionToken(&sts.GetSessionTokenInput{
+			DurationSeconds: &duration,
+			SerialNumber:    aws.String(mfaDevice),
+			TokenCode:       &tokenCode,
+		})
+		if tokenError != nil {
+			return tokenError
+		}
+
+		section.Key("aws_access_key_id").SetValue(*newToken.Credentials.AccessKeyId)
+		section.Key("aws_secret_access_key").SetValue(*newToken.Credentials.SecretAccessKey)
+		sessionToken.SetValue(*newToken.Credentials.SessionToken)
+		section.Key("expiration").SetValue(newToken.Credentials.Expiration.Format(dateFormat))
+
+		configuration.SaveTo(credentialsFilePath)
+	}
+
+	return nil
+}

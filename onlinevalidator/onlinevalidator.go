@@ -19,21 +19,13 @@
 package onlinevalidator
 
 import (
-	"errors"
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/logger"
-	"github.com/Appliscale/perun/utilities"
-	"github.com/aws/aws-sdk-go/aws"
+	"github.com/Appliscale/perun/mysession"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
-	"github.com/aws/aws-sdk-go/service/sts"
-	"github.com/go-ini/ini"
 	"io/ioutil"
-	"os/user"
-	"time"
 )
-
-const dateFormat = "2006-01-02 15:04:05 MST"
 
 // Validate template and get URL for cost estimation.
 func ValidateAndEstimateCosts(context *context.Context) bool {
@@ -41,14 +33,14 @@ func ValidateAndEstimateCosts(context *context.Context) bool {
 	defer printResult(&valid, context.Logger)
 
 	if context.Config.DefaultDecisionForMFA {
-		err := updateSessionToken(context.Config.DefaultProfile, context.Config.DefaultRegion, context.Config.DefaultDurationForMFA, context.Logger)
+		err := mysession.UpdateSessionToken(context.Config.DefaultProfile, context.Config.DefaultRegion, context.Config.DefaultDurationForMFA, context)
 		if err != nil {
 			context.Logger.Error(err.Error())
 			return false
 		}
 	}
 
-	session, err := createSession(context.Config.DefaultProfile, &context.Config.DefaultRegion, context.Logger)
+	session, err := mysession.CreateSession(context, context.Config.DefaultProfile, &context.Config.DefaultRegion)
 	if err != nil {
 		context.Logger.Error(err.Error())
 		return false
@@ -98,114 +90,6 @@ func estimateCosts(session *session.Session, template *string, logger *logger.Lo
 	}
 
 	logger.Info("Costs estimation: " + *output.Url)
-}
-
-func createSession(profile string, region *string, logger *logger.Logger) (*session.Session, error) {
-	logger.Info("Profile: " + profile)
-	logger.Info("Region: " + *region)
-
-	session, err := session.NewSessionWithOptions(
-		session.Options{
-			Config: aws.Config{
-				Region: region,
-			},
-			Profile: profile,
-		})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return session, nil
-}
-
-func updateSessionToken(profile string, region string, defaultDuration int64, logger *logger.Logger) error {
-	user, err := user.Current()
-	if err != nil {
-		return err
-	}
-
-	credentialsFilePath := user.HomeDir + "/.aws/credentials"
-	configuration, err := ini.Load(credentialsFilePath)
-	if err != nil {
-		return err
-	}
-
-	section, err := configuration.GetSection(profile)
-	if err != nil {
-		section, err = configuration.NewSection(profile)
-		if err != nil {
-			return err
-		}
-	}
-
-	profileLongTerm := profile + "-long-term"
-	sectionLongTerm, err := configuration.GetSection(profileLongTerm)
-	if err != nil {
-		return err
-	}
-
-	sessionToken := section.Key("aws_session_token")
-	expiration := section.Key("expiration")
-
-	expirationDate, err := time.Parse(dateFormat, section.Key("expiration").Value())
-	if err == nil {
-		logger.Info("Session token will expire in " +
-			utilities.TruncateDuration(time.Since(expirationDate)).String() + " (" + expirationDate.Format(dateFormat) + ")")
-	}
-
-	mfaDevice := sectionLongTerm.Key("mfa_serial").Value()
-	if mfaDevice == "" {
-		return errors.New("There is no mfa_serial for the profile " + profileLongTerm)
-	}
-
-	if sessionToken.Value() == "" || expiration.Value() == "" || time.Since(expirationDate).Nanoseconds() > 0 {
-		session, err := session.NewSessionWithOptions(
-			session.Options{
-				Config: aws.Config{
-					Region: &region,
-				},
-				Profile: profileLongTerm,
-			})
-		if err != nil {
-			return err
-		}
-
-		var tokenCode string
-		err = logger.GetInput("MFA token code", &tokenCode)
-		if err != nil {
-			return err
-		}
-
-		var duration int64
-		if defaultDuration == 0 {
-			err = logger.GetInput("Duration", &duration)
-			if err != nil {
-				return err
-			}
-		} else {
-			duration = defaultDuration
-		}
-
-		stsSession := sts.New(session)
-		newToken, err := stsSession.GetSessionToken(&sts.GetSessionTokenInput{
-			DurationSeconds: &duration,
-			SerialNumber:    aws.String(mfaDevice),
-			TokenCode:       &tokenCode,
-		})
-		if err != nil {
-			return err
-		}
-
-		section.Key("aws_access_key_id").SetValue(*newToken.Credentials.AccessKeyId)
-		section.Key("aws_secret_access_key").SetValue(*newToken.Credentials.SecretAccessKey)
-		sessionToken.SetValue(*newToken.Credentials.SessionToken)
-		section.Key("expiration").SetValue(newToken.Credentials.Expiration.Format(dateFormat))
-
-		configuration.SaveTo(credentialsFilePath)
-	}
-
-	return nil
 }
 
 func printResult(valid *bool, logger *logger.Logger) {
