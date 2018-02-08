@@ -6,5 +6,5 @@ go:
 install: make config-install get-deps
 
 script:
-  - make test
   - make code-analysis
+  - make test
