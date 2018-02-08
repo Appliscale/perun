@@ -149,10 +149,14 @@ Before you create stack you should validate it with perun :wink:.
 ## Maintainers
 
 - [Piotr Figwer](https://github.com/pfigwer)
+- [Sylwia Gargula](https://github.com/SylwiaGargula)
 - [Wojciech Gawroński](https://github.com/afronski)
-- [Kacper Patro](https://github.com/morfeush22)
-- [Paweł Pikuła](https://github.com/ppikula)
+- [Jakub Lamparski](https://github.com/jlampar)
 
 ## Contributors
 
-- *Here is a place for you!*
+- [Aleksander Mamla](https://github.com/amamla)
+- [Kacper Patro](https://github.com/morfeush22)
+- [Paweł Pikuła](https://github.com/ppikula)
+- [Michał Połcik](https://github.com/mwpolcik)
+- [Maksymilian Wojczuk](https://github.com/maxiwoj)
