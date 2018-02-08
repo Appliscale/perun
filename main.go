@@ -26,7 +26,6 @@ import (
 	"github.com/Appliscale/perun/offlinevalidator"
 	"github.com/Appliscale/perun/onlinevalidator"
 	"github.com/Appliscale/perun/stack"
-	"github.com/Appliscale/perun/utilities"
 	"os"
 )
 
@@ -34,11 +33,6 @@ func main() {
 	context, err := context.GetContext(cliparser.ParseCliArguments, configuration.GetConfiguration)
 	if err != nil {
 		os.Exit(1)
-	}
-
-	if *context.CliArguments.Version {
-		context.Logger.Always(utilities.VersionStatus())
-		os.Exit(0)
 	}
 
 	if *context.CliArguments.Mode == cliparser.ValidateMode {
@@ -74,12 +68,12 @@ func main() {
 		os.Exit(0)
 	}
 
-	if *context.CliArguments.Mode == cliparser.CreateStack {
+	if *context.CliArguments.Mode == cliparser.CreateStackMode {
 		stack.NewStack(&context)
 		os.Exit(0)
 	}
 
-	if *context.CliArguments.Mode == cliparser.DestroyStack {
+	if *context.CliArguments.Mode == cliparser.DestroyStackMode {
 		stack.DestroyStack(&context)
 		os.Exit(0)
 	}
