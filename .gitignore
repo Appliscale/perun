@@ -1,5 +1,6 @@
 # IDE or editor specific files:
 .idea
+*.iml
 
 # Binaries for programs and plug-ins:
 perun
