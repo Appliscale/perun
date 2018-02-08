@@ -17,7 +17,7 @@
 package parsers
 
 import (
-	"github.com/amamla/jsonparser"
+	"github.com/Appliscale/jsonparser"
 	"github.com/Appliscale/perun/offlinevalidator/template"
 	"strconv"
 )
