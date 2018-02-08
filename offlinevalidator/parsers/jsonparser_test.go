@@ -17,13 +17,13 @@
 package parsers
 
 import (
-	"testing"
-	"os"
-	"io/ioutil"
-	template "github.com/Appliscale/perun/offlinevalidator/template"
-	"strings"
-	"github.com/stretchr/testify/assert"
 	"fmt"
+	template "github.com/Appliscale/perun/offlinevalidator/template"
+	"github.com/stretchr/testify/assert"
+	"io/ioutil"
+	"os"
+	"strings"
+	"testing"
 )
 
 func TestMain(m *testing.M) {
@@ -35,7 +35,7 @@ func TestJsonParser(t *testing.T) {
 	fileName := "test_resources/sample_template.json"
 	fileContents, err := ioutil.ReadFile(fileName)
 	if err != nil {
-		t.Fatal("Error while loading file: " + fileName, err)
+		t.Fatal("Error while loading file: "+fileName, err)
 	}
 	tmpl := template.TemplateWithDetails{}
 	err = ParseJson(fileContents, &tmpl)

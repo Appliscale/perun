@@ -17,27 +17,28 @@
 package template
 
 type TemplateWithDetails struct {
-	AWSTemplateFormatVersion	*TemplateElement
-	Description					*TemplateElement
-	Metadata					*TemplateElement
-	Parameters					*TemplateElement
-	Mappings					*TemplateElement
-	Conditions					*TemplateElement
-	Transform					*TemplateElement
-	Resources					*TemplateElement
-	Outputs						*TemplateElement
+	AWSTemplateFormatVersion *TemplateElement
+	Description              *TemplateElement
+	Metadata                 *TemplateElement
+	Parameters               *TemplateElement
+	Mappings                 *TemplateElement
+	Conditions               *TemplateElement
+	Transform                *TemplateElement
+	Resources                *TemplateElement
+	Outputs                  *TemplateElement
 }
 
 type TemplateElement struct {
-	Name		string
-	Value		interface{}
-	Type		TemplateElementValueType
-	Children	interface{}
-	Line		int
-	Column		int
+	Name     string
+	Value    interface{}
+	Type     TemplateElementValueType
+	Children interface{}
+	Line     int
+	Column   int
 }
 
 type TemplateElementValueType int
+
 const (
 	NotExist = TemplateElementValueType(iota)
 	String
@@ -57,26 +58,26 @@ func (te *TemplateElement) GetChildrenSlice() []*TemplateElement {
 	return *te.Children.(*[]*TemplateElement)
 }
 
-func (te *TemplateElement) Traverse(iterator func (element *TemplateElement, parent *TemplateElement, depth int)) {
+func (te *TemplateElement) Traverse(iterator func(element *TemplateElement, parent *TemplateElement, depth int)) {
 	if te != nil {
 		te.traverse(iterator, nil, 0)
 	}
 }
 
-func (te *TemplateElement) traverse(iterator func (element *TemplateElement, parent *TemplateElement, depth int), parent *TemplateElement, depth int) {
+func (te *TemplateElement) traverse(iterator func(element *TemplateElement, parent *TemplateElement, depth int), parent *TemplateElement, depth int) {
 	iterator(te, parent, depth)
 	if te.Type == Object {
 		for _, v := range te.GetChildrenMap() {
-			v.traverse(iterator, te, depth +1)
+			v.traverse(iterator, te, depth+1)
 		}
 	} else if te.Type == Array {
 		for _, v := range te.GetChildrenSlice() {
-			v.traverse(iterator, te, depth +1)
+			v.traverse(iterator, te, depth+1)
 		}
 	}
 }
 
-func (twd TemplateWithDetails) Traverse(iterator func (element *TemplateElement, parent *TemplateElement, depth int)) {
+func (twd TemplateWithDetails) Traverse(iterator func(element *TemplateElement, parent *TemplateElement, depth int)) {
 	twd.AWSTemplateFormatVersion.Traverse(iterator)
 	twd.Description.Traverse(iterator)
 	twd.Metadata.Traverse(iterator)

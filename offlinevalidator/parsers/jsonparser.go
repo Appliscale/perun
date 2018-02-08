@@ -22,21 +22,21 @@ import (
 	"strconv"
 )
 
-func ParseJson(fileContents []byte, tmpl *template.TemplateWithDetails) (error) {
+func ParseJson(fileContents []byte, tmpl *template.TemplateWithDetails) error {
 	elements, err := parse(fileContents)
 	if err != nil {
 		return err
 	}
 	*tmpl = template.TemplateWithDetails{
-		AWSTemplateFormatVersion:	elements["AWSTemplateFormatVersion"],
-		Description:				elements["Description"],
-		Metadata:					elements["Metadata"],
-		Parameters:					elements["Parameters"],
-		Mappings:					elements["Mappings"],
-		Conditions:					elements["Conditions"],
-		Transform:					elements["Transform"],
-		Resources:					elements["Resources"],
-		Outputs:					elements["Outputs"]}
+		AWSTemplateFormatVersion: elements["AWSTemplateFormatVersion"],
+		Description:              elements["Description"],
+		Metadata:                 elements["Metadata"],
+		Parameters:               elements["Parameters"],
+		Mappings:                 elements["Mappings"],
+		Conditions:               elements["Conditions"],
+		Transform:                elements["Transform"],
+		Resources:                elements["Resources"],
+		Outputs:                  elements["Outputs"]}
 	return nil
 }
 
@@ -53,20 +53,20 @@ func nestedJsonObjectIterator(fileContents string, offset int, parentChildrenMap
 	var iterator func(key []byte, value []byte, dataType jsonparser.ValueType, startOffset int, endOffset int, valueStartOffset int) error
 
 	iterator = func(key []byte, value []byte, dataType jsonparser.ValueType, startOffset int, endOffset int, valueStartOffset int) error {
-		line, character := lineAndCharacter(fileContents, startOffset + offset)
+		line, character := lineAndCharacter(fileContents, startOffset+offset)
 		element := &template.TemplateElement{
-			Name: string(key),
-			Line: line,
+			Name:   string(key),
+			Line:   line,
 			Column: character,
-			Type: translateElementType(dataType)}
+			Type:   translateElementType(dataType)}
 		parentChildrenMap[element.Name] = element
 		if dataType == jsonparser.Object {
 			elementChildrenMap := make(map[string]*template.TemplateElement)
 			element.Children = elementChildrenMap
-			return jsonparser.ObjectEach(value, nestedJsonObjectIterator(fileContents, offset + valueStartOffset, elementChildrenMap))
+			return jsonparser.ObjectEach(value, nestedJsonObjectIterator(fileContents, offset+valueStartOffset, elementChildrenMap))
 		} else if dataType == jsonparser.Array {
 			elementChildrenArray := make([]*template.TemplateElement, 0)
-			_, err := jsonparser.ArrayEach(value, nestedJsonArrayIterator(fileContents, offset + valueStartOffset, &elementChildrenArray))
+			_, err := jsonparser.ArrayEach(value, nestedJsonArrayIterator(fileContents, offset+valueStartOffset, &elementChildrenArray))
 			element.Children = &elementChildrenArray
 			return err
 		} else {
@@ -80,21 +80,21 @@ func nestedJsonObjectIterator(fileContents string, offset int, parentChildrenMap
 
 func nestedJsonArrayIterator(fileContents string, offset int, parentChildrenArray *[]*template.TemplateElement) func(value []byte, dataType jsonparser.ValueType, startOffset int, endOffset int, err error) {
 	var iterator func(value []byte, dataType jsonparser.ValueType, startOffset int, endOffset int, err error)
-	iterator = func(value []byte, dataType jsonparser.ValueType, startOffset int, endOffset int, err error)  {
+	iterator = func(value []byte, dataType jsonparser.ValueType, startOffset int, endOffset int, err error) {
 		line, character := lineAndCharacter(string(fileContents), startOffset+offset)
 		element := &template.TemplateElement{
-			Name: "[" + strconv.Itoa(len(*parentChildrenArray)) + "]",
-			Line: line,
+			Name:   "[" + strconv.Itoa(len(*parentChildrenArray)) + "]",
+			Line:   line,
 			Column: character,
-			Type: translateElementType(dataType)}
+			Type:   translateElementType(dataType)}
 		*parentChildrenArray = append(*parentChildrenArray, element)
 		if dataType == jsonparser.Object {
 			elementChildrenMap := make(map[string]*template.TemplateElement)
 			element.Children = elementChildrenMap
-			jsonparser.ObjectEach(value, nestedJsonObjectIterator(fileContents, offset + startOffset, elementChildrenMap))
+			jsonparser.ObjectEach(value, nestedJsonObjectIterator(fileContents, offset+startOffset, elementChildrenMap))
 		} else if dataType == jsonparser.Array {
 			elementChildrenArray := make([]*template.TemplateElement, 1)
-			jsonparser.ArrayEach(value, nestedJsonArrayIterator(fileContents, offset + startOffset, &elementChildrenArray))
+			jsonparser.ArrayEach(value, nestedJsonArrayIterator(fileContents, offset+startOffset, &elementChildrenArray))
 			element.Children = &elementChildrenArray
 		} else {
 			element.Value = parsePrimitiveValue(value, dataType)
