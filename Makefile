@@ -1,5 +1,3 @@
-TEST?=./...
-
 .PHONY: config-install get-deps code-analysis test all
 
 all: get-deps code-analysis test
@@ -15,7 +13,7 @@ get-deps:
 	go fmt ./...
 
 code-analysis: get-deps
-	go tool vet -v .
+	go vet -v ./...
 
 test: get-deps
-	go test -v -cover $(TEST)
+	go test -v -cover ./...
