@@ -75,10 +75,20 @@ To create new stack you have to type:
 ~ $ perun create-stack <PATH TO YOUR TEMPLATE> <NAME OF YOUR STACK>
 ```
 
+or 
+
+```bash
+~ $ perun create-stack --template=<TEMPLATE> --stack=<NAME OF YOUR STACK>```
+
 To destroy stack just type:
 
 ```bash
 ~ $ perun delete-stack <NAME OF YOUR STACK>
+```
+
+or 
+```bash
+~ $ perun delete-stack --stack=<NAME OF YOUR STACK>
 ```
 
 You can use option ``--progress`` to show the stack creation/deletion progress in the console, but

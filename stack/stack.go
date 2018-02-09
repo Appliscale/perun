@@ -2,13 +2,14 @@ package stack
 
 import (
 	"encoding/json"
+	"io/ioutil"
+
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/mysession"
 	"github.com/Appliscale/perun/parameters"
 	"github.com/Appliscale/perun/progress"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
-	"io/ioutil"
 )
 
 // This function gets template and  name of stack. It creates "CreateStackInput" structure.
