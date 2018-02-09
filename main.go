@@ -25,6 +25,7 @@ import (
 	"github.com/Appliscale/perun/converter"
 	"github.com/Appliscale/perun/offlinevalidator"
 	"github.com/Appliscale/perun/onlinevalidator"
+	"github.com/Appliscale/perun/progress"
 	"github.com/Appliscale/perun/stack"
 	"os"
 )
@@ -75,6 +76,16 @@ func main() {
 
 	if *context.CliArguments.Mode == cliparser.DestroyStackMode {
 		stack.DestroyStack(&context)
+		os.Exit(0)
+	}
+
+	if *context.CliArguments.Mode == cliparser.SetupSinkMode {
+		progress.ConfigureRemoteSink(&context)
+		os.Exit(0)
+	}
+
+	if *context.CliArguments.Mode == cliparser.DestroySinkMode {
+		progress.DestroyRemoteSink(&context)
 		os.Exit(0)
 	}
 }
