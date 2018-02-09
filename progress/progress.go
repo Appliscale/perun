@@ -3,15 +3,16 @@ package progress
 import (
 	"encoding/json"
 	"errors"
+	"os/user"
+	"strings"
+	"time"
+
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/mysession"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/olekukonko/tablewriter"
-	"os/user"
-	"strings"
-	"time"
 )
 
 type Connection struct {
@@ -64,7 +65,7 @@ func ConfigureRemoteSink(context *context.Context) (err error) {
 
 		if err == nil {
 			context.Logger.Info("Remote sink configuration successful")
-			context.Logger.Warning("It's configuration may take up to a minute, wait before calling 'create-stack' with flag --progress")
+			context.Logger.Info("It's configuration may take up to a minute, wait before calling 'create-stack' with flag --progress")
 		}
 		return
 	}
