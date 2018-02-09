@@ -34,6 +34,11 @@ var CreateStackMode = "create-stack"
 var DestroyStackMode = "delete-stack"
 var UpdateStackMode = "update-stack"
 var MfaMode = "mfa"
+var SetupSinkMode = "setup-remote-sink"
+var DestroySinkMode = "destroy-remote-sink"
+
+const JSON = "json"
+const YAML = "yaml"
 
 type CliArguments struct {
 	Mode              *string
@@ -51,6 +56,7 @@ type CliArguments struct {
 	Stack             *string
 	Capabilities      *[]string
 	PrettyPrint       *bool
+	Progress          *bool
 }
 
 // Get and validate CLI arguments. Returns error if validation fails.
@@ -67,6 +73,7 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		region            = app.Flag("region", "An AWS region to use.").Short('r').String()
 		sandbox           = app.Flag("sandbox", "Do not use configuration files hierarchy.").Bool()
 		configurationPath = app.Flag("config", "A path to the configuration file").Short('c').String()
+		showProgress      = app.Flag("progress", "Show progress of stack creation. Option available only after setting up a remote sink").Bool()
 
 		onlineValidate         = app.Command(ValidateMode, "Online template Validation")
 		onlineValidateTemplate = onlineValidate.Arg("template", "A path to the template file.").Required().String()
@@ -97,6 +104,10 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		updateStackCapabilities = updateStack.Flag("capabilities", "Capabilities: CAPABILITY_IAM | CAPABILITY_NAMED_IAM").Enums("CAPABILITY_IAM", "CAPABILITY_NAMED_IAM")
 
 		mfaCommand = app.Command(MfaMode, "Create temporary secure credentials with MFA.")
+
+		setupSink = app.Command(SetupSinkMode, "Sets up resources required for progress report on stack events (SNS Topic, SQS Queue and SQS Queue Policy)")
+
+		destroySink = app.Command(DestroySinkMode, "Destroys resources created with setup-remote-sink")
 	)
 
 	app.HelpFlag.Short('h')
@@ -128,9 +139,9 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		// create Stack
 	case createStack.FullCommand():
 		cliArguments.Mode = &CreateStackMode
-		cliArguments.TemplatePath = createStackTemplate
 		cliArguments.Stack = createStackName
 		cliArguments.Capabilities = createStackCapabilities
+		cliArguments.TemplatePath = createStackTemplate
 
 		// delete Stack
 	case deleteStack.FullCommand():
@@ -158,6 +169,14 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 			err = errors.New("You have to specify stack name and template file, try --help")
 			return
 		}
+
+		// set up remote sink
+	case setupSink.FullCommand():
+		cliArguments.Mode = &SetupSinkMode
+
+		// destroy remote sink
+	case destroySink.FullCommand():
+		cliArguments.Mode = &DestroySinkMode
 	}
 
 	// OTHER FLAGS
@@ -170,6 +189,7 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 	cliArguments.Region = region
 	cliArguments.Sandbox = sandbox
 	cliArguments.ConfigurationPath = configurationPath
+	cliArguments.Progress = showProgress
 
 	if *cliArguments.DurationForMFA < 0 {
 		err = errors.New("You should specify value for duration of MFA token greater than zero")

@@ -3,10 +3,13 @@ package stack
 import (
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/mysession"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/cloudformation"
+	//"github.com/Appliscale/perun/notificationservice"
 	"io/ioutil"
 	"os"
+
+	"github.com/Appliscale/perun/progress"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/cloudformation"
 )
 
 // This function gets template and  name of stack. It creates "CreateStackInput" structure.
@@ -56,32 +59,55 @@ func getTemplateFromFile(context *context.Context) (string, string) {
 }
 
 // This function uses CreateStackInput variable to create Stack.
-func createStack(templateStruct cloudformation.CreateStackInput, session *session.Session) (err error) {
+func createStack(context *context.Context, templateStruct cloudformation.CreateStackInput, session *session.Session) {
 	api := cloudformation.New(session)
-	_, err = api.CreateStack(&templateStruct)
-	return
+	_, err := api.CreateStack(&templateStruct)
+	if err != nil {
+		context.Logger.Error("Error creating stack: " + err.Error())
+	}
 }
 
 // This function uses all functions above and session to create Stack.
 func NewStack(context *context.Context) {
 	template, stackName := getTemplateFromFile(context)
+
 	templateStruct := createStackInput(context, &template, &stackName)
-	session := mysession.InitializeSession(context)
-	createStackError := createStack(templateStruct, session)
-	if createStackError != nil {
-		context.Logger.Error(createStackError.Error())
+	currentSession := mysession.InitializeSession(context)
+
+	if *context.CliArguments.Progress {
+		conn, err := progress.GetRemoteSink(context, currentSession)
+		if err != nil {
+			context.Logger.Error("Error getting remote sink configuration: " + err.Error())
+			return
+		}
+		templateStruct.NotificationARNs = []*string{conn.TopicArn}
+		createStack(context, templateStruct, currentSession)
+		conn.MonitorQueue()
+	} else {
+		createStack(context, templateStruct, currentSession)
 	}
 }
 
 // This function bases on "DeleteStackInput" structure and destroys stack. It uses "StackName" to choose which stack will be destroy. Before that it creates session.
 func DestroyStack(context *context.Context) {
 	delStackInput := deleteStackInput(context)
-	session := mysession.InitializeSession(context)
-	api := cloudformation.New(session)
-	_, err := api.DeleteStack(&delStackInput)
+	currentSession := mysession.InitializeSession(context)
+	api := cloudformation.New(currentSession)
+
+	var err error = nil
+	if *context.CliArguments.Progress {
+		conn, err := progress.GetRemoteSink(context, currentSession)
+		if err != nil {
+			context.Logger.Error("Error getting remote sink configuration: " + err.Error())
+			return
+		}
+		_, err = api.DeleteStack(&delStackInput)
+		conn.MonitorQueue()
+	} else {
+		_, err = api.DeleteStack(&delStackInput)
+	}
 	if err != nil {
 		context.Logger.Error(err.Error())
-		os.Exit(1)
 	}
 }
 
