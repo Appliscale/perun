@@ -38,6 +38,7 @@ With first command a default configuration file (`defaults/main.yaml`) will be c
 
 ### Commands
 
+#### Validation
 To validate your template with AWS API (*online validation*), just type:
 
 ```bash
@@ -50,6 +51,7 @@ To validate your template offline (*well*, almost offline :wink: - *AWS CloudFor
 ~ $ perun validate_offline <PATH TO YOUR TEMPLATE>
 ```
 
+#### Conversion
 To convert your template between JSON and YAML formats you have to type:
 
 ```bash
@@ -58,6 +60,7 @@ To convert your template between JSON and YAML formats you have to type:
            <PATH FOR A CONVERTED FILE, INCLUDING FILE NAME>
            <JSON or YAML>
 ```
+#### Configuration
 To create your own configuration file use `configure` mode:
 
 ```bash
@@ -65,18 +68,45 @@ To create your own configuration file use `configure` mode:
 ```
 Then type path and name of new configuration file.
 
+#### Stack Creation
 To create new stack you have to type:
 
-``~ $ perun --mode=create-stack
-             --template=<PATH TO YOUR TEMPLATE>
-             --stack=<NAME OF YOUR STACK>
-``
+```bash
+~ $ perun create-stack <PATH TO YOUR TEMPLATE> <NAME OF YOUR STACK>
+```
 
 To destroy stack just type:
 
-``~ $ perun --mode=delete-stack
-             --stack=<NAME OF YOUR STACK>
-``
+```bash
+~ $ perun delete-stack <NAME OF YOUR STACK>
+```
+
+You can use option ``--progress`` to show the stack creation/deletion progress in the console, but
+note, that this requires setting up a remote sink.
+
+##### Remote sink
+
+To setup remote sink type:
+
+```bash
+~ $ perun setup-remote-sink
+```
+
+This will create an sns topic and sqs queue with permissions for the sns topic to publish on the sqs
+queue. Using above services may produce some cost: 
+According to the AWS SQS and SNS pricing:
+- SNS:
+  - notifications to the SQS queue are free
+- SQS:
+  - The first 1 million monthly requests are free.
+  - After that: 0.40$ per million requests after Free Tier (Monthly)
+  - Typical stack creation uses around a hundred requests
+  
+To destroy remote sink just type:
+
+```bash
+~ $ perun destroy-remote-sink
+``` 
 
 ### Configuration file
 
