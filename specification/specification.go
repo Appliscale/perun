@@ -20,13 +20,14 @@ package specification
 
 import (
 	"encoding/json"
-	"github.com/Appliscale/perun/context"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"os/user"
 	"strings"
+
+	"github.com/Appliscale/perun/context"
 )
 
 type Specification struct {
@@ -62,6 +63,14 @@ type Attribute struct {
 	PrimitiveItemType string
 	PrimitiveType     string
 	Type              string
+}
+
+// IsSubproperty : Checks if it is subproperty
+func (property *Property) IsSubproperty() bool {
+	if property.Type != "List" && property.Type != "Map" && len(property.Type) > 0 {
+		return true
+	}
+	return false
 }
 
 // Download specification for region specified in config.

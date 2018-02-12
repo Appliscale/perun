@@ -1,9 +1,246 @@
 {
+  "PropertyTypes": {
+    "AWS::Nested1::Cluster.JobFlowInstancesConfig": {
+      "Properties": {
+        "CoreInstanceGroup": {
+          "Type": "InstanceGroupConfig",
+          "Required": true
+        }
+      }
+    },
+    "AWS::Nested1::Cluster.InstanceGroupConfig": {
+      "Properties": {
+        "AutoScalingPolicy": {
+          "PrimitiveType": "String",
+          "Required": true
+        },
+        "BidPrice": {
+          "PrimitiveType": "String",
+          "Required": true
+        }
+      }
+    },
+    "AWS::Nested2::RestApi.S3Location": {
+      "Properties": {
+        "Bucket": {
+          "PrimitiveType": "String",
+          "Required": true
+        },
+        "ETag": {
+          "PrimitiveType": "String",
+          "Required": false
+        }
+      }
+    },
+    "AWS::Nested3::Cluster.SomeProperty": {
+      "Properties": {
+        "Ec2KeyName": {
+          "PrimitiveType": "String",
+          "Required": true
+        }
+      }
+    },
+    "AWS::Nested4::Method.MethodDefinition": {
+      "Properties":{
+        "Location": {
+          "Required": false,
+          "Type": "Location"
+        }
+      }
+    },
+    "AWS::Nested4::Method.Location": {
+      "Properties":{
+       "S3": {
+         "PrimitiveType": "S3",
+         "Required": false
+       }
+      }
+    },
+    "AWS::Nested4::Method.S3": {
+      "Properties":{
+       "BucketName": {
+         "PrimitiveType": "String",
+         "Required": true
+       }
+      }
+    },
+    "AWS::List1::Cluster.BootstrapActionConfig" :{
+      "Properties":{
+        "Name": {
+          "PrimitiveType": "String",
+          "Required": true
+        }
+      }
+    },
+    "AWS::List2::Bucket.WebsiteConfiguration" :{
+      "Properties" :{
+        "RoutingRules": {
+            "ItemType": "RoutingRule",
+            "Required": true,
+            "Type": "List"
+        }
+      }
+    },
+    "AWS::List2::Bucket.RoutingRule": {
+      "Properties": {
+        "RedirectRule": {
+          "Required": true,
+          "Type": "RedirectRule"
+        }
+      }
+    },
+    "AWS::List2::Bucket.RedirectRule": {
+      "Properties": {
+        "HostName": {
+          "PrimitiveType": "String",
+          "Required": true
+        },
+        "HttpRedirectCode": {
+          "PrimitiveType": "String",
+          "Required": true
+        }
+      }
+    },
+    "AWS::List3::Bucket.LifecycleConfiguration":{
+      "Properties": {
+        "Rules": {
+          "ItemType": "Rule",
+          "Required": true,
+          "Type": "List"
+        }
+      }
+    },
+    "AWS::List3::Bucket.Rule":{
+      "Properties": {
+        "Transition": {
+          "Required": false,
+          "Type": "Transition"
+        },
+        "Id": {
+          "PrimitiveType": "String",
+          "Required": false
+        }
+      }
+    },
+    "AWS::List3::Bucket.Transition": {
+      "Properties": {
+        "StorageClass": {
+          "PrimitiveType": "String",
+          "Required": true
+        },
+        "TransitionInDays": {
+          "PrimitiveType": "Integer",
+          "Required": false
+        }
+      }
+    },
+    "AWS::Map1::Association.ParameterValues":{
+      "Properties": {
+        "ParameterValues": {
+          "PrimitiveItemType": "String",
+          "Required": true,
+          "Type": "List"
+        }
+      }
+    },
+    "AWS::Map2::Thing.AttributePayload": {
+      "Properties": {
+        "Attributes": {
+          "PrimitiveItemType": "String",
+          "Required": false,
+          "Type": "Map"
+        }
+      }
+    }
+  },
   "ResourceTypes": {
     "ExampleResourceType": {
       "Properties": {
         "ExampleProperty": {
           "Required": true
+        }
+      }
+    },
+    "AWS::Nested1::Cluster": {
+      "Properties": {
+        "Instances": {
+          "Required": true,
+          "Type": "JobFlowInstancesConfig"
+        }
+      }
+    },
+    "AWS::Nested2::RestApi": {
+      "Properties": {
+        "BodyS3Location": {
+          "Required": false,
+          "Type": "S3Location"
+        }
+      }
+    },
+    "AWS::Nested3::Cluster": {
+      "Properties": {
+        "Instances": {
+          "Required": true,
+          "Type": "SomeProperty"
+        }
+      }
+    },
+    "AWS::Nested4::Method": {
+      "Properties": {
+        "Definition": {
+          "Required": true,
+          "Type": "MethodDefinition"
+        }
+      }
+    },
+    "AWS::List1::Cluster" :{
+      "Properties": {
+        "BootstrapActions": {
+          "ItemType": "BootstrapActionConfig",
+          "Required": true,
+          "Type": "List"
+        }
+      }
+    },
+    "AWS::List2::Bucket" :{
+      "Properties": {
+        "WebsiteConfiguration": {
+          "Required": true,
+          "Type": "WebsiteConfiguration"
+          }
+      }
+    },
+    "AWS::List3::Bucket" :{
+      "Properties": {
+        "LifecycleConfiguration": {
+          "Required": false,
+          "Type": "LifecycleConfiguration"
+        }
+      }
+    },
+    "AWS::List4::DBSubnetGroup":{
+      "Properties":{
+        "SubnetIds": {
+          "PrimitiveItemType": "String",
+          "Required": true,
+          "Type": "List"
+        }
+      }
+    },
+    "AWS::Map1::Association": {
+      "Properties":{
+        "Parameters": {
+          "ItemType": "ParameterValues",
+          "Required": false,
+          "Type": "Map"
+        }
+      }
+    },
+    "AWS::Map2::Thing": {
+      "Properties": {
+        "AttributePayload": {
+          "Required": false,
+          "Type": "AttributePayload"
         }
       }
     }

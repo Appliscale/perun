@@ -3,7 +3,7 @@
 ## MIT
 
 - https://github.com/alecthomas/kingpin
-  - Command-line parser. It is type-safe and allows to have short version of commands (e.g. `--mode`, `-m`).
+  - Command-line parser. It is type-safe and allows to have short version of commands (e.g. `--config`, `-c`).
 - https://github.com/ghodss/yaml
   - *Go* lacks of YAML support out of the box, so we need this one.
 - https://github.com/asaskevich/govalidator

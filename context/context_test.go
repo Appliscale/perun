@@ -27,7 +27,7 @@ import (
 )
 
 func parseCliArgumentsValidStub(cliArguments cliparser.CliArguments) cliArgumentsParser {
-	return func() (cliparser.CliArguments, error) {
+	return func(args []string) (cliparser.CliArguments, error) {
 		return cliArguments, nil
 	}
 }
@@ -38,7 +38,7 @@ func getConfigurationValidStub(config configuration.Configuration) configuration
 	}
 }
 
-func parseCliArgumentsErroneous() (cliparser.CliArguments, error) {
+func parseCliArgumentsErroneous(args []string) (cliparser.CliArguments, error) {
 	return cliparser.CliArguments{}, errors.New("")
 }
 

@@ -24,10 +24,15 @@ import (
 )
 
 type Logger struct {
-	Quiet            bool
-	Yes              bool
-	Verbosity        Verbosity
-	validationErrors []string
+	Quiet              bool
+	Yes                bool
+	Verbosity          Verbosity
+	resourceValidation []*ResourceValidation
+}
+
+type ResourceValidation struct {
+	ResourceName string
+	Errors       []string
 }
 
 type Verbosity int
@@ -94,8 +99,8 @@ func (logger *Logger) Trace(trace string) {
 }
 
 // Log validation error.
-func (logger *Logger) ValidationError(elementName string, error string) {
-	logger.validationErrors = append(logger.validationErrors, "\""+elementName+"\" "+error)
+func (resourceValidation *ResourceValidation) AddValidationError(error string) {
+	resourceValidation.Errors = append(resourceValidation.Errors, error)
 }
 
 // Get input from command line.
@@ -117,10 +122,36 @@ func (logger *Logger) log(verbosity Verbosity, message string) {
 // Print validation error.
 func (logger *Logger) PrintValidationErrors() {
 	if !logger.Quiet {
-		for _, err := range logger.validationErrors {
-			fmt.Println(err)
+		for _, resourceValidation := range logger.resourceValidation {
+			if len(resourceValidation.Errors) != 0 {
+				fmt.Println(resourceValidation.ResourceName)
+				for _, err := range resourceValidation.Errors {
+					fmt.Println("        ", err)
+				}
+			} else {
+				fmt.Println(resourceValidation.ResourceName, " has no validation errors")
+			}
 		}
 	}
+}
+
+func (logger *Logger) HasValidationErrors() bool {
+	for _, resourceValidation := range logger.resourceValidation {
+		if len(resourceValidation.Errors) > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+// AddResourceForValidation : Adds resource for validation
+func (logger *Logger) AddResourceForValidation(resourceName string) *ResourceValidation {
+	resourceValidation := &ResourceValidation{
+		ResourceName: resourceName,
+	}
+	logger.resourceValidation = append(logger.resourceValidation, resourceValidation)
+
+	return resourceValidation
 }
 
 // Set logger verbosity.

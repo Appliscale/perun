@@ -1,0 +1,6 @@
+Key: !Equals
+  - "value_1"
+  - !FindInMap
+      - MapName
+      - TopLevelKey
+      - SecondLevelKey
