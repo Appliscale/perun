@@ -48,9 +48,9 @@ func Convert(context *context.Context) error {
 
 	if *context.CliArguments.OutputFileFormat == cliparser.JSON {
 		var outputTemplate []byte
-		if *context.CliArguments.PrettyPrint == false {
+		if *context.CliArguments.PrettyPrint == "" {
 			outputTemplate, err = yamlToJSON(rawTemplate)
-		} else if *context.CliArguments.PrettyPrint == true {
+		} else if *context.CliArguments.PrettyPrint == "pretty-print" {
 			outputTemplate, err = yamlToPrettyJSON(rawTemplate)
 		}
 		if err != nil {
