@@ -17,11 +17,12 @@
 package validators
 
 import (
+	"os"
+	"testing"
+
 	"github.com/Appliscale/perun/logger"
 	"github.com/Appliscale/perun/offlinevalidator/template"
 	"github.com/stretchr/testify/assert"
-	"os"
-	"testing"
 )
 
 var sink logger.Logger
@@ -38,12 +39,18 @@ func TestMain(m *testing.M) {
 
 func TestValidVpc(t *testing.T) {
 	vpc := createVpc("10.0.0.0/16")
-	assert.True(t, IsVpcValid("Example", vpc, &sink))
+	resourceValidation := logger.ResourceValidation{
+		ResourceName: "Example",
+	}
+	assert.True(t, IsVpcValid(vpc, &resourceValidation))
 }
 
 func TestInvalidVpc(t *testing.T) {
 	vpc := createVpc("10.0.0.0")
-	assert.False(t, IsVpcValid("Example", vpc, &sink))
+	resourceValidation := logger.ResourceValidation{
+		ResourceName: "Example",
+	}
+	assert.False(t, IsVpcValid(vpc, &resourceValidation))
 }
 
 func createVpc(cidrBlock string) template.Resource {
