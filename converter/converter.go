@@ -49,9 +49,9 @@ func Convert(context *context.Context) error {
 	if *context.CliArguments.OutputFileFormat == cliparser.JSON {
 		var outputTemplate []byte
 		if *context.CliArguments.PrettyPrint == false {
-			outputTemplate, err = toJSON(rawTemplate)
+			outputTemplate, err = yamlToJSON(rawTemplate)
 		} else if *context.CliArguments.PrettyPrint == true {
-			outputTemplate, err = prettyJSON(rawTemplate)
+			outputTemplate, err = yamlToPrettyJSON(rawTemplate)
 		}
 		if err != nil {
 			return err
@@ -76,7 +76,7 @@ func toYAML(jsonTemplate []byte) ([]byte, error) {
 	return yamlTemplate, error
 }
 
-func toJSON(yamlTemplate []byte) ([]byte, error) {
+func yamlToJSON(yamlTemplate []byte) ([]byte, error) {
 	jsonTemplate, error := yaml.YAMLToJSON(yamlTemplate)
 	if !govalidator.IsJSON(string(jsonTemplate)) {
 		return nil, errors.New("This is not a valid YAML file")
@@ -84,18 +84,16 @@ func toJSON(yamlTemplate []byte) ([]byte, error) {
 	return jsonTemplate, error
 }
 
-func prettyJSON(yamlTemplate []byte) ([]byte, error) {
-	var yamlObj interface{}
-	templateError := yaml.Unmarshal(yamlTemplate, &yamlObj)
-	if templateError != nil {
-		return nil, errors.New("Incorrect yaml")
-	}
-	jsonTemplate, indentError := json.MarshalIndent(yamlObj, "", "    ")
+func yamlToPrettyJSON(yamlTemplate []byte) ([]byte, error) {
+	var YAMLObj interface{}
+	templateError := yaml.Unmarshal(yamlTemplate, &YAMLObj)
+
+	jsonTemplate, templateError := json.MarshalIndent(YAMLObj, "", "    ")
 
 	if !govalidator.IsJSON(string(jsonTemplate)) {
 		return nil, errors.New("This is not a valid YAML file")
 	}
-	return jsonTemplate, indentError
+	return jsonTemplate, templateError
 
 }
 
