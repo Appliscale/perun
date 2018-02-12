@@ -21,7 +21,6 @@ package converter
 import (
 	"encoding/json"
 	"errors"
-	"github.com/Appliscale/perun/cliparser"
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/logger"
 	"github.com/asaskevich/govalidator"
@@ -37,17 +36,16 @@ func Convert(context *context.Context) error {
 	if err != nil {
 		return err
 	}
+	format := chooseformat(rawTemplate)
+	var outputTemplate []byte
 
-	if *context.CliArguments.OutputFileFormat == cliparser.YAML {
-		outputTemplate, err := toYAML(rawTemplate)
+	if format == "JSON" {
+		outputTemplate, err = toYAML(rawTemplate)
 		if err != nil {
 			return err
 		}
 		saveToFile(outputTemplate, *context.CliArguments.OutputFilePath, context.Logger)
-	}
-
-	if *context.CliArguments.OutputFileFormat == cliparser.JSON {
-		var outputTemplate []byte
+	} else if format == "YAML" {
 		if *context.CliArguments.PrettyPrint == false {
 			outputTemplate, err = yamlToJSON(rawTemplate)
 		} else if *context.CliArguments.PrettyPrint == true {
@@ -56,11 +54,13 @@ func Convert(context *context.Context) error {
 		if err != nil {
 			return err
 		}
-
-		err = saveToFile(outputTemplate, *context.CliArguments.OutputFilePath, context.Logger)
-		if err != nil {
-			return err
-		}
+	} else {
+		context.Logger.Always(format)
+		return nil
+	}
+	err = saveToFile(outputTemplate, *context.CliArguments.OutputFilePath, context.Logger)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -111,4 +111,17 @@ func saveToFile(template []byte, path string, logger *logger.Logger) error {
 	}
 
 	return nil
+}
+
+func chooseformat(rawTemplate []byte) (format string) {
+
+	_, errorYAML := toYAML(rawTemplate)
+	_, errorJSON := yamlToJSON(rawTemplate)
+
+	if errorYAML == nil {
+		return "JSON"
+	} else if errorJSON == nil {
+		return "YAML"
+	}
+	return "Invalid output file format. Use JSON or YAML"
 }
