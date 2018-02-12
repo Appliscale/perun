@@ -9,7 +9,7 @@ func elongateForms(line *string, lines *[]string, idx int, name string) {
 	var currentFunctions int
 	pLines := *lines
 	totalFunctions := strings.Count(*line, "!")
-	for (currentFunctions != totalFunctions+1) && !strings.Contains(*line, "#!/bin/bash") && strings.Contains(*line, "!") {
+	for (currentFunctions != totalFunctions+1) && !strings.Contains(*line, "#!") && strings.Contains(*line, "!") {
 		short := shortForm(name)
 		long := longForm(name)
 		full := fullForm(long)
