@@ -45,12 +45,44 @@ func TestIndentations(t *testing.T) {
 	assert.Equal(t, "K", firstLetter, "MSG")
 }
 
-func TestFixFunctions(t *testing.T) {
+func TestMultiline(t *testing.T) {
 	rawTemplate, _ := ioutil.ReadFile("./test_resources/test_map.yaml")
 	expectedTemplate, _ := ioutil.ReadFile("./test_resources/manual_test_map.yaml")
-	fixed, _ := FixFunctions(rawTemplate, &sink)
+	fixed, _ := FixFunctions(rawTemplate, &sink, "multiline")
 	expected, _ := parseFileIntoLines(expectedTemplate, &sink)
 	actual, _ := parseFileIntoLines(fixed, &sink)
+
+	if string(actual[len(actual)-1]) == "" {
+		actual = actual[:(len(actual) - 1)]
+	}
+
+	assert.Equal(t, expected, actual, "MSG")
+}
+
+func TestElongate(t *testing.T) {
+	rawTemplate, _ := ioutil.ReadFile("./test_resources/test_elongate.yaml")
+	expectedTemplate, _ := ioutil.ReadFile("./test_resources/manual_test_elongate.yaml")
+	fixed, _ := FixFunctions(rawTemplate, &sink, "elongate")
+	expected, _ := parseFileIntoLines(expectedTemplate, &sink)
+	actual, _ := parseFileIntoLines(fixed, &sink)
+
+	if string(actual[len(actual)-1]) == "" {
+		actual = actual[:(len(actual) - 1)]
+	}
+
+	assert.Equal(t, expected, actual, "MSG")
+}
+
+func TestCorrectLong(t *testing.T) {
+	rawTemplate, _ := ioutil.ReadFile("./test_resources/manual_test_elongate.yaml")
+	expectedTemplate, _ := ioutil.ReadFile("./test_resources/manual_test_correctlong.yaml")
+	fixed, _ := FixFunctions(rawTemplate, &sink, "correctlong")
+	expected, _ := parseFileIntoLines(expectedTemplate, &sink)
+	actual, _ := parseFileIntoLines(fixed, &sink)
+
+	if string(actual[len(actual)-1]) == "" {
+		actual = actual[:(len(actual) - 1)]
+	}
 
 	assert.Equal(t, expected, actual, "MSG")
 }

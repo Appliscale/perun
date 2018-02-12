@@ -21,13 +21,15 @@ package converter
 import (
 	"encoding/json"
 	"errors"
+	"io/ioutil"
+	"os"
+
 	"github.com/Appliscale/perun/cliparser"
 	"github.com/Appliscale/perun/context"
+	"github.com/Appliscale/perun/intrinsicsolver"
 	"github.com/Appliscale/perun/logger"
 	"github.com/asaskevich/govalidator"
 	"github.com/ghodss/yaml"
-	"io/ioutil"
-	"os"
 )
 
 // Read template from the file, convert it and check if it has valid structure.
@@ -39,7 +41,14 @@ func Convert(context *context.Context) error {
 	}
 
 	if *context.CliArguments.OutputFileFormat == cliparser.YAML {
-		outputTemplate, err := toYAML(rawTemplate)
+		if !govalidator.IsJSON(string(rawTemplate)) {
+			return errors.New("This is not a valid YAML file")
+		}
+		preprocessed, preprocessingError := intrinsicsolver.FixFunctions(rawTemplate, context.Logger, "multiline", "elongate", "correctlong")
+		if preprocessingError != nil {
+			context.Logger.Error(preprocessingError.Error())
+		}
+		outputTemplate, err := yamlToJSON(preprocessed)
 		if err != nil {
 			return err
 		}
@@ -78,9 +87,6 @@ func toYAML(jsonTemplate []byte) ([]byte, error) {
 
 func yamlToJSON(yamlTemplate []byte) ([]byte, error) {
 	jsonTemplate, error := yaml.YAMLToJSON(yamlTemplate)
-	if !govalidator.IsJSON(string(jsonTemplate)) {
-		return nil, errors.New("This is not a valid YAML file")
-	}
 	return jsonTemplate, error
 }
 
