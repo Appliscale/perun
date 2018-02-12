@@ -51,7 +51,7 @@ type CliArguments struct {
 	Region            *string
 	Sandbox           *bool
 	Stack             *string
-	PrettyPrint       *string
+	PrettyPrint       *bool
 }
 
 func availableFormats() []string {
@@ -83,7 +83,7 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		convertTemplate     = convert.Arg("template", "A path to the template file.").Required().String()
 		convertOutputFile   = convert.Arg("output", "A path where converted file will be saved.").Required().String()
 		convertOutputFormat = convert.Arg("format", "Output format: "+strings.ToUpper(JSON)+" | "+strings.ToUpper(YAML)+".").HintAction(availableFormats).Required().String()
-		prettyPrint         = convert.Arg("pretty-print", "Pretty printing JSON").String()
+		prettyPrint         = convert.Flag("pretty-print", "Pretty printing JSON").Bool()
 
 		configure = app.Command(ConfigureMode, "Create your own configuration mode")
 
