@@ -11,6 +11,9 @@ import (
 	"github.com/Appliscale/perun/logger"
 )
 
+var functions = []string{"Base64", "GetAtt", "GetAZs", "ImportValue", "Ref", "FindInMap", "Join", "Select", "Split", "Sub", "And", "Equals", "If", "Not", "Or"}
+var mapNature = functions[5:]
+
 /*
 FixFunctions : takes []byte file and firstly converts all single quotation marks to double ones (anything between single ones is treated as the rune in GoLang),
 then deconstructs file into lines, checks for intrinsic functions. The FixFunctions has modes: `multiline`, `elongate` and `correctlong`.
@@ -43,12 +46,10 @@ func FixFunctions(template []byte, logger *logger.Logger, mode ...string) ([]byt
 
 	lines := quotationProcessed
 
-	var functions = []string{"Base64", "GetAtt", "GetAZs", "ImportValue", "Ref", "FindInMap", "Join", "Select", "Split", "Sub", "And", "Equals", "If", "Not", "Or"}
-
 	for idx, d := range lines {
 		for _, m := range mode {
 			if m == "multiline" {
-				for _, function := range functions[5:] {
+				for _, function := range mapNature {
 					fixMultiLineMap(&d, &lines, idx, function)
 				}
 			}
