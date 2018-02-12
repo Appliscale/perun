@@ -19,6 +19,7 @@
 package converter
 
 import (
+	"encoding/json"
 	"errors"
 	"github.com/Appliscale/perun/cliparser"
 	"github.com/Appliscale/perun/context"
@@ -46,10 +47,16 @@ func Convert(context *context.Context) error {
 	}
 
 	if *context.CliArguments.OutputFileFormat == cliparser.JSON {
-		outputTemplate, err := toJSON(rawTemplate)
+		var outputTemplate []byte
+		if *context.CliArguments.PrettyPrint == false {
+			outputTemplate, err = toJSON(rawTemplate)
+		} else if *context.CliArguments.PrettyPrint == true {
+			outputTemplate, err = prettyJSON(rawTemplate)
+		}
 		if err != nil {
 			return err
 		}
+
 		err = saveToFile(outputTemplate, *context.CliArguments.OutputFilePath, context.Logger)
 		if err != nil {
 			return err
@@ -71,12 +78,25 @@ func toYAML(jsonTemplate []byte) ([]byte, error) {
 
 func toJSON(yamlTemplate []byte) ([]byte, error) {
 	jsonTemplate, error := yaml.YAMLToJSON(yamlTemplate)
+	if !govalidator.IsJSON(string(jsonTemplate)) {
+		return nil, errors.New("This is not a valid YAML file")
+	}
+	return jsonTemplate, error
+}
+
+func prettyJSON(yamlTemplate []byte) ([]byte, error) {
+	var yamlObj interface{}
+	templateError := yaml.Unmarshal(yamlTemplate, &yamlObj)
+	if templateError != nil {
+		return nil, errors.New("Incorrect yaml")
+	}
+	jsonTemplate, indentError := json.MarshalIndent(yamlObj, "", "    ")
 
 	if !govalidator.IsJSON(string(jsonTemplate)) {
 		return nil, errors.New("This is not a valid YAML file")
 	}
+	return jsonTemplate, indentError
 
-	return jsonTemplate, error
 }
 
 func saveToFile(template []byte, path string, logger *logger.Logger) error {

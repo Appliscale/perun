@@ -51,6 +51,7 @@ type CliArguments struct {
 	Sandbox           *bool
 	Version           *bool
 	Stack             *string
+	PrettyPrint       *bool
 }
 
 // Get and validate CLI arguments. Returns error if validation fails.
@@ -71,6 +72,7 @@ func ParseCliArguments() (cliArguments CliArguments, err error) {
 	cliArguments.Sandbox = kingpin.Flag("sandbox", "Do not use configuration files hierarchy.").Bool()
 	cliArguments.Version = kingpin.Flag("version", "Print version number together with release name and exit immediately.").Bool()
 	cliArguments.Stack = kingpin.Flag("stack", "An AWS stack name.").String()
+	cliArguments.PrettyPrint = kingpin.Flag("pretty-print", "Pretty print JSON").Bool()
 
 	kingpin.Parse()
 
