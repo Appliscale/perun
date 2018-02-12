@@ -135,7 +135,6 @@ func (logger *Logger) PrintValidationErrors() {
 	}
 }
 
-// HasValidationErrors : Check if logger contains error messages
 func (logger *Logger) HasValidationErrors() bool {
 	for _, resourceValidation := range logger.resourceValidation {
 		if len(resourceValidation.Errors) > 0 {

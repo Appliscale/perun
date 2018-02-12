@@ -20,6 +20,9 @@ perun
 
 # Local perun configuration:
 .perun
+
+# This is a temporary file which is being created when FixFunctions is called from intrinsicsolver package.
 preprocessed.yml
 
+# Internal Visual Studio Code config
 .vscode
