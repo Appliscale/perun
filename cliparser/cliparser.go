@@ -51,6 +51,7 @@ type CliArguments struct {
 	Region            *string
 	Sandbox           *bool
 	Stack             *string
+	PrettyPrint       *bool
 }
 
 func availableFormats() []string {
