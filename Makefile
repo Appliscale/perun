@@ -17,4 +17,3 @@ code-analysis: get-deps
 
 test: get-deps
 	go test -v -cover ./...
-	

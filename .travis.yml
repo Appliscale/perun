@@ -7,4 +7,4 @@ install: make config-install get-deps
 
 script:
   - make code-analysis
-- make test
+  - make test

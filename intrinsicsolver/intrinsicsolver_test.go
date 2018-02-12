@@ -1,4 +1,4 @@
-// Copyright 2017 Appliscale
+// Copyright 2018 Appliscale
 //
 // Maintainers and contributors are listed in README file inside repository.
 //
@@ -14,14 +14,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package validators
+package intrinsicsolver
 
 import (
+	"io/ioutil"
 	"os"
 	"testing"
 
 	"github.com/Appliscale/perun/logger"
-	"github.com/Appliscale/perun/offlinevalidator/template"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -37,26 +37,20 @@ func TestMain(m *testing.M) {
 	os.Exit(retCode)
 }
 
-func TestValidVpc(t *testing.T) {
-	vpc := createVpc("10.0.0.0/16")
-	resourceValidation := logger.ResourceValidation{
-		ResourceName: "Example",
-	}
-	assert.True(t, IsVpcValid(vpc, &resourceValidation))
+func TestIndentations(t *testing.T) {
+	line := "                Key: Value       "
+	lineIndent := indentations(line)
+	firstLetter := string(line[lineIndent])
+	assert.Equal(t, 16, lineIndent, "MSG")
+	assert.Equal(t, "K", firstLetter, "MSG")
 }
 
-func TestInvalidVpc(t *testing.T) {
-	vpc := createVpc("10.0.0.0")
-	resourceValidation := logger.ResourceValidation{
-		ResourceName: "Example",
-	}
-	assert.False(t, IsVpcValid(vpc, &resourceValidation))
-}
+func TestFixFunctions(t *testing.T) {
+	rawTemplate, _ := ioutil.ReadFile("./test_resources/test_map.yaml")
+	expectedTemplate, _ := ioutil.ReadFile("./test_resources/manual_test_map.yaml")
+	fixed, _ := FixFunctions(rawTemplate, &sink)
+	expected, _ := parseFileIntoLines(expectedTemplate, &sink)
+	actual, _ := parseFileIntoLines(fixed, &sink)
 
-func createVpc(cidrBlock string) template.Resource {
-	vpc := template.Resource{}
-	properties := make(map[string]interface{})
-	properties["CidrBlock"] = cidrBlock
-	vpc.Properties = properties
-	return vpc
+	assert.Equal(t, expected, actual, "MSG")
 }
