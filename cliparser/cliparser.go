@@ -23,7 +23,6 @@ import (
 	"github.com/Appliscale/perun/logger"
 	"github.com/Appliscale/perun/utilities"
 	"gopkg.in/alecthomas/kingpin.v2"
-	"strings"
 )
 
 var ValidateMode = "validate"
@@ -33,14 +32,10 @@ var ConfigureMode = "configure"
 var CreateStackMode = "create-stack"
 var DestroyStackMode = "delete-stack"
 
-const JSON = "json"
-const YAML = "yaml"
-
 type CliArguments struct {
 	Mode              *string
 	TemplatePath      *string
 	OutputFilePath    *string
-	OutputFileFormat  *string
 	ConfigurationPath *string
 	Quiet             *bool
 	Yes               *bool
@@ -52,10 +47,6 @@ type CliArguments struct {
 	Sandbox           *bool
 	Stack             *string
 	PrettyPrint       *bool
-}
-
-func availableFormats() []string {
-	return []string{JSON, YAML}
 }
 
 // Get and validate CLI arguments. Returns error if validation fails.
@@ -79,11 +70,10 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		offlineValidate         = app.Command(OfflineValidateMode, "Offline Template Validation")
 		offlineValidateTemplate = offlineValidate.Arg("template", "A path to the template file.").Required().String()
 
-		convert             = app.Command(ConvertMode, "Convertion between JSON and YAML of template files")
-		convertTemplate     = convert.Arg("template", "A path to the template file.").Required().String()
-		convertOutputFile   = convert.Arg("output", "A path where converted file will be saved.").Required().String()
-		convertOutputFormat = convert.Arg("format", "Output format: "+strings.ToUpper(JSON)+" | "+strings.ToUpper(YAML)+".").HintAction(availableFormats).Required().String()
-		prettyPrint         = convert.Flag("pretty-print", "Pretty printing JSON").Bool()
+		convert           = app.Command(ConvertMode, "Convertion between JSON and YAML of template files")
+		convertTemplate   = convert.Arg("template", "A path to the template file.").Required().String()
+		convertOutputFile = convert.Arg("output", "A path where converted file will be saved.").Required().String()
+		prettyPrint       = convert.Flag("pretty-print", "Pretty printing JSON").Bool()
 
 		configure = app.Command(ConfigureMode, "Create your own configuration mode")
 
@@ -113,7 +103,6 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		cliArguments.Mode = &ConvertMode
 		cliArguments.TemplatePath = convertTemplate
 		cliArguments.OutputFilePath = convertOutputFile
-		cliArguments.OutputFileFormat = convertOutputFormat
 		cliArguments.PrettyPrint = prettyPrint
 
 		// configure
@@ -121,7 +110,6 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		cliArguments.Mode = &ConfigureMode
 
 		// create Stack
-
 	case createStack.FullCommand():
 		cliArguments.Mode = &CreateStackMode
 		cliArguments.Stack = createStackName
@@ -156,15 +144,6 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 	if *cliArguments.Verbosity != "" && !logger.IsVerbosityValid(*cliArguments.Verbosity) {
 		err = errors.New("You specified invalid value for --verbosity flag")
 		return
-	}
-
-	if *cliArguments.Mode == ConvertMode {
-		*cliArguments.OutputFileFormat = strings.ToLower(*cliArguments.OutputFileFormat)
-		if *cliArguments.OutputFileFormat != JSON && *cliArguments.OutputFileFormat != YAML {
-			err = errors.New("Invalid output file format. Use JSON or YAML")
-			return
-		}
-
 	}
 
 	return

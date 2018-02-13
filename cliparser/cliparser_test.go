@@ -21,11 +21,6 @@ import (
 	"testing"
 )
 
-func TestInvalidOutputFormatInConvertMode(t *testing.T) {
-	assert.Equal(t, "Invalid output file format. Use JSON or YAML",
-		parseCliArguments([]string{"cmd", "convert", "some_path", "some_path", "wrong_format"}).Error())
-}
-
 func TestInvalidVerbosity(t *testing.T) {
 	assert.Equal(t, "You specified invalid value for --verbosity flag",
 		parseCliArguments([]string{"cmd", "validate", "some_path", "--verbosity=TEST"}).Error())
