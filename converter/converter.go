@@ -36,7 +36,7 @@ func Convert(context *context.Context) error {
 	if err != nil {
 		return err
 	}
-	format := chooseformat(rawTemplate)
+	format := detectFormatFromContent(rawTemplate)
 	var outputTemplate []byte
 
 	if format == "JSON" {
@@ -113,7 +113,7 @@ func saveToFile(template []byte, path string, logger *logger.Logger) error {
 	return nil
 }
 
-func chooseformat(rawTemplate []byte) (format string) {
+func detectFormatFromContent(rawTemplate []byte) (format string) {
 
 	_, errorYAML := toYAML(rawTemplate)
 	_, errorJSON := yamlToJSON(rawTemplate)
@@ -123,5 +123,5 @@ func chooseformat(rawTemplate []byte) (format string) {
 	} else if errorJSON == nil {
 		return "YAML"
 	}
-	return "Invalid output file format. Use JSON or YAML"
+	return "Unsupported file format. The input file must be either a valid _JSON_ or _YAML_ file."
 }
