@@ -21,14 +21,13 @@ package converter
 import (
 	"encoding/json"
 	"errors"
-	"io/ioutil"
-	"os"
-
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/intrinsicsolver"
 	"github.com/Appliscale/perun/logger"
 	"github.com/asaskevich/govalidator"
 	"github.com/ghodss/yaml"
+	"io/ioutil"
+	"os"
 )
 
 // Read template from the file, convert it and check if it has valid structure.
@@ -41,16 +40,16 @@ func Convert(context *context.Context) error {
 	format := detectFormatFromContent(rawTemplate)
 	var outputTemplate []byte
 
+	// If input type file is JSON convert to YAML.
 	if format == "JSON" {
 		outputTemplate, err = toYAML(rawTemplate)
 		if err != nil {
 			return err
 		}
 		saveToFile(outputTemplate, *context.CliArguments.OutputFilePath, context.Logger)
+
+		// If input type file is YAML, check all functions and create JSON (with or not --pretty-print flag).
 	} else if format == "YAML" {
-		if !govalidator.IsJSON(string(rawTemplate)) {
-			return errors.New("This is not a valid YAML file")
-		}
 		preprocessed, preprocessingError := intrinsicsolver.FixFunctions(rawTemplate, context.Logger, "multiline", "elongate", "correctlong")
 		if preprocessingError != nil {
 			context.Logger.Error(preprocessingError.Error())
@@ -63,13 +62,13 @@ func Convert(context *context.Context) error {
 		if err != nil {
 			return err
 		}
+		err = saveToFile(outputTemplate, *context.CliArguments.OutputFilePath, context.Logger)
+		if err != nil {
+			return err
+		}
 	} else {
 		context.Logger.Always(format)
 		return nil
-	}
-	err = saveToFile(outputTemplate, *context.CliArguments.OutputFilePath, context.Logger)
-	if err != nil {
-		return err
 	}
 
 	return nil
@@ -96,9 +95,6 @@ func yamlToPrettyJSON(yamlTemplate []byte) ([]byte, error) {
 
 	jsonTemplate, templateError := json.MarshalIndent(YAMLObj, "", "    ")
 
-	if !govalidator.IsJSON(string(jsonTemplate)) {
-		return nil, errors.New("This is not a valid YAML file")
-	}
 	return jsonTemplate, templateError
 
 }
