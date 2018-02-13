@@ -42,7 +42,7 @@ func Convert(context *context.Context) error {
 
 	// If input type file is JSON convert to YAML.
 	if format == "JSON" {
-		outputTemplate, err = toYAML(rawTemplate)
+		outputTemplate, err = jsonToYaml(rawTemplate)
 		if err != nil {
 			return err
 		}
@@ -55,9 +55,9 @@ func Convert(context *context.Context) error {
 			context.Logger.Error(preprocessingError.Error())
 		}
 		if *context.CliArguments.PrettyPrint == false {
-			outputTemplate, err = yamlToJSON(preprocessed)
+			outputTemplate, err = yamlToJson(preprocessed)
 		} else if *context.CliArguments.PrettyPrint == true {
-			outputTemplate, err = yamlToPrettyJSON(preprocessed)
+			outputTemplate, err = yamlToPrettyJson(preprocessed)
 		}
 		if err != nil {
 			return err
@@ -74,7 +74,7 @@ func Convert(context *context.Context) error {
 	return nil
 }
 
-func toYAML(jsonTemplate []byte) ([]byte, error) {
+func jsonToYaml(jsonTemplate []byte) ([]byte, error) {
 	if !govalidator.IsJSON(string(jsonTemplate)) {
 		return nil, errors.New("This is not a valid JSON file")
 	}
@@ -84,12 +84,12 @@ func toYAML(jsonTemplate []byte) ([]byte, error) {
 	return yamlTemplate, error
 }
 
-func yamlToJSON(yamlTemplate []byte) ([]byte, error) {
+func yamlToJson(yamlTemplate []byte) ([]byte, error) {
 	jsonTemplate, error := yaml.YAMLToJSON(yamlTemplate)
 	return jsonTemplate, error
 }
 
-func yamlToPrettyJSON(yamlTemplate []byte) ([]byte, error) {
+func yamlToPrettyJson(yamlTemplate []byte) ([]byte, error) {
 	var YAMLObj interface{}
 	templateError := yaml.Unmarshal(yamlTemplate, &YAMLObj)
 
@@ -116,9 +116,8 @@ func saveToFile(template []byte, path string, logger *logger.Logger) error {
 }
 
 func detectFormatFromContent(rawTemplate []byte) (format string) {
-
-	_, errorYAML := toYAML(rawTemplate)
-	_, errorJSON := yamlToJSON(rawTemplate)
+	_, errorYAML := jsonToYaml(rawTemplate)
+	_, errorJSON := yamlToJson(rawTemplate)
 
 	if errorYAML == nil {
 		return "JSON"
