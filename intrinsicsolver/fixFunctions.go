@@ -11,14 +11,21 @@ import (
 	"github.com/Appliscale/perun/logger"
 )
 
+var functions = []string{"Base64", "GetAtt", "GetAZs", "ImportValue", "Ref", "FindInMap", "Join", "Select", "Split", "Sub", "And", "Equals", "If", "Not", "Or"}
+var mapNature = functions[5:]
+
 /*
 FixFunctions : takes []byte file and firstly converts all single quotation marks to double ones (anything between single ones is treated as the rune in GoLang),
-then deconstructs file into lines, checks for intrinsic functions of a map nature where the function name is located in one line and it's body (map elements)
+then deconstructs file into lines, checks for intrinsic functions. The FixFunctions has modes: `multiline`, `elongate` and `correctlong`.
+Mode `multiline` looks for functions of a map nature where the function name is located in one line and it's body (map elements)
 are located in the following lines (if this would be not fixed an error would be thrown: `json: unsupported type: map[interface {}]interface {}`).
-The function changes the notation by putting function name in the next line with proper indentation and saves the result to temporary file,
-then opens it and returns []byte array.
+The function changes the notation by putting function name in the next line with proper indentation.
+Mode `elongate` exchanges the short function names into their proper, long equivalent.
+Mode `correctlong` prepares the file for conversion into JSON. If the file is a YAML with every line being solicitously indented, there is no problem and the `elongate` mode is all we need.
+But if there is any mixed notation (e.g. indented maps along with one-line maps, functions in one line with the key), parsing must be preceded with some additional operations.
+The result is saved to temporary file, then opened and returned as a []byte array.
 */
-func FixFunctions(template []byte, logger *logger.Logger) ([]byte, error) {
+func FixFunctions(template []byte, logger *logger.Logger, mode ...string) ([]byte, error) {
 	var quotationProcessed, temporaryResult []string
 	preLines, err := parseFileIntoLines(template, logger)
 
@@ -34,33 +41,67 @@ func FixFunctions(template []byte, logger *logger.Logger) ([]byte, error) {
 		quotationProcessed = append(quotationProcessed, fixed)
 	}
 
+	// In case the intrinsic function is in the last line and the the next line is investigated in search for it's multi-line body, we have to add one, blank line.
+	quotationProcessed = append(quotationProcessed, "")
+
 	lines := quotationProcessed
 
-	// These are the YAML short names of a functions which take the arguments in a form of a map.
-	multiLiners := []string{"!FindInMap", "!Join", "!Select", "!Split", "!Sub", "!And", "!Equals", "!If", "!Not", "!Or"}
-
 	for idx, d := range lines {
-		for _, function := range multiLiners {
-			fixMultiLineMap(&d, &lines, idx, function)
+		for _, m := range mode {
+			if m == "multiline" {
+				for _, function := range mapNature {
+					fixMultiLineMap(&d, &lines, idx, function)
+				}
+			}
+			if m == "elongate" {
+				for _, function := range functions {
+					elongateForms(&d, &lines, idx, function)
+				}
+			}
+			if m == "correctlong" {
+				fixLongFormCorrectness(&d)
+			}
 		}
 
 		temporaryResult = append(temporaryResult, d)
 	}
 
 	// Function writeLines saves the processed result to a file (if there would be any errors, it could be investigated there).
-	if err := writeLines(temporaryResult, "preprocessed.yml"); err != nil {
+	if err := writeLines(temporaryResult, ".preprocessed.yml"); err != nil {
 		logger.Error(err.Error())
 		return nil, err
 	}
 
 	// Then the temporary result is opened and returned as a []byte.
-	preprocessedTemplate, err := ioutil.ReadFile("preprocessed.yml")
+	preprocessedTemplate, err := ioutil.ReadFile(".preprocessed.yml")
 	if err != nil {
 		logger.Error(err.Error())
 		return preprocessedTemplate, err
 	}
 
 	return preprocessedTemplate, nil
+}
+
+// Expands the function name to it's long form without a colon. For example - Fn::FindInMap.
+func longForm(name string) string {
+	var fullName string
+	if name != "Ref" {
+		fullName = "Fn::" + name
+	} else {
+		fullName = name
+	}
+	return fullName
+}
+
+/* Expands the function name by adding a colon. For example - Fn::FindInMap:.
+It is crucial to pass here the output from the longForm function.*/
+func fullForm(name string) string {
+	return (name + ":")
+}
+
+// Expands the function name to it's short form. For example - !FindInMap.
+func shortForm(name string) string {
+	return ("!" + name)
 }
 
 // Function parseFileIntoLines is reading the []byte file and returns it line by line as []string slice.
