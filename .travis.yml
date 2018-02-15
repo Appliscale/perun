@@ -8,3 +8,27 @@ install: make config-install get-deps
 script:
   - make code-analysis
   - make test
+
+before_deploy:
+  - 'mkdir -p release'
+  - 'GOOS=linux GOARCH=amd64 go build -o release/perun-linux-amd64'
+  - 'GOOS=darwin GOARCH=amd64 go build -o release/perun-darwin-amd64'
+  - 'GOOS=windows GOARCH=amd64 go build -o release/perun-windows-amd64.exe'
+  - 'GOOS=windows GOARCH=386 go build -o release/perun-windows-386.exe'
+  - 'tar -C release -czf release/perun-linux-amd64.tar.gz perun-linux-amd64'
+  - 'tar -C release -czf release/perun-darwin-amd64.tar.gz perun-darwin-amd64'
+  - 'tar -C release -czf release/perun-windows-amd64.tar.gz perun-windows-amd64.exe'
+  - 'tar -C release -czf release/perun-windows-386.tar.gz perun-windows-386.exe'
+
+deploy:
+  provider: releases
+  api_key:
+    secure: eLTZravNiDVvQ1dekb7NvWYJBIG2X6CzfHEqUKJ2JCDlKSqYXrvqZF/B3XxmYvmF1tEAmAa08LMDzzzApl9IML1DVSoW8i6uy+uetg+xbvumAf9fq14nMd0JQEEA1qruE7pwjyQs7h9gXYtyAR01CPhj/xNUQmYV1i8NCTHoljBkO+NsMFyi3WMbW7HTRQZQZXbPBagI06L3tSOCfN/w5KVmRsKFQ3lvmnzs+mTrIvOy2CBQC+0Cp3PQ/p7yyhEWRFd5J6n2jYGxneetnBq0FAfbOF4RIwvrWuu9XI/znxhYMOB5lra0qUwuG+prJStB6oaQ/vHStRcxQorV75Jtm4u/EHcFmmaxTQvPksdZQ8VSIbFonz1qbnuurP5sloiAR1RnJQtQWZKj7I7ioknEBh4kqCGvLUIbt0VpHTNoPKN0a8GYiPSE9UO6J+CNS+FR5mahW3xsHx5dHMV+R4mxcbt16dlg0g8m4tah06bd3P/t91kkgliTWmkHDMX4ES4hh+ribMnsLB0k7iqtuoO2P+gFn80CR5ooAX9Z3u8P8MaEovuPSaO7DqsGfX3uCaFInyBpc5EteCNwgN9dGAfh4mscJlijx28qgJ5quNU56fhcfQ8DoC5nXTM7RRRSu0OB1xSDa9OEf5Nh1AlkDwQKxjAYD+ujYFCXxqSWcntUbqE=
+  file:
+    - release/perun-linux-amd64.tar.gz
+    - release/perun-darwin-amd64.tar.gz
+    - release/perun-windows-amd64.tar.gz
+    - release/perun-windows-386.tar.gz
+  skip_cleanup: true
+  on:
+    tags: true
