@@ -30,6 +30,9 @@ var spec specification.Specification
 
 var sink logger.Logger
 
+var deadProp = make([]string, 0)
+var deadRes = make([]string, 0)
+
 func setup() {
 	var err error
 
@@ -51,7 +54,7 @@ func TestValidResource(t *testing.T) {
 	resources := make(map[string]template.Resource)
 	resources["ExampleResource"] = createResourceWithOneProperty("ExampleResourceType", "ExampleProperty", "Property value")
 
-	assert.True(t, validateResources(resources, &spec, &sink), "This resource should be valid")
+	assert.True(t, validateResources(resources, &spec, &sink, deadProp, deadRes), "This resource should be valid")
 }
 
 func TestInvalidResourceType(t *testing.T) {
@@ -59,7 +62,7 @@ func TestInvalidResourceType(t *testing.T) {
 	resources := make(map[string]template.Resource)
 	resources["ExampleResource"] = createResourceWithOneProperty("InvalidType", "ExampleProperty", "Property value")
 
-	assert.False(t, validateResources(resources, &spec, &sink), "This resource should be invalid, it has invalid resource type")
+	assert.False(t, validateResources(resources, &spec, &sink, deadProp, deadRes), "This resource should be invalid, it has invalid resource type")
 }
 
 func TestLackOfRequiredPropertyInResource(t *testing.T) {
@@ -67,7 +70,7 @@ func TestLackOfRequiredPropertyInResource(t *testing.T) {
 	resources := make(map[string]template.Resource)
 	resources["ExampleResource"] = createResourceWithOneProperty("ExampleResourceType", "SomeProperty", "Property value")
 
-	assert.False(t, validateResources(resources, &spec, &sink), "This resource should not be valid, it does not have required property")
+	assert.False(t, validateResources(resources, &spec, &sink, deadProp, deadRes), "This resource should not be valid, it does not have required property")
 }
 func TestLackOfSubpropertyWithSpecification(t *testing.T) {
 	sink = logger.Logger{}
@@ -77,7 +80,7 @@ func TestLackOfSubpropertyWithSpecification(t *testing.T) {
 	}
 	resources["cluster"] = createResourceWithNestedProperties("AWS::Nested3::Cluster", "SomeProperty", properties)
 
-	assert.False(t, validateResources(resources, &spec, &sink), "This resource should not be valid, it does not have property with specification")
+	assert.False(t, validateResources(resources, &spec, &sink, deadProp, deadRes), "This resource should not be valid, it does not have property with specification")
 }
 func TestValidPrimitiveTypeInProperty(t *testing.T) {
 	sink = logger.Logger{}
@@ -87,7 +90,7 @@ func TestValidPrimitiveTypeInProperty(t *testing.T) {
 	}
 	resources["cluster"] = createResourceWithNestedProperties("AWS::Nested3::Cluster", "Instances", properties)
 
-	assert.True(t, validateResources(resources, &spec, &sink), "This resource should be valid")
+	assert.True(t, validateResources(resources, &spec, &sink, deadProp, deadRes), "This resource should be valid")
 }
 
 func TestLackOfPrimitiveTypeInProperty(t *testing.T) {
@@ -98,7 +101,7 @@ func TestLackOfPrimitiveTypeInProperty(t *testing.T) {
 	}
 	resources["cluster"] = createResourceWithNestedProperties("AWS::Nested3::Cluster", "Instances", properties)
 
-	assert.False(t, validateResources(resources, &spec, &sink), "This resource shouldn't be valid")
+	assert.False(t, validateResources(resources, &spec, &sink, deadProp, deadRes), "This resource shouldn't be valid")
 }
 
 func TestLackOfPrimitiveTypeInPropertyNestedInProperty(t *testing.T) {
@@ -112,7 +115,7 @@ func TestLackOfPrimitiveTypeInPropertyNestedInProperty(t *testing.T) {
 	}
 	resources["cluster"] = createResourceWithNestedProperties("AWS::Nested1::Cluster", "Instances", properties)
 
-	assert.False(t, validateResources(resources, &spec, &sink), "This resource shouldn't be valid, it lacks required property")
+	assert.False(t, validateResources(resources, &spec, &sink, deadProp, deadRes), "This resource shouldn't be valid, it lacks required property")
 }
 func TestLackOfRequiredSubproperty(t *testing.T) {
 	sink = logger.Logger{}
@@ -124,7 +127,7 @@ func TestLackOfRequiredSubproperty(t *testing.T) {
 	}
 	resources["cluster"] = createResourceWithNestedProperties("AWS::Nested1::Cluster", "Instances", properties)
 
-	assert.False(t, validateResources(resources, &spec, &sink), "This resource shouldn't be valid, required subproperty is missing")
+	assert.False(t, validateResources(resources, &spec, &sink, deadProp, deadRes), "This resource shouldn't be valid, required subproperty is missing")
 }
 func TestLackOfRequiredPrimitiveTypeInNonrequiredSubproperty(t *testing.T) {
 	sink = logger.Logger{}
@@ -134,7 +137,7 @@ func TestLackOfRequiredPrimitiveTypeInNonrequiredSubproperty(t *testing.T) {
 	}
 	resources["ApiGatewayResource"] = createResourceWithNestedProperties("AWS::Nested2::RestApi", "BodyS3Location", properties)
 
-	assert.False(t, validateResources(resources, &spec, &sink), "This resource shouldn't be valid, required primitive property in nonrequired subproperty is missing")
+	assert.False(t, validateResources(resources, &spec, &sink, deadProp, deadRes), "This resource shouldn't be valid, required primitive property in nonrequired subproperty is missing")
 }
 
 func TestLackOfRequiredPropertyInNonRequiredProperty(t *testing.T) {
@@ -148,7 +151,7 @@ func TestLackOfRequiredPropertyInNonRequiredProperty(t *testing.T) {
 	}
 	resources["ExampleResource"] = createResourceWithNestedProperties("AWS::Nested4::Method", "Definition", properties)
 
-	assert.True(t, validateResources(resources, &spec, &sink), "This resource should be valid")
+	assert.True(t, validateResources(resources, &spec, &sink, deadProp, deadRes), "This resource should be valid")
 }
 
 func TestLackOfRequiredNestedPrimitivePropertyInListItem(t *testing.T) {
@@ -168,7 +171,7 @@ func TestLackOfRequiredNestedPrimitivePropertyInListItem(t *testing.T) {
 	resource.Properties["BootstrapActions"] = properties
 	resources["ExampleResource"] = resource
 
-	assert.False(t, validateResources(resources, &spec, &sink), "This resource should not be valid, List is empty")
+	assert.False(t, validateResources(resources, &spec, &sink, deadProp, deadRes), "This resource should not be valid, List is empty")
 }
 
 func TestLackOfRequiredListItemSubpropertyInList(t *testing.T) {
@@ -185,7 +188,7 @@ func TestLackOfRequiredListItemSubpropertyInList(t *testing.T) {
 	}
 	resources["ExampleResource"] = createResourceWithNestedProperties("AWS::List2::Bucket", "WebsiteConfiguration", properties)
 
-	assert.False(t, validateResources(resources, &spec, &sink), "This resource should not be valid, It must contain RedirectRule property")
+	assert.False(t, validateResources(resources, &spec, &sink, deadProp, deadRes), "This resource should not be valid, It must contain RedirectRule property")
 }
 
 func TestLackOfRequiredPrimitiveTypeListItemInList(t *testing.T) {
@@ -209,7 +212,7 @@ func TestLackOfRequiredPrimitiveTypeListItemInList(t *testing.T) {
 	}
 	resources["ExampleResource"] = createResourceWithNestedProperties("AWS::List2::Bucket", "WebsiteConfiguration", properties)
 
-	assert.False(t, validateResources(resources, &spec, &sink), "This resource should not be valid, RedirectRule must contain HostName and HttpRedirectCode")
+	assert.False(t, validateResources(resources, &spec, &sink, deadProp, deadRes), "This resource should not be valid, RedirectRule must contain HostName and HttpRedirectCode")
 }
 
 func TestValidRequiredPrimitiveTypeListItemInList(t *testing.T) {
@@ -227,7 +230,7 @@ func TestValidRequiredPrimitiveTypeListItemInList(t *testing.T) {
 	}
 	resources["ExampleResource"] = createResourceWithNestedProperties("AWS::List2::Bucket", "WebsiteConfiguration", properties)
 
-	assert.True(t, validateResources(resources, &spec, &sink), "This resource should be valid")
+	assert.True(t, validateResources(resources, &spec, &sink, deadProp, deadRes), "This resource should be valid")
 }
 
 func TestLackOfNonRequiredNestedListItemProperty(t *testing.T) {
@@ -245,7 +248,7 @@ func TestLackOfNonRequiredNestedListItemProperty(t *testing.T) {
 	}
 	resources["ExampleResource"] = createResourceWithNestedProperties("AWS::List3::Bucket", "LifecycleConfiguration", properties)
 
-	assert.True(t, validateResources(resources, &spec, &sink), "This resource should be valid")
+	assert.True(t, validateResources(resources, &spec, &sink, deadProp, deadRes), "This resource should be valid")
 }
 
 func TestInvalidList(t *testing.T) {
@@ -256,7 +259,7 @@ func TestInvalidList(t *testing.T) {
 
 	resources["ExampleResource"] = createResourceWithOneProperty("AWS::List4::DBSubnetGroup", "SubnetIds", properties)
 
-	assert.False(t, validateResources(resources, &spec, &sink), "This resource should be valid")
+	assert.False(t, validateResources(resources, &spec, &sink, deadProp, deadRes), "This resource should be valid")
 }
 
 func TestValidList(t *testing.T) {
@@ -272,7 +275,7 @@ func TestValidList(t *testing.T) {
 	}
 	resources["ExampleResource"] = resource
 
-	assert.True(t, validateResources(resources, &spec, &sink), "This resource should be valid")
+	assert.True(t, validateResources(resources, &spec, &sink, deadProp, deadRes), "This resource should be valid")
 }
 
 func TestValidIfMapInNestedPropertyIsMap(t *testing.T) {
@@ -286,7 +289,7 @@ func TestValidIfMapInNestedPropertyIsMap(t *testing.T) {
 	}
 	resources["ExampleResource"] = createResourceWithNestedProperties("AWS::Map2::Thing", "AttributePayload", properties)
 
-	assert.True(t, validateResources(resources, &spec, &sink), "This resource should be valid")
+	assert.True(t, validateResources(resources, &spec, &sink, deadProp, deadRes), "This resource should be valid")
 }
 
 func TestInvalidNonMapProperty(t *testing.T) {
@@ -298,7 +301,7 @@ func TestInvalidNonMapProperty(t *testing.T) {
 	}
 	resources["ExampleResource"] = createResourceWithNestedProperties("AWS::Map2::Thing", "AttributePayload", properties)
 
-	assert.False(t, validateResources(resources, &spec, &sink), "This resource shouldn't be valid - Attributes should be a Map")
+	assert.False(t, validateResources(resources, &spec, &sink, deadProp, deadRes), "This resource shouldn't be valid - Attributes should be a Map")
 }
 
 func createResourceWithNestedProperties(resourceType string, propertyName string, nestedPropertyValue map[string]interface{}) template.Resource {

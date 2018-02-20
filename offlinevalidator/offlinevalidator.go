@@ -24,6 +24,8 @@ import (
 	"io/ioutil"
 	"path"
 	"reflect"
+	"strconv"
+	"strings"
 
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/intrinsicsolver"
@@ -85,28 +87,35 @@ func Validate(context *context.Context) bool {
 		return false
 	}
 
-	resources := obtainResources(goFormationTemplate, perunTemplate)
+	deNilizedTemplate, _ := nilNeutralize(goFormationTemplate, context.Logger)
+	resources := obtainResources(deNilizedTemplate, perunTemplate, context.Logger)
+	deadResources := getNilResources(resources)
+	deadProperties := getNilProperties(resources)
 
-	valid = validateResources(resources, &specification, context.Logger)
+	valid = validateResources(resources, &specification, context.Logger, deadProperties, deadResources)
 	return valid
 }
 
-func validateResources(resources map[string]template.Resource, specification *specification.Specification, sink *logger.Logger) bool {
+func validateResources(resources map[string]template.Resource, specification *specification.Specification, sink *logger.Logger, deadProp []string, deadRes []string) bool {
 
 	for resourceName, resourceValue := range resources {
-		resourceValidation := sink.AddResourceForValidation(resourceName)
+		if deadResource := sliceContains(deadRes, resourceName); !deadResource {
+			resourceValidation := sink.AddResourceForValidation(resourceName)
 
-		if resourceSpecification, ok := specification.ResourceTypes[resourceValue.Type]; ok {
-			for propertyName, propertyValue := range resourceSpecification.Properties {
-				validateProperties(specification, resourceValue, propertyName, propertyValue, resourceValidation)
+			if resourceSpecification, ok := specification.ResourceTypes[resourceValue.Type]; ok {
+				for propertyName, propertyValue := range resourceSpecification.Properties {
+					if deadProperty := sliceContains(deadProp, propertyName); !deadProperty {
+						validateProperties(specification, resourceValue, propertyName, propertyValue, resourceValidation)
+					}
+				}
+			} else {
+				resourceValidation.AddValidationError("Type needs to be specified")
 			}
-		} else {
-			resourceValidation.AddValidationError("Type needs to be specified")
-		}
-		if validator, ok := validatorsMap[resourceValue.Type]; ok {
-			validator.(func(template.Resource, *logger.ResourceValidation) bool)(resourceValue, resourceValidation)
-		}
+			if validator, ok := validatorsMap[resourceValue.Type]; ok {
+				validator.(func(template.Resource, *logger.ResourceValidation) bool)(resourceValue, resourceValidation)
+			}
 
+		}
 	}
 	return !sink.HasValidationErrors()
 }
@@ -226,7 +235,7 @@ func parseYAML(templateFile []byte, refTemplate template.Template, logger *logge
 		return template, err
 	}
 
-	preprocessed, preprocessingError := intrinsicsolver.FixFunctions(templateFile, logger, "multiline")
+	preprocessed, preprocessingError := intrinsicsolver.FixFunctions(templateFile, logger, "multiline", "elongate", "correctlong")
 	if preprocessingError != nil {
 		logger.Error(preprocessingError.Error())
 	}
@@ -240,7 +249,7 @@ func parseYAML(templateFile []byte, refTemplate template.Template, logger *logge
 	return returnTemplate, nil
 }
 
-func obtainResources(goformationTemplate cloudformation.Template, perunTemplate template.Template) map[string]template.Resource {
+func obtainResources(goformationTemplate cloudformation.Template, perunTemplate template.Template, logger *logger.Logger) map[string]template.Resource {
 	perunResources := perunTemplate.Resources
 	goformationResources := goformationTemplate.Resources
 
@@ -258,6 +267,54 @@ func obtainResources(goformationTemplate cloudformation.Template, perunTemplate 
 		*/
 	}
 
+	for propertyName, propertyContent := range perunResources { // Searching through PROPERTIES
+		if propertyContent.Properties == nil {
+			logger.Always("WARNING! " + propertyName + " <--- is nil.")
+		} else {
+			for element, elementValue := range propertyContent.Properties { // Searching through PROPERTIES.ELEMENT
+				if elementValue == nil {
+					logger.Always("WARNING! " + propertyName + ": " + element + " <--- is nil.")
+				} else if elementMap, ok := elementValue.(map[string]interface{}); ok { // Searching through PROPERTIES.ELEMENT.ELEMENT when it is map
+					for key, value := range elementMap {
+						if value == nil {
+							logger.Always("WARNING! " + propertyName + ": " + element + ": " + key + " <--- is nil.")
+						} else if elementOfElement, ok := value.(map[string]interface{}); ok {
+							for subKey, subValue := range elementOfElement {
+								if subValue == nil {
+									logger.Always("WARNING! " + propertyName + ": " + element + ": " + key + ": " + subKey + " <--- is nil.")
+								}
+							}
+						} else if sliceOfElement, ok := value.([]interface{}); ok {
+							for indexKey, indexValue := range sliceOfElement {
+								if indexValue == nil {
+									logger.Always("WARNING! " + propertyName + ": " + element + ": " + key + "[" + strconv.Itoa(indexKey) + "] <--- is nil.")
+								}
+							}
+						}
+					}
+				} else if elementSlice, ok := elementValue.([]interface{}); ok { // Searching through PROPERTIES.ELEMENT.ELEMENT when is is slice
+					for index, value := range elementSlice {
+						if value == nil {
+							logger.Always("WARNING! " + propertyName + ": " + element + "[" + strconv.Itoa(index) + "] <--- is nil.")
+						} else if elementOfElement, ok := value.(map[string]interface{}); ok {
+							for subKey, subValue := range elementOfElement {
+								if subValue == nil {
+									logger.Always("WARNING! " + propertyName + ": " + element + "[" + strconv.Itoa(index) + "]: " + subKey + " <--- is nil.")
+								}
+							}
+						} else if sliceOfElement, ok := value.([]interface{}); ok {
+							for indexKey, indexValue := range sliceOfElement {
+								if indexValue == nil {
+									logger.Always("WARNING! " + propertyName + ": " + element + "[" + strconv.Itoa(index) + "][" + strconv.Itoa(indexKey) + "] <--- is nil.")
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
 	return perunResources
 }
 
@@ -268,7 +325,9 @@ func toMapList(resourceProperties map[string]interface{}, propertyName string) [
 	}
 	mapList := make([]map[string]interface{}, len(subproperties))
 	for index, value := range subproperties {
-		mapList[index] = value.(map[string]interface{})
+		if _, ok := value.(map[string]interface{}); ok {
+			mapList[index] = value.(map[string]interface{})
+		}
 	}
 	return mapList
 }
@@ -280,7 +339,9 @@ func toStringList(resourceProperties map[string]interface{}, propertyName string
 	}
 	list := make([]string, len(subproperties))
 	for index, value := range subproperties {
-		list[index] = value.(string)
+		if value != nil {
+			list[index] = value.(string)
+		}
 	}
 	return list
 }
@@ -291,4 +352,84 @@ func toMap(resourceProperties map[string]interface{}, propertyName string) map[s
 		return map[string]interface{}{}
 	}
 	return subproperties
+}
+
+// There is a possibility that a map[string]interface{} inside the template would have one of it's element's being an intrinsic function designed to output `key : value` pair.
+// If this function would be unresolved, it would output <nil> of type interface{}. It would be an alien element in a map[string]interface{} surrounding.
+// To fix this and alert that there is a missing element, we replace a lonely `nil` inside a map with a `MISSING: nil` pair.
+func nilNeutralize(template cloudformation.Template, logger *logger.Logger) (output cloudformation.Template, err error) {
+	bytes, initErr := json.Marshal(template)
+	if initErr != nil {
+		logger.Error(err.Error())
+	}
+	byteSlice := string(bytes)
+
+	var info int
+	var check1, check2, check3 string
+	if strings.Contains(byteSlice, ",null,") {
+		check1 = strings.Replace(byteSlice, ",null,", ",{\"MISSING\":null},", -1)
+		info++
+	} else {
+		check1 = byteSlice
+	}
+	if strings.Contains(check1, "[null,") {
+		check2 = strings.Replace(check1, "[null,", "[{\"MISSING\":null},", -1)
+		info++
+	} else {
+		check2 = check1
+	}
+	if strings.Contains(check2, ",null]") {
+		check3 = strings.Replace(check2, ",null]", ",{\"MISSING\":null}]", -1)
+		info++
+	} else {
+		check3 = check2
+	}
+
+	byteSliceCorrected := []byte(check3)
+
+	tempJSON, err := goformation.ParseJSON(byteSliceCorrected)
+	if err != nil {
+		logger.Error(err.Error())
+	}
+
+	if info > 0 {
+		logger.Info("There are intrinsic functions which would output `key : value` pair but are unresolved and are evaluated to <nil>. As this element of a template should be a hash table element, the <nil> is exchanged with a mock `MISSING : <nil>` pair.")
+	}
+
+	returnTemplate := *tempJSON
+
+	return returnTemplate, nil
+}
+
+func getNilProperties(resources map[string]template.Resource) []string {
+	list := make([]string, 0)
+	for _, resourceContent := range resources {
+		properties := resourceContent.Properties
+		for propertyName, propertyContent := range properties {
+			if propertyContent == nil {
+				list = append(list, propertyName)
+			}
+		}
+	}
+	return list
+}
+
+func getNilResources(resources map[string]template.Resource) []string {
+	list := make([]string, 0)
+	for resourceName, resourceContent := range resources {
+		if resourceContent.Properties == nil {
+			list = append(list, resourceName)
+		}
+
+	}
+	return list
+}
+
+func sliceContains(slice []string, match string) bool {
+	for _, s := range slice {
+		if s == match {
+			return true
+		}
+	}
+	return false
 }

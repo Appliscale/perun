@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 
@@ -28,6 +27,10 @@ The result is saved to temporary file, then opened and returned as a []byte arra
 func FixFunctions(template []byte, logger *logger.Logger, mode ...string) ([]byte, error) {
 	var quotationProcessed, temporaryResult []string
 	preLines, err := parseFileIntoLines(template, logger)
+	if err != nil {
+		logger.Error(err.Error())
+		return nil, err
+	}
 
 	// All single quotation marks are transformed to double ones.
 	for _, line := range preLines {
@@ -66,20 +69,26 @@ func FixFunctions(template []byte, logger *logger.Logger, mode ...string) ([]byt
 		temporaryResult = append(temporaryResult, d)
 	}
 
-	// Function writeLines saves the processed result to a file (if there would be any errors, it could be investigated there).
-	if err := writeLines(temporaryResult, ".preprocessed.yml"); err != nil {
-		logger.Error(err.Error())
-		return nil, err
-	}
+	stringStream := strings.Join(temporaryResult, "\n")
+	output := []byte(stringStream)
 
-	// Then the temporary result is opened and returned as a []byte.
-	preprocessedTemplate, err := ioutil.ReadFile(".preprocessed.yml")
-	if err != nil {
-		logger.Error(err.Error())
-		return preprocessedTemplate, err
-	}
+	return output, nil
 
-	return preprocessedTemplate, nil
+	// To investigate preprocessed template, uncomment the next lines:
+	/*
+		if err := writeLines(temporaryResult, ".preprocessed.yml"); err != nil {
+			logger.Error(err.Error())
+			return nil, err
+		}
+
+		preprocessedTemplate, err := ioutil.ReadFile(".preprocessed.yml")
+		if err != nil {
+			logger.Error(err.Error())
+			return preprocessedTemplate, err
+		}
+
+		return preprocessedTemplate, nil
+	*/
 }
 
 // Expands the function name to it's long form without a colon. For example - Fn::FindInMap.
