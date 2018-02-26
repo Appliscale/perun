@@ -15,14 +15,15 @@ var mapNature = functions[5:]
 
 /*
 FixFunctions : takes []byte file and firstly converts all single quotation marks to double ones (anything between single ones is treated as the rune in GoLang),
-then deconstructs file into lines, checks for intrinsic functions. The FixFunctions has modes: `multiline`, `elongate` and `correctlong`.
+then deconstructs file into lines, checks for intrinsic functions. The FixFunctions has modes: `multiline`, `elongate`, `correctlong` and `temp`.
 Mode `multiline` looks for functions of a map nature where the function name is located in one line and it's body (map elements)
 are located in the following lines (if this would be not fixed an error would be thrown: `json: unsupported type: map[interface {}]interface {}`).
 The function changes the notation by putting function name in the next line with proper indentation.
 Mode `elongate` exchanges the short function names into their proper, long equivalent.
 Mode `correctlong` prepares the file for conversion into JSON. If the file is a YAML with every line being solicitously indented, there is no problem and the `elongate` mode is all we need.
 But if there is any mixed notation (e.g. indented maps along with one-line maps, functions in one line with the key), parsing must be preceded with some additional operations.
-The result is saved to temporary file, then opened and returned as a []byte array.
+Mode `temp` allows the user to save the result to a temporary file `.preprocessed.yml`.
+The result is returned as a []byte array.
 */
 func FixFunctions(template []byte, logger *logger.Logger, mode ...string) ([]byte, error) {
 	var quotationProcessed, temporaryResult []string
@@ -72,23 +73,17 @@ func FixFunctions(template []byte, logger *logger.Logger, mode ...string) ([]byt
 	stringStream := strings.Join(temporaryResult, "\n")
 	output := []byte(stringStream)
 
+	for _, m := range mode {
+		if m == "temp" {
+			if err := writeLines(temporaryResult, ".preprocessed.yml"); err != nil {
+				logger.Error(err.Error())
+				return nil, err
+			}
+			logger.Info("Created temporary file of a preprocessed template `.preprocessed.yml`")
+		}
+	}
+
 	return output, nil
-
-	// To investigate preprocessed template, uncomment the next lines:
-	/*
-		if err := writeLines(temporaryResult, ".preprocessed.yml"); err != nil {
-			logger.Error(err.Error())
-			return nil, err
-		}
-
-		preprocessedTemplate, err := ioutil.ReadFile(".preprocessed.yml")
-		if err != nil {
-			logger.Error(err.Error())
-			return preprocessedTemplate, err
-		}
-
-		return preprocessedTemplate, nil
-	*/
 }
 
 // Expands the function name to it's long form without a colon. For example - Fn::FindInMap.

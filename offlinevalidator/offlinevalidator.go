@@ -235,7 +235,7 @@ func parseYAML(templateFile []byte, refTemplate template.Template, logger *logge
 		return template, err
 	}
 
-	preprocessed, preprocessingError := intrinsicsolver.FixFunctions(templateFile, logger, "multiline", "elongate", "correctlong")
+	preprocessed, preprocessingError := intrinsicsolver.FixFunctions(templateFile, logger, "multiline", "elongate", "correctlong", "temp")
 	if preprocessingError != nil {
 		logger.Error(preprocessingError.Error())
 	}
@@ -253,28 +253,16 @@ func obtainResources(goformationTemplate cloudformation.Template, perunTemplate 
 	perunResources := perunTemplate.Resources
 	goformationResources := goformationTemplate.Resources
 
-	errDecode := mapstructure.Decode(goformationResources, &perunResources)
-	if errDecode != nil {
-		/*
-			Printing errDecode would log:
+	mapstructure.Decode(goformationResources, &perunResources)
 
-			ERROR error(s) decoding:
-			[template.Resource name] expected a map, got 'bool'
-
-			whenever a value of a property would be a boolean value (e.g. evaluated by !Equals intrinsic function; or e.g. 'got string', 'got float' etc. in other options).
-			But after logging all the decoding errors, it would log if template is valid or not and eventually log the missing property as it should do
-			and the error doesn't stand as obstacle of validation.
-		*/
-	}
-
-	for propertyName, propertyContent := range perunResources { // Searching through PROPERTIES
+	for propertyName, propertyContent := range perunResources {
 		if propertyContent.Properties == nil {
 			logger.Always("WARNING! " + propertyName + " <--- is nil.")
 		} else {
-			for element, elementValue := range propertyContent.Properties { // Searching through PROPERTIES.ELEMENT
+			for element, elementValue := range propertyContent.Properties {
 				if elementValue == nil {
 					logger.Always("WARNING! " + propertyName + ": " + element + " <--- is nil.")
-				} else if elementMap, ok := elementValue.(map[string]interface{}); ok { // Searching through PROPERTIES.ELEMENT.ELEMENT when it is map
+				} else if elementMap, ok := elementValue.(map[string]interface{}); ok {
 					for key, value := range elementMap {
 						if value == nil {
 							logger.Always("WARNING! " + propertyName + ": " + element + ": " + key + " <--- is nil.")
@@ -292,7 +280,7 @@ func obtainResources(goformationTemplate cloudformation.Template, perunTemplate 
 							}
 						}
 					}
-				} else if elementSlice, ok := elementValue.([]interface{}); ok { // Searching through PROPERTIES.ELEMENT.ELEMENT when is is slice
+				} else if elementSlice, ok := elementValue.([]interface{}); ok {
 					for index, value := range elementSlice {
 						if value == nil {
 							logger.Always("WARNING! " + propertyName + ": " + element + "[" + strconv.Itoa(index) + "] <--- is nil.")
@@ -337,6 +325,7 @@ func toStringList(resourceProperties map[string]interface{}, propertyName string
 	if !ok {
 		return nil
 	}
+
 	list := make([]string, len(subproperties))
 	for index, value := range subproperties {
 		if value != nil {
@@ -354,9 +343,9 @@ func toMap(resourceProperties map[string]interface{}, propertyName string) map[s
 	return subproperties
 }
 
-// There is a possibility that a map[string]interface{} inside the template would have one of it's element's being an intrinsic function designed to output `key : value` pair.
-// If this function would be unresolved, it would output <nil> of type interface{}. It would be an alien element in a map[string]interface{} surrounding.
-// To fix this and alert that there is a missing element, we replace a lonely `nil` inside a map with a `MISSING: nil` pair.
+// There is a possibility that a hash map inside the template would have one of it's element's being an intrinsic function designed to output `key : value` pair.
+// If this function would be unresolved, it would output a standalone <nil> of type interface{}. It would be an alien element in a hash map.
+// To prevent the parser from breaking, we wipe out the entire, expected hash map element.
 func nilNeutralize(template cloudformation.Template, logger *logger.Logger) (output cloudformation.Template, err error) {
 	bytes, initErr := json.Marshal(template)
 	if initErr != nil {
@@ -367,19 +356,19 @@ func nilNeutralize(template cloudformation.Template, logger *logger.Logger) (out
 	var info int
 	var check1, check2, check3 string
 	if strings.Contains(byteSlice, ",null,") {
-		check1 = strings.Replace(byteSlice, ",null,", ",{\"MISSING\":null},", -1)
+		check1 = strings.Replace(byteSlice, ",null,", ",", -1)
 		info++
 	} else {
 		check1 = byteSlice
 	}
 	if strings.Contains(check1, "[null,") {
-		check2 = strings.Replace(check1, "[null,", "[{\"MISSING\":null},", -1)
+		check2 = strings.Replace(check1, "[null,", "[", -1)
 		info++
 	} else {
 		check2 = check1
 	}
 	if strings.Contains(check2, ",null]") {
-		check3 = strings.Replace(check2, ",null]", ",{\"MISSING\":null}]", -1)
+		check3 = strings.Replace(check2, ",null]", "]", -1)
 		info++
 	} else {
 		check3 = check2
@@ -392,8 +381,24 @@ func nilNeutralize(template cloudformation.Template, logger *logger.Logger) (out
 		logger.Error(err.Error())
 	}
 
+	infoOpening, link, part, occurences, elements, a, t := "", "", "", "", "", "", ""
 	if info > 0 {
-		logger.Info("There are intrinsic functions which would output `key : value` pair but are unresolved and are evaluated to <nil>. As this element of a template should be a hash table element, the <nil> is exchanged with a mock `MISSING : <nil>` pair.")
+		if info == 1 {
+			elements = "element"
+			t = "this "
+			a = "a"
+			infoOpening = "is an intrinsic function "
+			link = "is"
+			part = "part"
+		} else {
+			elements = "elements"
+			t = "those "
+			occurences = strconv.Itoa(info)
+			infoOpening = "are " + occurences + " intrinsic functions "
+			link = "are"
+			part = "parts"
+		}
+		logger.Info("There " + infoOpening + "which would output `key : value` pair but " + link + " unresolved and " + link + " evaluated to <nil>. As " + t + elements + " of a template should be " + a + " hash table " + elements + ", " + t + "standalone <nil> " + link + " deleted completely. It is recommended to investigate " + t + part + " of a template manually.")
 	}
 
 	returnTemplate := *tempJSON
