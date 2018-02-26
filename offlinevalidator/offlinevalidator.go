@@ -235,7 +235,7 @@ func parseYAML(templateFile []byte, refTemplate template.Template, logger *logge
 		return template, err
 	}
 
-	preprocessed, preprocessingError := intrinsicsolver.FixFunctions(templateFile, logger, "multiline", "elongate", "correctlong", "temp")
+	preprocessed, preprocessingError := intrinsicsolver.FixFunctions(templateFile, logger, "multiline", "elongate", "correctlong")
 	if preprocessingError != nil {
 		logger.Error(preprocessingError.Error())
 	}
