@@ -64,7 +64,7 @@ func ConfigureRemoteSink(context *context.Context) (err error) {
 
 		if err == nil {
 			context.Logger.Info("Remote sink configuration successful")
-			context.Logger.Info("It's configuration may take up to a minute, wait before calling 'create-stack' with flag --progress")
+			context.Logger.Warning("It's configuration may take up to a minute, wait before calling 'create-stack' with flag --progress")
 		}
 		return
 	}

@@ -59,12 +59,10 @@ func getTemplateFromFile(context *context.Context) (string, string) {
 }
 
 // This function uses CreateStackInput variable to create Stack.
-func createStack(context *context.Context, templateStruct cloudformation.CreateStackInput, session *session.Session) {
+func createStack(context *context.Context, templateStruct cloudformation.CreateStackInput, session *session.Session) (err error) {
 	api := cloudformation.New(session)
-	_, err := api.CreateStack(&templateStruct)
-	if err != nil {
-		context.Logger.Error("Error creating stack: " + err.Error())
-	}
+	_, err = api.CreateStack(&templateStruct)
+	return
 }
 
 // This function uses all functions above and session to create Stack.
@@ -81,10 +79,18 @@ func NewStack(context *context.Context) {
 			return
 		}
 		templateStruct.NotificationARNs = []*string{conn.TopicArn}
-		createStack(context, templateStruct, currentSession)
+		err = createStack(context, templateStruct, currentSession)
+		if err != nil {
+			context.Logger.Error("Error creating stack: " + err.Error())
+			return
+		}
 		conn.MonitorQueue()
 	} else {
-		createStack(context, templateStruct, currentSession)
+		err := createStack(context, templateStruct, currentSession)
+		if err != nil {
+			context.Logger.Error("Error creating stack: " + err.Error())
+			return
+		}
 	}
 }
 

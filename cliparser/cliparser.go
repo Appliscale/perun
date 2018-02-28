@@ -75,26 +75,33 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		configurationPath = app.Flag("config", "A path to the configuration file").Short('c').String()
 		showProgress      = app.Flag("progress", "Show progress of stack creation. Option available only after setting up a remote sink").Bool()
 
-		onlineValidate         = app.Command(ValidateMode, "Online template Validation")
-		onlineValidateTemplate = onlineValidate.Arg("template", "A path to the template file.").Required().String()
+		onlineValidate            = app.Command(ValidateMode, "Online template Validation")
+		onlineValidateTemplate    = onlineValidate.Arg("template", "A path to the template file.").String()
+		onlineValidateImpTemplate = onlineValidate.Flag("template", "A path to the template file.").String()
 
-		offlineValidate         = app.Command(OfflineValidateMode, "Offline Template Validation")
-		offlineValidateTemplate = offlineValidate.Arg("template", "A path to the template file.").Required().String()
+		offlineValidate            = app.Command(OfflineValidateMode, "Offline Template Validation")
+		offlineValidateTemplate    = offlineValidate.Arg("template", "A path to the template file.").String()
+		offlineValidateImpTemplate = offlineValidate.Flag("template", "A path to the template file.").String()
 
-		convert           = app.Command(ConvertMode, "Convertion between JSON and YAML of template files")
-		convertTemplate   = convert.Arg("template", "A path to the template file.").Required().String()
-		convertOutputFile = convert.Arg("output", "A path where converted file will be saved.").Required().String()
-		prettyPrint       = convert.Flag("pretty-print", "Pretty printing JSON").Bool()
+		convert              = app.Command(ConvertMode, "Convertion between JSON and YAML of template files")
+		convertTemplate      = convert.Arg("template", "A path to the template file.").String()
+		convertOutputFile    = convert.Arg("output", "A path where converted file will be saved.").String()
+		convertImpTemplate   = convert.Flag("from", "A path to the template file.").String()
+		convertImpOutputFile = convert.Flag("to", "A path where converted file will be saved.").String()
+		prettyPrint          = convert.Flag("pretty-print", "Pretty printing JSON").Bool()
 
 		configure = app.Command(ConfigureMode, "Create your own configuration mode")
 
 		createStack             = app.Command(CreateStackMode, "Creates a stack on aws")
-		createStackName         = createStack.Arg("stack", "An AWS stack name.").Required().String()
-		createStackTemplate     = createStack.Arg("template", "A path to the template file.").Required().String()
+		createStackName         = createStack.Arg("stack", "An AWS stack name.").String()
+		createStackTemplate     = createStack.Arg("template", "A path to the template file.").String()
+		createStackImpName      = createStack.Flag("stack", "Sn AWS stack name.").String()
+		createStackImpTemplate  = createStack.Flag("template", "A path to the template file.").String()
 		createStackCapabilities = createStack.Flag("capabilities", "Capabilities: CAPABILITY_IAM | CAPABILITY_NAMED_IAM").Enums("CAPABILITY_IAM", "CAPABILITY_NAMED_IAM")
 
-		deleteStack     = app.Command(DestroyStackMode, "Deletes a stack on aws")
-		deleteStackName = deleteStack.Arg("stack", "An AWS stack name.").Required().String()
+		deleteStack        = app.Command(DestroyStackMode, "Deletes a stack on aws")
+		deleteStackName    = deleteStack.Arg("stack", "An AWS stack name.").String()
+		deleteStackImpName = deleteStack.Flag("stack", "An AWS stack name.").String()
 
 		updateStack             = app.Command(UpdateStackMode, "Updates a stack on aws")
 		updateStackName         = updateStack.Arg("stack", "An AWS stack name").String()
@@ -118,19 +125,45 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 	//online validate
 	case onlineValidate.FullCommand():
 		cliArguments.Mode = &ValidateMode
-		cliArguments.TemplatePath = onlineValidateTemplate
+		if len(*onlineValidateTemplate) > 0 {
+			cliArguments.TemplatePath = onlineValidateTemplate
+		} else if len(*onlineValidateImpTemplate) > 0 {
+			cliArguments.TemplatePath = onlineValidateImpTemplate
+		} else {
+			err = errors.New("You have to specify the template, try --help")
+			return
+		}
 
 		// offline validation
 	case offlineValidate.FullCommand():
 		cliArguments.Mode = &OfflineValidateMode
-		cliArguments.TemplatePath = offlineValidateTemplate
+		if len(*offlineValidateTemplate) > 0 {
+			cliArguments.TemplatePath = offlineValidateTemplate
+		} else if len(*offlineValidateImpTemplate) > 0 {
+			cliArguments.TemplatePath = offlineValidateImpTemplate
+		} else {
+			err = errors.New("You have to specify the template, try --help")
+			return
+		}
 
 		// convert
 	case convert.FullCommand():
 		cliArguments.Mode = &ConvertMode
-		cliArguments.TemplatePath = convertTemplate
-		cliArguments.OutputFilePath = convertOutputFile
 		cliArguments.PrettyPrint = prettyPrint
+
+		if len(*convertImpOutputFile) > 0 && len(*convertImpTemplate) > 0 {
+			cliArguments.TemplatePath = convertImpTemplate
+			cliArguments.OutputFilePath = convertImpOutputFile
+		} else if len(*convertOutputFile) > 0 && len(*convertTemplate) > 0 {
+			cliArguments.TemplatePath = convertTemplate
+			cliArguments.OutputFilePath = convertOutputFile
+		} else if len(*convertTemplate) > 0 && len(*convertImpOutputFile) > 0 {
+			cliArguments.TemplatePath = convertTemplate
+			cliArguments.OutputFilePath = convertImpOutputFile
+		} else {
+			err = errors.New("You have to specify the template and the output file, try --help")
+			return
+		}
 
 		// configure
 	case configure.FullCommand():
@@ -139,14 +172,33 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		// create Stack
 	case createStack.FullCommand():
 		cliArguments.Mode = &CreateStackMode
-		cliArguments.Stack = createStackName
 		cliArguments.Capabilities = createStackCapabilities
-		cliArguments.TemplatePath = createStackTemplate
+
+		if len(*createStackImpTemplate) > 0 && len(*createStackImpName) > 0 {
+			cliArguments.Stack = createStackImpName
+			cliArguments.TemplatePath = createStackImpTemplate
+		} else if len(*createStackName) > 0 && len(*createStackTemplate) > 0 {
+			cliArguments.Stack = createStackName
+			cliArguments.TemplatePath = createStackTemplate
+		} else if len(*createStackName) > 0 && len(*createStackImpTemplate) > 0 {
+			cliArguments.Stack = createStackName
+			cliArguments.TemplatePath = createStackImpTemplate
+		} else {
+			err = errors.New("You have to specify stack name and template file, try --help")
+			return
+		}
 
 		// delete Stack
 	case deleteStack.FullCommand():
 		cliArguments.Mode = &DestroyStackMode
-		cliArguments.Stack = deleteStackName
+		if len(*deleteStackName) > 0 {
+			cliArguments.Stack = deleteStackName
+		} else if len(*deleteStackImpName) > 0 {
+			cliArguments.Stack = deleteStackImpName
+		} else {
+			err = errors.New("You have to specify the stack name, try --help")
+			return
+		}
 
 		// generate MFA token
 	case mfaCommand.FullCommand():
