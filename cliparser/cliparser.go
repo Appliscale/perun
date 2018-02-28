@@ -94,7 +94,7 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		createStackCapabilities = createStack.Flag("capabilities", "Capabilities: CAPABILITY_IAM | CAPABILITY_NAMED_IAM").Enums("CAPABILITY_IAM", "CAPABILITY_NAMED_IAM")
 
 		deleteStack     = app.Command(DestroyStackMode, "Deletes a stack on aws")
-		deleteStackName = deleteStack.Arg("stack", "An AWS stack name.").Required().String()
+		deleteStackName = deleteStack.Arg("stack", "An AWS stack name.").String()
 
 		updateStack             = app.Command(UpdateStackMode, "Updates a stack on aws")
 		updateStackName         = updateStack.Arg("stack", "An AWS stack name").String()
