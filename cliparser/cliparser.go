@@ -163,6 +163,20 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 			return
 		}
 
+		if len(*convertImpOutputFile) > 0 && len(*convertImpTemplate) > 0 {
+			cliArguments.TemplatePath = convertImpTemplate
+			cliArguments.OutputFilePath = convertImpOutputFile
+		} else if len(*convertOutputFile) > 0 && len(*convertTemplate) > 0 {
+			cliArguments.TemplatePath = convertTemplate
+			cliArguments.OutputFilePath = convertOutputFile
+		} else if len(*convertTemplate) > 0 && len(*convertImpOutputFile) > 0 {
+			cliArguments.TemplatePath = convertTemplate
+			cliArguments.OutputFilePath = convertImpOutputFile
+		} else {
+			err = errors.New("You have to specify the template and the output file, try --help")
+			return
+		}
+
 		// configure
 	case configure.FullCommand():
 		cliArguments.Mode = &ConfigureMode
