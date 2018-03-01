@@ -137,7 +137,7 @@ func validateProperties(
 		} else if propertyValue.Type == "List" {
 			checkListProperties(specification, resourceValue.Properties, resourceValue.Type, propertyName, propertyValue.ItemType, resourceValidation)
 		} else if propertyValue.Type == "Map" {
-			checkMapProperties(resourceValue.Properties, resourceValidation)
+			checkMapProperties(resourceValue.Properties, propertyName, resourceValidation)
 		}
 	}
 }
@@ -166,7 +166,7 @@ func checkListProperties(
 					if subpropertyValue.IsSubproperty() {
 						checkNestedProperties(spec, listItem, resourceValueType, subpropertyName, subpropertyValue.Type, resourceValidation)
 					} else if subpropertyValue.Type == "Map" {
-						checkMapProperties(listItem, resourceValidation)
+						checkMapProperties(listItem, propertyName, resourceValidation)
 					}
 				}
 			}
@@ -181,7 +181,7 @@ func checkNestedProperties(
 	resourceValidation *logger.ResourceValidation) {
 
 	if propertySpec, hasSpec := spec.PropertyTypes[resourceValueType+"."+propertyType]; hasSpec {
-		resourceSubproperties := toMap(resourceProperties, propertyName)
+		resourceSubproperties, _ := toMap(resourceProperties, propertyName)
 		for subpropertyName, subpropertyValue := range propertySpec.Properties {
 			if _, isPresent := resourceSubproperties[subpropertyName]; !isPresent {
 				if subpropertyValue.Required {
@@ -193,7 +193,7 @@ func checkNestedProperties(
 				} else if subpropertyValue.Type == "List" {
 					checkListProperties(spec, resourceSubproperties, resourceValueType, subpropertyName, subpropertyValue.ItemType, resourceValidation)
 				} else if subpropertyValue.Type == "Map" {
-					checkMapProperties(resourceSubproperties, resourceValidation)
+					checkMapProperties(resourceSubproperties, subpropertyName, resourceValidation)
 				}
 			}
 		}
@@ -202,12 +202,12 @@ func checkNestedProperties(
 
 func checkMapProperties(
 	resourceProperties map[string]interface{},
+	propertyName string,
 	resourceValidation *logger.ResourceValidation) {
 
-	for subpropertyName, subpropertyValue := range resourceProperties {
-		if reflect.TypeOf(subpropertyValue).Kind() != reflect.Map {
-			resourceValidation.AddValidationError(subpropertyName + " must be a Map")
-		}
+	_, err := toMap(resourceProperties, propertyName)
+	if err != nil {
+		resourceValidation.AddValidationError(err.Error())
 	}
 }
 
@@ -335,12 +335,12 @@ func toStringList(resourceProperties map[string]interface{}, propertyName string
 	return list
 }
 
-func toMap(resourceProperties map[string]interface{}, propertyName string) map[string]interface{} {
+func toMap(resourceProperties map[string]interface{}, propertyName string) (map[string]interface{}, error) {
 	subproperties, ok := resourceProperties[propertyName].(map[string]interface{})
 	if !ok {
-		return map[string]interface{}{}
+		return nil, errors.New(propertyName + " must be a Map")
 	}
-	return subproperties
+	return subproperties, nil
 }
 
 // There is a possibility that a hash map inside the template would have one of it's element's being an intrinsic function designed to output `key : value` pair.

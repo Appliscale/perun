@@ -292,7 +292,7 @@ func TestValidIfMapInNestedPropertyIsMap(t *testing.T) {
 	assert.True(t, validateResources(resources, &spec, &sink, deadProp, deadRes), "This resource should be valid")
 }
 
-func TestInvalidNonMapProperty(t *testing.T) {
+func TestInvalidNestedNonMapProperty(t *testing.T) {
 	sink = logger.Logger{}
 
 	resources := make(map[string]template.Resource)
@@ -302,6 +302,38 @@ func TestInvalidNonMapProperty(t *testing.T) {
 	resources["ExampleResource"] = createResourceWithNestedProperties("AWS::Map2::Thing", "AttributePayload", properties)
 
 	assert.False(t, validateResources(resources, &spec, &sink, deadProp, deadRes), "This resource shouldn't be valid - Attributes should be a Map")
+}
+
+func TestValidMapProperty(t *testing.T) {
+	sink = logger.Logger{}
+
+	resources := make(map[string]template.Resource)
+	resource := template.Resource{}
+	resource.Type = "AWS::Map3::DBParameterGroup"
+	resource.Properties = make(map[string]interface{})
+	resource.Properties["Parameters"] = map[string]interface{}{
+		"general_log":     1,
+		"long_query_time": 10,
+		"slow_query_log":  1,
+	}
+	resource.Properties["Family"] = "mysql5.6"
+	resources["ExampleResource"] = resource
+
+	assert.True(t, validateResources(resources, &spec, &sink, deadProp, deadRes), "This resource should be valid")
+}
+
+func TestInvalidMapProperty(t *testing.T) {
+	sink = logger.Logger{}
+
+	resources := make(map[string]template.Resource)
+	resource := template.Resource{}
+	resource.Type = "AWS::Map3::DBParameterGroup"
+	resource.Properties = make(map[string]interface{})
+	resource.Properties["Parameters"] = "DummyValue"
+	resource.Properties["Family"] = "mysql5.6"
+	resources["ExampleResource"] = resource
+
+	assert.False(t, validateResources(resources, &spec, &sink, deadProp, deadRes), "This resource should be valid")
 }
 
 func createResourceWithNestedProperties(resourceType string, propertyName string, nestedPropertyValue map[string]interface{}) template.Resource {
