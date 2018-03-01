@@ -215,6 +215,12 @@ func parseJSON(templateFile []byte, refTemplate template.Template, logger *logge
 
 	err = json.Unmarshal(templateFile, &refTemplate)
 	if err != nil {
+		syntaxError, ok := err.(*json.SyntaxError)
+		if ok {
+			offset := int(syntaxError.Offset)
+			line, character := lineAndCharacter(string(templateFile), offset)
+			logger.Error("Syntax error at line " + strconv.Itoa(line) + ", column " + strconv.Itoa(character))
+		}
 		return template, err
 	}
 
@@ -437,4 +443,29 @@ func sliceContains(slice []string, match string) bool {
 		}
 	}
 	return false
+}
+
+func lineAndCharacter(input string, offset int) (line int, character int) {
+	lf := rune(0x0A)
+
+	if offset > len(input) || offset < 0 {
+		return 0, 0
+	}
+
+	line = 1
+
+	for i, b := range input {
+		if b == lf {
+			if i < offset {
+				line++
+				character = 0
+			}
+		} else {
+			character++
+		}
+		if i == offset {
+			break
+		}
+	}
+	return line, character
 }
