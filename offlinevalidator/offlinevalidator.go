@@ -215,11 +215,14 @@ func parseJSON(templateFile []byte, refTemplate template.Template, logger *logge
 
 	err = json.Unmarshal(templateFile, &refTemplate)
 	if err != nil {
-		syntaxError, ok := err.(*json.SyntaxError)
-		if ok {
-			offset := int(syntaxError.Offset)
-			line, character := lineAndCharacter(string(templateFile), offset)
+		if syntaxError, isSyntaxError := err.(*json.SyntaxError); isSyntaxError {
+			syntaxOffset := int(syntaxError.Offset)
+			line, character := lineAndCharacter(string(templateFile), syntaxOffset)
 			logger.Error("Syntax error at line " + strconv.Itoa(line) + ", column " + strconv.Itoa(character))
+		} else if typeError, isTypeError := err.(*json.UnmarshalTypeError); isTypeError {
+			typeOffset := int(typeError.Offset)
+			line, character := lineAndCharacter(string(templateFile), typeOffset)
+			logger.Error("Type error at line " + strconv.Itoa(line) + ", column " + strconv.Itoa(character))
 		}
 		return template, err
 	}
