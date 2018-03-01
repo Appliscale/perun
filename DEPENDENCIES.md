@@ -2,7 +2,7 @@
 
 ## MIT
 
-- https://github.com/alecthomas/kingpin
+- gopkg.in/alecthomas/kingpin.v2
   - Command-line parser. It is type-safe and allows to have short version of commands (e.g. `--config`, `-c`).
 - https://github.com/ghodss/yaml
   - *Go* lacks of YAML support out of the box, so we need this one.
@@ -19,3 +19,5 @@
   - AWS API.
 - https://github.com/go-ini/ini
   - For handling AWS credential files.
+- https://github.com/awslabs/goformation
+  - Library for working with AWS CloudFormation templates (capable of resolving the intrinsic functions).
