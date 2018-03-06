@@ -77,8 +77,8 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 
 		configure = app.Command(ConfigureMode, "Create your own configuration mode")
 
-		createStack     = app.Command(CreateStackMode, "Creates a stack on aws")
-		createStackName = createStack.Arg("stack", "An AWS stack name.").Required().String()
+		createStack         = app.Command(CreateStackMode, "Creates a stack on aws")
+		createStackName     = createStack.Arg("stack", "An AWS stack name.").Required().String()
 		createStackTemplate = createStack.Arg("template", "A path to the template file.").Required().String()
 
 		deleteStack     = app.Command(DestroyStackMode, "Deletes a stack on aws")
