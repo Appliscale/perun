@@ -36,6 +36,7 @@ var UpdateStackMode = "update-stack"
 var MfaMode = "mfa"
 var SetupSinkMode = "setup-remote-sink"
 var DestroySinkMode = "destroy-remote-sink"
+var CreateParametersMode = "create-parameters"
 
 const JSON = "json"
 const YAML = "yaml"
@@ -43,6 +44,7 @@ const YAML = "yaml"
 type CliArguments struct {
 	Mode              *string
 	TemplatePath      *string
+	Parameters        *map[string]string
 	OutputFilePath    *string
 	ConfigurationPath *string
 	Quiet             *bool
@@ -92,6 +94,7 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		createStackName         = createStack.Arg("stack", "An AWS stack name.").Required().String()
 		createStackTemplate     = createStack.Arg("template", "A path to the template file.").Required().String()
 		createStackCapabilities = createStack.Flag("capabilities", "Capabilities: CAPABILITY_IAM | CAPABILITY_NAMED_IAM").Enums("CAPABILITY_IAM", "CAPABILITY_NAMED_IAM")
+		createStackParams       = createStack.Flag("parameter", "list of parameters").StringMap()
 
 		deleteStack     = app.Command(DestroyStackMode, "Deletes a stack on aws")
 		deleteStackName = deleteStack.Arg("stack", "An AWS stack name.").String()
@@ -106,6 +109,12 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		setupSink = app.Command(SetupSinkMode, "Sets up resources required for progress report on stack events (SNS Topic, SQS Queue and SQS Queue Policy)")
 
 		destroySink = app.Command(DestroySinkMode, "Destroys resources created with setup-remote-sink")
+
+		createParameters                 = app.Command(CreateParametersMode, "Creates a JSON parameters configuration suitable for give cloud formation file")
+		createParametersTemplate         = createParameters.Arg("template", "A path to the template file.").String()
+		createParametersParamsOutputFile = createParameters.Flag("output", "A path to file where parameters will be saved.").String()
+		createParametersParams           = createParameters.Flag("parameter", "list of parameters").StringMap()
+		createParametersPrettyPrint      = createParameters.Flag("pretty-print", "Pretty printing JSON").Bool()
 	)
 
 	app.HelpFlag.Short('h')
@@ -140,6 +149,7 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		cliArguments.Stack = createStackName
 		cliArguments.TemplatePath = createStackTemplate
 		cliArguments.Capabilities = createStackCapabilities
+		cliArguments.Parameters = createStackParams
 
 		// delete Stack
 	case deleteStack.FullCommand():
@@ -156,6 +166,14 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		cliArguments.Stack = updateStackName
 		cliArguments.TemplatePath = updateStackTemplate
 		cliArguments.Capabilities = updateStackCapabilities
+
+		// create Parameters
+	case createParameters.FullCommand():
+		cliArguments.Mode = &CreateParametersMode
+		cliArguments.TemplatePath = createParametersTemplate
+		cliArguments.OutputFilePath = createParametersParamsOutputFile
+		cliArguments.Parameters = createParametersParams
+		cliArguments.PrettyPrint = createParametersPrettyPrint
 
 		// set up remote sink
 	case setupSink.FullCommand():

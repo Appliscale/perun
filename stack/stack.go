@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/Appliscale/perun/parameters"
 	"github.com/Appliscale/perun/progress"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
@@ -19,9 +20,14 @@ func createStackInput(context *context.Context, template *string, stackName *str
 	capabilities := make([]*string, len(rawCapabilities))
 	for i, capability := range rawCapabilities {
 		capabilities[i] = &capability
+
+	params, err := parameters.GetAwsParameters(context)
+	if err != nil {
+		context.Logger.Error(err.Error())
 	}
 
 	templateStruct := cloudformation.CreateStackInput{
+		Parameters:   params,
 		TemplateBody: template,
 		StackName:    stackName,
 		Capabilities: capabilities,
@@ -59,7 +65,7 @@ func getTemplateFromFile(context *context.Context) (string, string) {
 }
 
 // This function uses CreateStackInput variable to create Stack.
-func createStack(context *context.Context, templateStruct cloudformation.CreateStackInput, session *session.Session) (err error) {
+func createStack(templateStruct cloudformation.CreateStackInput, session *session.Session) (err error) {
 	api := cloudformation.New(session)
 	_, err = api.CreateStack(&templateStruct)
 	return
@@ -79,14 +85,14 @@ func NewStack(context *context.Context) {
 			return
 		}
 		templateStruct.NotificationARNs = []*string{conn.TopicArn}
-		err = createStack(context, templateStruct, currentSession)
+		err = createStack(templateStruct, currentSession)
 		if err != nil {
 			context.Logger.Error("Error creating stack: " + err.Error())
 			return
 		}
 		conn.MonitorQueue()
 	} else {
-		err := createStack(context, templateStruct, currentSession)
+		err := createStack(templateStruct, currentSession)
 		if err != nil {
 			context.Logger.Error("Error creating stack: " + err.Error())
 			return
