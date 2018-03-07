@@ -64,9 +64,9 @@ func ConfigureParameters(context *context.Context) error {
 	if *context.CliArguments.OutputFilePath != "" {
 		context.Logger.Info("Writing parameters configuration to file: " + *context.CliArguments.OutputFilePath)
 
-		_, err = os.Stat(*context.CliArguments.OutputFilePath + ".json")
+		_, err = os.Stat(*context.CliArguments.OutputFilePath)
 		if err == nil {
-			context.Logger.Warning("File " + *context.CliArguments.OutputFilePath + ".json would be overriten by this action. Do you want to continue? [Y/N]")
+			context.Logger.Warning("File " + *context.CliArguments.OutputFilePath + " would be overriten by this action. Do you want to continue? [Y/N]")
 			var ans string
 			for ans != "n" && ans != "y" {
 				fmt.Scanf("%s", &ans)
@@ -77,7 +77,7 @@ func ConfigureParameters(context *context.Context) error {
 				return errors.New("user aborted")
 			}
 		}
-		err = ioutil.WriteFile(*context.CliArguments.OutputFilePath+".json", resultString, 0666)
+		err = ioutil.WriteFile(*context.CliArguments.OutputFilePath, resultString, 0666)
 		if err != nil {
 			context.Logger.Error(err.Error())
 		}
@@ -93,6 +93,10 @@ func GetAwsParameters(context *context.Context) (parameters []*cloudformation2.P
 	if err != nil {
 		return
 	}
+	parameters = ParseParameterToAwsCompatible(params)
+	return
+}
+func ParseParameterToAwsCompatible(params []*Parameter) (parameters []*cloudformation2.Parameter) {
 	for paramnum := range params {
 		parameters = append(parameters,
 			&cloudformation2.Parameter{
