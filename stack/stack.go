@@ -1,6 +1,7 @@
 package stack
 
 import (
+	"encoding/json"
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/mysession"
 	"github.com/Appliscale/perun/parameters"
@@ -12,7 +13,7 @@ import (
 
 // This function gets template and  name of stack. It creates "CreateStackInput" structure.
 func createStackInput(template *string, stackName *string, context *context.Context) cloudformation.CreateStackInput {
-	params, err := parameters.GetAwsParameters(context)
+	params, err := getParameters(context)
 	if err != nil {
 		context.Logger.Error(err.Error())
 	}
@@ -120,4 +121,24 @@ func deleteStackInput(context *context.Context) cloudformation.DeleteStackInput 
 		StackName: &name,
 	}
 	return templateStruct
+}
+
+// Get the parameters - if parameters file provided - from file, else - interactively from user
+func getParameters(context *context.Context) (params []*cloudformation.Parameter, err error) {
+	if *context.CliArguments.ParametersFile == "" {
+		params, err = parameters.GetAwsParameters(context)
+	} else {
+		var parametersData []byte
+		var readParameters []*parameters.Parameter
+		parametersData, err = ioutil.ReadFile(*context.CliArguments.ParametersFile)
+		if err != nil {
+			return
+		}
+		err = json.Unmarshal(parametersData, &readParameters)
+		if err != nil {
+			return
+		}
+		params = parameters.ParseParameterToAwsCompatible(readParameters)
+	}
+	return
 }

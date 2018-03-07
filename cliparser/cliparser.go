@@ -55,6 +55,7 @@ type CliArguments struct {
 	Stack             *string
 	PrettyPrint       *bool
 	Progress          *bool
+	ParametersFile    *string
 }
 
 // Get and validate CLI arguments. Returns error if validation fails.
@@ -90,13 +91,13 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 
 		configure = app.Command(ConfigureMode, "Create your own configuration mode")
 
-		createStack            = app.Command(CreateStackMode, "Creates a stack on aws")
-		createStackName        = createStack.Arg("stack", "An AWS stack name.").String()
-		createStackTemplate    = createStack.Arg("template", "A path to the template file.").String()
-		createStackImpName     = createStack.Flag("stack", "Sn AWS stack name.").String()
-		createStackImpTemplate = createStack.Flag("template", "A path to the template file.").String()
-		createStackParams      = createStack.Flag("parameter", "list of parameters").StringMap()
-		//createStackParametersFile = createStack.Flag("parametersFile", "filename with parameters")
+		createStack               = app.Command(CreateStackMode, "Creates a stack on aws")
+		createStackName           = createStack.Arg("stack", "An AWS stack name.").String()
+		createStackTemplate       = createStack.Arg("template", "A path to the template file.").String()
+		createStackImpName        = createStack.Flag("stack", "Sn AWS stack name.").String()
+		createStackImpTemplate    = createStack.Flag("template", "A path to the template file.").String()
+		createStackParams         = createStack.Flag("parameter", "list of parameters").StringMap()
+		createStackParametersFile = createStack.Flag("parameters-file", "filename with parameters").String()
 
 		deleteStack        = app.Command(DestroyStackMode, "Deletes a stack on aws")
 		deleteStackName    = deleteStack.Arg("stack", "An AWS stack name.").String()
@@ -169,6 +170,7 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 	case createStack.FullCommand():
 		cliArguments.Mode = &CreateStackMode
 		cliArguments.Parameters = createStackParams
+		cliArguments.ParametersFile = createStackParametersFile
 		if len(*createStackImpTemplate) > 0 && len(*createStackImpName) > 0 {
 			cliArguments.Stack = createStackImpName
 			cliArguments.TemplatePath = createStackImpTemplate
