@@ -3,7 +3,7 @@ package stack
 import (
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/mysession"
-	//"github.com/Appliscale/perun/notificationservice"
+	"github.com/Appliscale/perun/parameters"
 	"github.com/Appliscale/perun/progress"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
@@ -11,8 +11,14 @@ import (
 )
 
 // This function gets template and  name of stack. It creates "CreateStackInput" structure.
-func createStackInput(template *string, stackName *string) cloudformation.CreateStackInput {
+func createStackInput(template *string, stackName *string, context *context.Context) cloudformation.CreateStackInput {
+	params, err := parameters.GetAwsParameters(context)
+	if err != nil {
+		context.Logger.Error(err.Error())
+	}
+
 	templateStruct := cloudformation.CreateStackInput{
+		Parameters:   params,
 		TemplateBody: template,
 		StackName:    stackName,
 	}
@@ -34,7 +40,7 @@ func getTemplateFromFile(context *context.Context) (string, string) {
 }
 
 // This function uses CreateStackInput variable to create Stack.
-func createStack(context *context.Context, templateStruct cloudformation.CreateStackInput, session *session.Session) (err error) {
+func createStack(templateStruct cloudformation.CreateStackInput, session *session.Session) (err error) {
 	api := cloudformation.New(session)
 	_, err = api.CreateStack(&templateStruct)
 	return
@@ -43,7 +49,7 @@ func createStack(context *context.Context, templateStruct cloudformation.CreateS
 // This function uses all functions above and session to create Stack.
 func NewStack(context *context.Context) {
 	template, stackName := getTemplateFromFile(context)
-	templateStruct := createStackInput(&template, &stackName)
+	templateStruct := createStackInput(&template, &stackName, context)
 
 	tokenError := mysession.UpdateSessionToken(context.Config.DefaultProfile, context.Config.DefaultRegion, context.Config.DefaultDurationForMFA, context)
 	if tokenError != nil {
@@ -61,14 +67,14 @@ func NewStack(context *context.Context) {
 			return
 		}
 		templateStruct.NotificationARNs = []*string{conn.TopicArn}
-		err = createStack(context, templateStruct, currentSession)
+		err = createStack(templateStruct, currentSession)
 		if err != nil {
 			context.Logger.Error("Error creating stack: " + err.Error())
 			return
 		}
 		conn.MonitorQueue()
 	} else {
-		err := createStack(context, templateStruct, currentSession)
+		err := createStack(templateStruct, currentSession)
 		if err != nil {
 			context.Logger.Error("Error creating stack: " + err.Error())
 			return

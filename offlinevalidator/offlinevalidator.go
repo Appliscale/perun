@@ -75,9 +75,9 @@ func Validate(context *context.Context) bool {
 
 	templateFileExtension := path.Ext(*context.CliArguments.TemplatePath)
 	if templateFileExtension == ".json" {
-		goFormationTemplate, err = parseJSON(rawTemplate, perunTemplate, context.Logger)
+		goFormationTemplate, err = ParseJSON(rawTemplate, perunTemplate, context.Logger)
 	} else if templateFileExtension == ".yaml" || templateFileExtension == ".yml" {
-		goFormationTemplate, err = parseYAML(rawTemplate, perunTemplate, context.Logger)
+		goFormationTemplate, err = ParseYAML(rawTemplate, perunTemplate, context.Logger)
 	} else {
 		err = errors.New("Invalid template file format.")
 	}
@@ -211,7 +211,7 @@ func checkMapProperties(
 	}
 }
 
-func parseJSON(templateFile []byte, refTemplate template.Template, logger *logger.Logger) (template cloudformation.Template, err error) {
+func ParseJSON(templateFile []byte, refTemplate template.Template, logger *logger.Logger) (template cloudformation.Template, err error) {
 
 	err = json.Unmarshal(templateFile, &refTemplate)
 	if err != nil {
@@ -228,7 +228,7 @@ func parseJSON(templateFile []byte, refTemplate template.Template, logger *logge
 	return returnTemplate, nil
 }
 
-func parseYAML(templateFile []byte, refTemplate template.Template, logger *logger.Logger) (template cloudformation.Template, err error) {
+func ParseYAML(templateFile []byte, refTemplate template.Template, logger *logger.Logger) (template cloudformation.Template, err error) {
 
 	err = yaml.Unmarshal(templateFile, &refTemplate)
 	if err != nil {
