@@ -59,6 +59,7 @@ type CliArguments struct {
 	Capabilities      *[]string
 	PrettyPrint       *bool
 	Progress          *bool
+	ParametersFile    *string
 }
 
 // Get and validate CLI arguments. Returns error if validation fails.
@@ -90,11 +91,12 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 
 		configure = app.Command(ConfigureMode, "Create your own configuration mode")
 
-		createStack             = app.Command(CreateStackMode, "Creates a stack on aws")
-		createStackName         = createStack.Arg("stack", "An AWS stack name.").Required().String()
-		createStackTemplate     = createStack.Arg("template", "A path to the template file.").Required().String()
-		createStackCapabilities = createStack.Flag("capabilities", "Capabilities: CAPABILITY_IAM | CAPABILITY_NAMED_IAM").Enums("CAPABILITY_IAM", "CAPABILITY_NAMED_IAM")
-		createStackParams       = createStack.Flag("parameter", "list of parameters").StringMap()
+		createStack               = app.Command(CreateStackMode, "Creates a stack on aws")
+		createStackName           = createStack.Arg("stack", "An AWS stack name.").Required().String()
+		createStackTemplate       = createStack.Arg("template", "A path to the template file.").Required().String()
+		createStackCapabilities   = createStack.Flag("capabilities", "Capabilities: CAPABILITY_IAM | CAPABILITY_NAMED_IAM").Enums("CAPABILITY_IAM", "CAPABILITY_NAMED_IAM")
+		createStackParams         = createStack.Flag("parameter", "list of parameters").StringMap()
+		createStackParametersFile = createStack.Flag("parameters-file", "filename with parameters").String()
 
 		deleteStack     = app.Command(DestroyStackMode, "Deletes a stack on aws")
 		deleteStackName = deleteStack.Arg("stack", "An AWS stack name.").String()
@@ -150,6 +152,7 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		cliArguments.TemplatePath = createStackTemplate
 		cliArguments.Capabilities = createStackCapabilities
 		cliArguments.Parameters = createStackParams
+		cliArguments.ParametersFile = createStackParametersFile
 
 		// delete Stack
 	case deleteStack.FullCommand():
