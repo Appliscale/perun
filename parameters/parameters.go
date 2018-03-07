@@ -23,15 +23,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"regexp"
+	"strings"
+
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/helpers"
 	"github.com/Appliscale/perun/offlinevalidator/template"
 	cloudformation2 "github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/awslabs/goformation/cloudformation"
-	"io/ioutil"
-	"os"
-	"regexp"
-	"strings"
 )
 
 type Parameter struct {

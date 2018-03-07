@@ -84,10 +84,10 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		offlineValidate         = app.Command(OfflineValidateMode, "Offline Template Validation")
 		offlineValidateTemplate = offlineValidate.Arg("template", "A path to the template file.").String()
 
-		convert           = app.Command(ConvertMode, "Convertion between JSON and YAML of template files")
-		convertTemplate   = convert.Arg("template", "A path to the template file.").String()
-		convertOutputFile = convert.Arg("output", "A path where converted file will be saved.").String()
-		prettyPrint       = convert.Flag("pretty-print", "Pretty printing JSON").Bool()
+		convert            = app.Command(ConvertMode, "Convertion between JSON and YAML of template files")
+		convertTemplate    = convert.Arg("template", "A path to the template file.").String()
+		convertOutputFile  = convert.Arg("output", "A path where converted file will be saved.").String()
+		convertPrettyPrint = convert.Flag("pretty-print", "Pretty printing JSON").Bool()
 
 		configure = app.Command(ConfigureMode, "Create your own configuration mode")
 
@@ -137,9 +137,9 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		// convert
 	case convert.FullCommand():
 		cliArguments.Mode = &ConvertMode
-		cliArguments.PrettyPrint = prettyPrint
 		cliArguments.TemplatePath = convertTemplate
 		cliArguments.OutputFilePath = convertOutputFile
+		cliArguments.PrettyPrint = convertPrettyPrint
 
 		// configure
 	case configure.FullCommand():
@@ -169,6 +169,14 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		cliArguments.Stack = updateStackName
 		cliArguments.TemplatePath = updateStackTemplate
 		cliArguments.Capabilities = updateStackCapabilities
+
+		// create Parameters
+	case createParameters.FullCommand():
+		cliArguments.Mode = &CreateParametersMode
+		cliArguments.TemplatePath = createParametersTemplate
+		cliArguments.OutputFilePath = createParametersParamsOutputFile
+		cliArguments.Parameters = createParametersParams
+		cliArguments.PrettyPrint = createParametersPrettyPrint
 
 		// create Parameters
 	case createParameters.FullCommand():

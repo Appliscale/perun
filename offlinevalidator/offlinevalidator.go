@@ -20,6 +20,7 @@ package offlinevalidator
 
 import (
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"reflect"
 	"strconv"
@@ -27,12 +28,14 @@ import (
 
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/helpers"
+	"github.com/Appliscale/perun/intrinsicsolver"
 	"github.com/Appliscale/perun/logger"
 	"github.com/Appliscale/perun/offlinevalidator/template"
 	"github.com/Appliscale/perun/offlinevalidator/validators"
 	"github.com/Appliscale/perun/specification"
 	"github.com/awslabs/goformation"
 	"github.com/awslabs/goformation/cloudformation"
+	"github.com/ghodss/yaml"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -203,6 +206,43 @@ func checkMapProperties(
 	if err != nil {
 		resourceValidation.AddValidationError(err.Error())
 	}
+	for subpropertyName, subpropertyValue := range resourceProperties {
+		if reflect.TypeOf(subpropertyValue).Kind() != reflect.Map {
+			resourceValidation.AddValidationError(subpropertyName + " must be a Map")
+		}
+	}
+}
+
+func ParseJSON(templateFile []byte, refTemplate template.Template, logger *logger.Logger) (template cloudformation.Template, err error) {
+
+	err = json.Unmarshal(templateFile, &refTemplate)
+	if err != nil {
+		return template, err
+	}
+
+	tempJSON, err := goformation.ParseJSON(templateFile)
+	if err != nil {
+		logger.Error(err.Error())
+	}
+
+	returnTemplate := *tempJSON
+
+	return returnTemplate, nil
+}
+
+func ParseYAML(templateFile []byte, refTemplate template.Template, logger *logger.Logger) (template cloudformation.Template, err error) {
+
+	err = yaml.Unmarshal(templateFile, &refTemplate)
+	if err != nil {
+		return template, err
+	}
+
+	preprocessed, preprocessingError := intrinsicsolver.FixFunctions(templateFile, logger, "multiline", "elongate", "correctlong")
+	if preprocessingError != nil {
+		logger.Error(preprocessingError.Error())
+	}
+	tempYAML, err := goformation.ParseYAML(preprocessed)
+	return *tempYAML, err
 }
 
 func obtainResources(goformationTemplate cloudformation.Template, perunTemplate template.Template, logger *logger.Logger) map[string]template.Resource {
