@@ -33,6 +33,7 @@ var CreateStackMode = "create-stack"
 var DestroyStackMode = "delete-stack"
 var SetupSinkMode = "setup-remote-sink"
 var DestroySinkMode = "destroy-remote-sink"
+var CreateParametersMode = "create-parameters"
 
 const JSON = "json"
 const YAML = "yaml"
@@ -40,6 +41,7 @@ const YAML = "yaml"
 type CliArguments struct {
 	Mode              *string
 	TemplatePath      *string
+	Parameters        *map[string]string
 	OutputFilePath    *string
 	ConfigurationPath *string
 	Quiet             *bool
@@ -84,7 +86,7 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		convertOutputFile    = convert.Arg("output", "A path where converted file will be saved.").String()
 		convertImpTemplate   = convert.Flag("from", "A path to the template file.").String()
 		convertImpOutputFile = convert.Flag("to", "A path where converted file will be saved.").String()
-		prettyPrint          = convert.Flag("pretty-print", "Pretty printing JSON").Bool()
+		convertPrettyPrint   = convert.Flag("pretty-print", "Pretty printing JSON").Bool()
 
 		configure = app.Command(ConfigureMode, "Create your own configuration mode")
 
@@ -93,6 +95,8 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		createStackTemplate    = createStack.Arg("template", "A path to the template file.").String()
 		createStackImpName     = createStack.Flag("stack", "Sn AWS stack name.").String()
 		createStackImpTemplate = createStack.Flag("template", "A path to the template file.").String()
+		createStackParams      = createStack.Flag("parameter", "list of parameters").StringMap()
+		//createStackParametersFile = createStack.Flag("parametersFile", "filename with parameters")
 
 		deleteStack        = app.Command(DestroyStackMode, "Deletes a stack on aws")
 		deleteStackName    = deleteStack.Arg("stack", "An AWS stack name.").String()
@@ -101,6 +105,13 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		setupSink = app.Command(SetupSinkMode, "Sets up resources required for progress report on stack events (SNS Topic, SQS Queue and SQS Queue Policy)")
 
 		destroySink = app.Command(DestroySinkMode, "Destroys resources created with setup-remote-sink")
+
+		createParameters                 = app.Command(CreateParametersMode, "Creates a JSON parameters configuration suitable for give cloud formation file")
+		createParametersTemplate         = createParameters.Arg("template", "A path to the template file.").String()
+		createParametersImpTemplate      = createParameters.Flag("template", "A path to the template file.").String()
+		createParametersParamsOutputFile = createParameters.Flag("output", "A path to file where parameters will be saved.").String()
+		createParametersParams           = createParameters.Flag("parameter", "list of parameters").StringMap()
+		createParametersPrettyPrint      = createParameters.Flag("pretty-print", "Pretty printing JSON").Bool()
 	)
 	app.HelpFlag.Short('h')
 	app.Version(utilities.VersionStatus())
@@ -134,7 +145,7 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		// convert
 	case convert.FullCommand():
 		cliArguments.Mode = &ConvertMode
-		cliArguments.PrettyPrint = prettyPrint
+		cliArguments.PrettyPrint = convertPrettyPrint
 
 		if len(*convertImpOutputFile) > 0 && len(*convertImpTemplate) > 0 {
 			cliArguments.TemplatePath = convertImpTemplate
@@ -157,6 +168,7 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		// create Stack
 	case createStack.FullCommand():
 		cliArguments.Mode = &CreateStackMode
+		cliArguments.Parameters = createStackParams
 		if len(*createStackImpTemplate) > 0 && len(*createStackImpName) > 0 {
 			cliArguments.Stack = createStackImpName
 			cliArguments.TemplatePath = createStackImpTemplate
@@ -182,6 +194,20 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 			err = errors.New("You have to specify the stack name, try --help")
 			return
 		}
+
+		// create Parameters
+	case createParameters.FullCommand():
+		cliArguments.Mode = &CreateParametersMode
+		if len(*createParametersTemplate) > 0 {
+			cliArguments.TemplatePath = createParametersTemplate
+		} else if len(*createParametersImpTemplate) > 0 {
+			cliArguments.TemplatePath = createParametersImpTemplate
+		} else {
+			err = errors.New("You have to specify the cloud formation template, try --help")
+		}
+		cliArguments.OutputFilePath = createParametersParamsOutputFile
+		cliArguments.Parameters = createParametersParams
+		cliArguments.PrettyPrint = createParametersPrettyPrint
 
 		// set up remote sink
 	case setupSink.FullCommand():
