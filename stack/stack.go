@@ -2,6 +2,7 @@ package stack
 
 import (
 	"encoding/json"
+
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/mysession"
 	//"github.com/Appliscale/perun/notificationservice"
@@ -21,6 +22,7 @@ func createStackInput(context *context.Context, template *string, stackName *str
 	capabilities := make([]*string, len(rawCapabilities))
 	for i, capability := range rawCapabilities {
 		capabilities[i] = &capability
+	}
 
 	params, err := getParameters(context)
 	if err != nil {

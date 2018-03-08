@@ -3,14 +3,15 @@ package helpers
 import (
 	"encoding/json"
 	"errors"
+	"path"
+	"strconv"
+
 	"github.com/Appliscale/perun/intrinsicsolver"
 	"github.com/Appliscale/perun/logger"
 	"github.com/Appliscale/perun/offlinevalidator/template"
 	"github.com/awslabs/goformation"
 	"github.com/awslabs/goformation/cloudformation"
 	"github.com/ghodss/yaml"
-	"path"
-	"strconv"
 )
 
 func GetParser(filename string) (func([]byte, template.Template, *logger.Logger) (cloudformation.Template, error), error) {
@@ -74,7 +75,6 @@ func ParseYAML(templateFile []byte, refTemplate template.Template, logger *logge
 func PrettyPrintJSON(toPrint interface{}) ([]byte, error) {
 	return json.MarshalIndent(toPrint, "", "    ")
 }
-
 
 func lineAndCharacter(input string, offset int) (line int, character int) {
 	lf := rune(0x0A)
