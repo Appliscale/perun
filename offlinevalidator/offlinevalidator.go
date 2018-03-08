@@ -251,15 +251,13 @@ func obtainResources(goformationTemplate cloudformation.Template, perunTemplate 
 
 	mapstructure.Decode(goformationResources, &perunResources)
 
-	//spew.Dump(perunResources)
-
 	for propertyName, propertyContent := range perunResources {
 		if propertyContent.Properties == nil {
 			logger.Warning(propertyName + " <--- is nil.")
 		} else {
 			for element, elementValue := range propertyContent.Properties {
-				initPath := []interface{}{element}
-				var discarded interface{}
+				initPath := []interface{}{element} // The path from the Property name to the <nil> element.
+				var discarded interface{}          // Container which stores the encountered nodes that aren't on the path.
 				checkWhereIsNil(element, elementValue, propertyName, logger, initPath, &discarded)
 			}
 		}
@@ -419,6 +417,7 @@ func sliceContainsNil(slice []interface{}) bool {
 	return false
 }
 
+// We check if the element is non-string, non-float64, non-boolean. Then it is another node or <nil>. There is no other option.
 func isNonSFB(v interface{}) bool {
 	var isString, isFloat, isBool bool
 	if _, ok := v.(string); ok {
@@ -448,11 +447,11 @@ func isPlainMap(mp map[string]interface{}) bool {
 		return false
 	}
 
-	return true // There is no <nil> and no complexity - it is plain, non-nil map.
+	return true // There is no <nil> and no complexity - it is a plain, non-nil map.
 }
 
 func isPlainSlice(slc []interface{}) bool {
-	// First we check is it more complex. If so - it is worth investigating and we should stop checking.
+	// The same flow as in `isPlainMap` function.
 	for _, s := range slc {
 		if _, ok := s.(map[string]interface{}); ok {
 			return false
@@ -460,12 +459,12 @@ func isPlainSlice(slc []interface{}) bool {
 			return false
 		}
 	}
-	// Ok, it isn't. It is a flat slice. So is there any <nil>?
-	if sliceContainsNil(slc) { // Yes, it is - so it is a slice worth investigating. This is not the slice we're looking for.
+
+	if sliceContainsNil(slc) {
 		return false
 	}
 
-	return true // There is no <nil> and no complexity - it is plain, non-nil slice.
+	return true
 }
 
 func discard(slice []interface{}, n interface{}) []interface{} {
@@ -520,20 +519,19 @@ func checkWhereIsNil(n interface{}, v interface{}, baseLevel string, logger *log
 		logger.Warning(baseLevel + ": " + where + " <--- is nil.")
 	} else if mp, ok := v.(map[string]interface{}); ok { // Value we encountered is a map.
 		if isPlainMap(mp) { // Check is it plain, non-nil map.
-			// It is - we shouldn't dive into. And we should remove it from the location path.
-			*dsc = n
+			// It is - we shouldn't dive into.
+			*dsc = n // The name is stored in the `discarded` container as the name of the blind alley.
 		} else {
 			for kmp, vmp := range mp {
 				if isNonSFB(vmp) {
 					fullPath = append(fullPath, kmp)
-					fullPath = discard(fullPath, *dsc)
+					fullPath = discard(fullPath, *dsc) // If the output path would be different, it seems that we've encountered some node which is not on the way to the <nil>. It will be discarded from the path. Otherwise the paths are the same and we hit the point.
 					checkWhereIsNil(kmp, vmp, baseLevel, logger, fullPath, dsc)
 				}
 			}
 		}
-	} else if slc, ok := v.([]interface{}); ok { // Value we encountered is a slice.
-		if isPlainSlice(slc) { // Check is it plain, non-nil slice.
-			// It is - we shouldn't dive into. And we should remove it from the location path.
+	} else if slc, ok := v.([]interface{}); ok { // The same flow as above.
+		if isPlainSlice(slc) {
 			*dsc = n
 		} else {
 			for islc, vslc := range slc {
