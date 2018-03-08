@@ -24,13 +24,12 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Appliscale/perun/context"
-	"github.com/Appliscale/perun/offlinevalidator"
+	"github.com/Appliscale/perun/helpers"
 	"github.com/Appliscale/perun/offlinevalidator/template"
 	cloudformation2 "github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/awslabs/goformation/cloudformation"
 	"io/ioutil"
 	"os"
-	"path"
 	"regexp"
 	"strings"
 )
@@ -49,7 +48,7 @@ func GetJSONParameters(context *context.Context) (resultString []byte, err error
 	}
 
 	if *context.CliArguments.PrettyPrint {
-		resultString, err = json.MarshalIndent(parameters, "", "    ")
+		resultString, err = helpers.PrettyPrintJSON(parameters)
 	} else {
 		resultString, err = json.Marshal(parameters)
 	}
@@ -67,12 +66,12 @@ func ConfigureParameters(context *context.Context) error {
 		_, err = os.Stat(*context.CliArguments.OutputFilePath)
 		if err == nil {
 			context.Logger.Warning("File " + *context.CliArguments.OutputFilePath + " would be overriten by this action. Do you want to continue? [Y/N]")
-			var ans string
-			for ans != "n" && ans != "y" {
-				fmt.Scanf("%s", &ans)
-				ans = strings.ToLower(ans)
+			var answer string
+			for answer != "n" && answer != "y" {
+				fmt.Scanf("%s", &answer)
+				answer = strings.ToLower(answer)
 			}
-			if ans == "n" {
+			if answer == "n" {
 				context.Logger.Info("Aborting..")
 				return errors.New("user aborted")
 			}
@@ -96,6 +95,7 @@ func GetAwsParameters(context *context.Context) (parameters []*cloudformation2.P
 	parameters = ParseParameterToAwsCompatible(params)
 	return
 }
+
 func ParseParameterToAwsCompatible(params []*Parameter) (parameters []*cloudformation2.Parameter) {
 	for paramnum := range params {
 		parameters = append(parameters,
@@ -141,7 +141,7 @@ func GetParameters(context *context.Context) (parameters []*Parameter, err error
 func checkParameterValid(parameterName string, parameterArgument map[string]interface{}, parameterValue string, context *context.Context) (bool, error) {
 	if parameterArgument["AllowedValues"] != nil {
 		allowedValues := getAllowedValues(parameterArgument)
-		if !sliceContains(parameterValue, allowedValues) {
+		if !helpers.SliceContains(allowedValues, parameterValue) {
 			context.Logger.Error("Value '" + parameterValue + "' is not allowed for Parameter " + parameterName + ". Value must be one of following: [" + strings.Join(allowedValues, ", ") + "]")
 			return false, nil
 		}
@@ -160,6 +160,7 @@ func checkParameterValid(parameterName string, parameterArgument map[string]inte
 	}
 	return true, nil
 }
+
 func getAllowedValues(parameterArgument map[string]interface{}) (res []string) {
 	list := parameterArgument["AllowedValues"].([]interface{})
 	for _, val := range list {
@@ -168,30 +169,16 @@ func getAllowedValues(parameterArgument map[string]interface{}) (res []string) {
 	return
 }
 
-func sliceContains(a string, list []string) bool {
-	for _, b := range list {
-		if b == a {
-			return true
-		}
-	}
-	return false
-}
-
 func parseTemplate(context *context.Context) (res cloudformation.Template, err error) {
 	rawTemplate, err := ioutil.ReadFile(*context.CliArguments.TemplatePath)
 	if err != nil {
 		return
 	}
-
 	myTemplate := template.Template{}
-
-	templateFileExtension := path.Ext(*context.CliArguments.TemplatePath)
-	if templateFileExtension == ".json" {
-		res, err = offlinevalidator.ParseJSON(rawTemplate, myTemplate, context.Logger)
-	} else if templateFileExtension == ".yaml" || templateFileExtension == ".yml" {
-		res, err = offlinevalidator.ParseYAML(rawTemplate, myTemplate, context.Logger)
-	} else {
-		err = errors.New("Invalid template file format.")
+	parser, err := helpers.GetParser(*context.CliArguments.TemplatePath)
+	if err != nil {
+		return
 	}
+	res, err = parser(rawTemplate, myTemplate, context.Logger)
 	return
 }
