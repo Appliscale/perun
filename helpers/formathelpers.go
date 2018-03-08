@@ -75,7 +75,6 @@ func PrettyPrintJSON(toPrint interface{}) ([]byte, error) {
 	return json.MarshalIndent(toPrint, "", "    ")
 }
 
-
 func lineAndCharacter(input string, offset int) (line int, character int) {
 	lf := rune(0x0A)
 
