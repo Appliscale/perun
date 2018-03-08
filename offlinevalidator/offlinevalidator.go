@@ -20,22 +20,20 @@ package offlinevalidator
 
 import (
 	"encoding/json"
-	"errors"
 	"io/ioutil"
-	"path"
 	"reflect"
 	"strconv"
 	"strings"
 
+	"errors"
 	"github.com/Appliscale/perun/context"
-	"github.com/Appliscale/perun/intrinsicsolver"
+	"github.com/Appliscale/perun/helpers"
 	"github.com/Appliscale/perun/logger"
 	"github.com/Appliscale/perun/offlinevalidator/template"
 	"github.com/Appliscale/perun/offlinevalidator/validators"
 	"github.com/Appliscale/perun/specification"
 	"github.com/awslabs/goformation"
 	"github.com/awslabs/goformation/cloudformation"
-	"github.com/ghodss/yaml"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -73,15 +71,12 @@ func Validate(context *context.Context) bool {
 	var perunTemplate template.Template
 	var goFormationTemplate cloudformation.Template
 
-	templateFileExtension := path.Ext(*context.CliArguments.TemplatePath)
-	if templateFileExtension == ".json" {
-		goFormationTemplate, err = parseJSON(rawTemplate, perunTemplate, context.Logger)
-	} else if templateFileExtension == ".yaml" || templateFileExtension == ".yml" {
-		goFormationTemplate, err = parseYAML(rawTemplate, perunTemplate, context.Logger)
-	} else {
-		err = errors.New("Invalid template file format.")
+	parser, err := helpers.GetParser(*context.CliArguments.TemplatePath)
+	if err != nil {
+		context.Logger.Error(err.Error())
+		return false
 	}
-
+	goFormationTemplate, err = parser(rawTemplate, perunTemplate, context.Logger)
 	if err != nil {
 		context.Logger.Error(err.Error())
 		return false
@@ -99,12 +94,12 @@ func Validate(context *context.Context) bool {
 func validateResources(resources map[string]template.Resource, specification *specification.Specification, sink *logger.Logger, deadProp []string, deadRes []string) bool {
 
 	for resourceName, resourceValue := range resources {
-		if deadResource := sliceContains(deadRes, resourceName); !deadResource {
+		if deadResource := helpers.SliceContains(deadRes, resourceName); !deadResource {
 			resourceValidation := sink.AddResourceForValidation(resourceName)
 
 			if resourceSpecification, ok := specification.ResourceTypes[resourceValue.Type]; ok {
 				for propertyName, propertyValue := range resourceSpecification.Properties {
-					if deadProperty := sliceContains(deadProp, propertyName); !deadProperty {
+					if deadProperty := helpers.SliceContains(deadProp, propertyName); !deadProperty {
 						validateProperties(specification, resourceValue, propertyName, propertyValue, resourceValidation)
 					}
 				}
@@ -209,53 +204,6 @@ func checkMapProperties(
 	if err != nil {
 		resourceValidation.AddValidationError(err.Error())
 	}
-}
-
-func parseJSON(templateFile []byte, refTemplate template.Template, logger *logger.Logger) (template cloudformation.Template, err error) {
-
-	err = json.Unmarshal(templateFile, &refTemplate)
-	if err != nil {
-		if syntaxError, isSyntaxError := err.(*json.SyntaxError); isSyntaxError {
-			syntaxOffset := int(syntaxError.Offset)
-			line, character := lineAndCharacter(string(templateFile), syntaxOffset)
-			logger.Error("Syntax error at line " + strconv.Itoa(line) + ", column " + strconv.Itoa(character))
-		} else if typeError, isTypeError := err.(*json.UnmarshalTypeError); isTypeError {
-			typeOffset := int(typeError.Offset)
-			line, character := lineAndCharacter(string(templateFile), typeOffset)
-			logger.Error("Type error at line " + strconv.Itoa(line) + ", column " + strconv.Itoa(character))
-		}
-		return template, err
-	}
-
-	tempJSON, err := goformation.ParseJSON(templateFile)
-	if err != nil {
-		logger.Error(err.Error())
-	}
-
-	returnTemplate := *tempJSON
-
-	return returnTemplate, nil
-}
-
-func parseYAML(templateFile []byte, refTemplate template.Template, logger *logger.Logger) (template cloudformation.Template, err error) {
-
-	err = yaml.Unmarshal(templateFile, &refTemplate)
-	if err != nil {
-		return template, err
-	}
-
-	preprocessed, preprocessingError := intrinsicsolver.FixFunctions(templateFile, logger, "multiline", "elongate", "correctlong")
-	if preprocessingError != nil {
-		logger.Error(preprocessingError.Error())
-	}
-	tempYAML, err := goformation.ParseYAML(preprocessed)
-	if err != nil {
-		logger.Error(err.Error())
-	}
-
-	returnTemplate := *tempYAML
-
-	return returnTemplate, nil
 }
 
 func obtainResources(goformationTemplate cloudformation.Template, perunTemplate template.Template, logger *logger.Logger) map[string]template.Resource {
@@ -437,38 +385,4 @@ func getNilResources(resources map[string]template.Resource) []string {
 
 	}
 	return list
-}
-
-func sliceContains(slice []string, match string) bool {
-	for _, s := range slice {
-		if s == match {
-			return true
-		}
-	}
-	return false
-}
-
-func lineAndCharacter(input string, offset int) (line int, character int) {
-	lf := rune(0x0A)
-
-	if offset > len(input) || offset < 0 {
-		return 0, 0
-	}
-
-	line = 1
-
-	for i, b := range input {
-		if b == lf {
-			if i < offset {
-				line++
-				character = 0
-			}
-		} else {
-			character++
-		}
-		if i == offset {
-			break
-		}
-	}
-	return line, character
 }
