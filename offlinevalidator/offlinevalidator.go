@@ -266,48 +266,12 @@ func obtainResources(goformationTemplate cloudformation.Template, perunTemplate 
 
 	for propertyName, propertyContent := range perunResources {
 		if propertyContent.Properties == nil {
-			logger.Always("WARNING! " + propertyName + " <--- is nil.")
+			logger.Warning(propertyName + " <--- is nil.")
 		} else {
 			for element, elementValue := range propertyContent.Properties {
-				if elementValue == nil {
-					logger.Always("WARNING! " + propertyName + ": " + element + " <--- is nil.")
-				} else if elementMap, ok := elementValue.(map[string]interface{}); ok {
-					for key, value := range elementMap {
-						if value == nil {
-							logger.Always("WARNING! " + propertyName + ": " + element + ": " + key + " <--- is nil.")
-						} else if elementOfElement, ok := value.(map[string]interface{}); ok {
-							for subKey, subValue := range elementOfElement {
-								if subValue == nil {
-									logger.Always("WARNING! " + propertyName + ": " + element + ": " + key + ": " + subKey + " <--- is nil.")
-								}
-							}
-						} else if sliceOfElement, ok := value.([]interface{}); ok {
-							for indexKey, indexValue := range sliceOfElement {
-								if indexValue == nil {
-									logger.Always("WARNING! " + propertyName + ": " + element + ": " + key + "[" + strconv.Itoa(indexKey) + "] <--- is nil.")
-								}
-							}
-						}
-					}
-				} else if elementSlice, ok := elementValue.([]interface{}); ok {
-					for index, value := range elementSlice {
-						if value == nil {
-							logger.Always("WARNING! " + propertyName + ": " + element + "[" + strconv.Itoa(index) + "] <--- is nil.")
-						} else if elementOfElement, ok := value.(map[string]interface{}); ok {
-							for subKey, subValue := range elementOfElement {
-								if subValue == nil {
-									logger.Always("WARNING! " + propertyName + ": " + element + "[" + strconv.Itoa(index) + "]: " + subKey + " <--- is nil.")
-								}
-							}
-						} else if sliceOfElement, ok := value.([]interface{}); ok {
-							for indexKey, indexValue := range sliceOfElement {
-								if indexValue == nil {
-									logger.Always("WARNING! " + propertyName + ": " + element + "[" + strconv.Itoa(index) + "][" + strconv.Itoa(indexKey) + "] <--- is nil.")
-								}
-							}
-						}
-					}
-				}
+				initPath := []interface{}{element} // The path from the Property name to the <nil> element.
+				var discarded interface{}          // Container which stores the encountered nodes that aren't on the path.
+				checkWhereIsNil(element, elementValue, propertyName, logger, initPath, &discarded)
 			}
 		}
 	}
@@ -448,6 +412,84 @@ func sliceContains(slice []string, match string) bool {
 	return false
 }
 
+func mapContainsNil(mp map[string]interface{}) bool {
+	for _, m := range mp {
+		if m == nil {
+			return true
+		}
+	}
+	return false
+}
+
+func sliceContainsNil(slice []interface{}) bool {
+	for _, s := range slice {
+		if s == nil {
+			return true
+		}
+	}
+	return false
+}
+
+// We check if the element is non-string, non-float64, non-boolean. Then it is another node or <nil>. There is no other option.
+func isNonStringFloatBool(v interface{}) bool {
+	var isString, isFloat, isBool bool
+	if _, ok := v.(string); ok {
+		isString = true
+	} else if _, ok := v.(float64); ok {
+		isFloat = true
+	} else if _, ok := v.(bool); ok {
+		isBool = true
+	}
+	if !isString && !isFloat && !isBool {
+		return true
+	}
+	return false
+}
+
+func isPlainMap(mp map[string]interface{}) bool {
+	// First we check is it more complex. If so - it is worth investigating and we should stop checking.
+	for _, m := range mp {
+		if _, ok := m.(map[string]interface{}); ok {
+			return false
+		} else if _, ok := m.([]interface{}); ok {
+			return false
+		}
+	}
+	// Ok, it isn't. So is there any <nil>?
+	if mapContainsNil(mp) { // Yes, it is - so it is a map worth investigating. This is not the map we're looking for.
+		return false
+	}
+
+	return true // There is no <nil> and no complexity - it is a plain, non-nil map.
+}
+
+func isPlainSlice(slc []interface{}) bool {
+	// The same flow as in `isPlainMap` function.
+	for _, s := range slc {
+		if _, ok := s.(map[string]interface{}); ok {
+			return false
+		} else if _, ok := s.([]interface{}); ok {
+			return false
+		}
+	}
+
+	if sliceContainsNil(slc) {
+		return false
+	}
+
+	return true
+}
+
+func discard(slice []interface{}, n interface{}) []interface{} {
+	result := []interface{}{}
+	for _, s := range slice {
+		if s != n {
+			result = append(result, s)
+		}
+	}
+	return result
+}
+
 func lineAndCharacter(input string, offset int) (line int, character int) {
 	lf := rune(0x0A)
 
@@ -471,4 +513,47 @@ func lineAndCharacter(input string, offset int) (line int, character int) {
 		}
 	}
 	return line, character
+}
+
+func checkWhereIsNil(n interface{}, v interface{}, baseLevel string, logger *logger.Logger, fullPath []interface{}, dsc *interface{}) {
+	if v == nil { // Value we encountered is nil - this is the end of investigation.
+		where := ""
+		for _, element := range fullPath {
+			if stringElement, ok := element.(string); ok {
+				if where != "" {
+					where += ": " + stringElement
+				} else {
+					where = stringElement
+				}
+			} else if intElement, ok := element.(int); ok {
+				where += "[" + strconv.Itoa(intElement) + "]"
+			}
+		}
+		logger.Warning(baseLevel + ": " + where + " <--- is nil.")
+	} else if mp, ok := v.(map[string]interface{}); ok { // Value we encountered is a map.
+		if isPlainMap(mp) { // Check is it plain, non-nil map.
+			// It is - we shouldn't dive into.
+			*dsc = n // The name is stored in the `discarded` container as the name of the blind alley.
+		} else {
+			for kmp, vmp := range mp {
+				if isNonStringFloatBool(vmp) {
+					fullPath = append(fullPath, kmp)
+					fullPath = discard(fullPath, *dsc) // If the output path would be different, it seems that we've encountered some node which is not on the way to the <nil>. It will be discarded from the path. Otherwise the paths are the same and we hit the point.
+					checkWhereIsNil(kmp, vmp, baseLevel, logger, fullPath, dsc)
+				}
+			}
+		}
+	} else if slc, ok := v.([]interface{}); ok { // The same flow as above.
+		if isPlainSlice(slc) {
+			*dsc = n
+		} else {
+			for islc, vslc := range slc {
+				if isNonStringFloatBool(vslc) {
+					fullPath = append(fullPath, islc)
+					fullPath = discard(fullPath, *dsc)
+					checkWhereIsNil(islc, vslc, baseLevel, logger, fullPath, dsc)
+				}
+			}
+		}
+	}
 }
