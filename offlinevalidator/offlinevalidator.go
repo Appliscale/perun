@@ -26,6 +26,7 @@ import (
 	"strconv"
 	"strings"
 
+	"errors"
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/helpers"
 	"github.com/Appliscale/perun/logger"
