@@ -431,7 +431,7 @@ func sliceContainsNil(slice []interface{}) bool {
 }
 
 // We check if the element is non-string, non-float64, non-boolean. Then it is another node or <nil>. There is no other option.
-func isNonSFB(v interface{}) bool {
+func isNonStringFloatBool(v interface{}) bool {
 	var isString, isFloat, isBool bool
 	if _, ok := v.(string); ok {
 		isString = true
@@ -536,7 +536,7 @@ func checkWhereIsNil(n interface{}, v interface{}, baseLevel string, logger *log
 			*dsc = n // The name is stored in the `discarded` container as the name of the blind alley.
 		} else {
 			for kmp, vmp := range mp {
-				if isNonSFB(vmp) {
+				if isNonStringFloatBool(vmp) {
 					fullPath = append(fullPath, kmp)
 					fullPath = discard(fullPath, *dsc) // If the output path would be different, it seems that we've encountered some node which is not on the way to the <nil>. It will be discarded from the path. Otherwise the paths are the same and we hit the point.
 					checkWhereIsNil(kmp, vmp, baseLevel, logger, fullPath, dsc)
@@ -548,7 +548,7 @@ func checkWhereIsNil(n interface{}, v interface{}, baseLevel string, logger *log
 			*dsc = n
 		} else {
 			for islc, vslc := range slc {
-				if isNonSFB(vslc) {
+				if isNonStringFloatBool(vslc) {
 					fullPath = append(fullPath, islc)
 					fullPath = discard(fullPath, *dsc)
 					checkWhereIsNil(islc, vslc, baseLevel, logger, fullPath, dsc)
