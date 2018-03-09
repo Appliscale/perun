@@ -39,6 +39,7 @@ With first command a default configuration file (`defaults/main.yaml`) will be c
 ### Commands
 
 #### Validation
+
 To validate your template with AWS API (*online validation*), just type:
 
 ```bash
@@ -52,6 +53,7 @@ To validate your template offline (*well*, almost offline :wink: - *AWS CloudFor
 ```
 
 #### Conversion
+
 To convert your template between JSON and YAML formats you have to type:
 
 ```bash
@@ -61,6 +63,7 @@ To convert your template between JSON and YAML formats you have to type:
            <JSON or YAML>
 ```
 #### Configuration
+
 To create your own configuration file use `configure` mode:
 
 ```bash
@@ -69,13 +72,14 @@ To create your own configuration file use `configure` mode:
 Then type path and name of new configuration file.
 
 #### Stack Creation
+
 To create new stack you have to type:
 
 ```bash
 ~ $ perun create-stack <PATH TO YOUR TEMPLATE> <NAME OF YOUR STACK>
 ```
 
-or 
+or
 
 ```bash
 ~ $ perun create-stack --template=<TEMPLATE> --stack=<NAME OF YOUR STACK>```
@@ -86,7 +90,7 @@ To destroy stack just type:
 ~ $ perun delete-stack <NAME OF YOUR STACK>
 ```
 
-or 
+or
 ```bash
 ~ $ perun delete-stack --stack=<NAME OF YOUR STACK>
 ```
@@ -103,7 +107,7 @@ To setup remote sink type:
 ```
 
 This will create an sns topic and sqs queue with permissions for the sns topic to publish on the sqs
-queue. Using above services may produce some cost: 
+queue. Using above services may produce some cost:
 According to the AWS SQS and SNS pricing:
 - SNS:
   - notifications to the SQS queue are free
@@ -111,12 +115,12 @@ According to the AWS SQS and SNS pricing:
   - The first 1 million monthly requests are free.
   - After that: 0.40$ per million requests after Free Tier (Monthly)
   - Typical stack creation uses around a hundred requests
-  
+
 To destroy remote sink just type:
 
 ```bash
 ~ $ perun destroy-remote-sink
-``` 
+```
 
 ### Configuration file
 
