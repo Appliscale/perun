@@ -77,4 +77,10 @@ func main() {
 		stack.DestroyStack(&context)
 		os.Exit(0)
 	}
+
+	if *context.CliArguments.Mode == cliparser.UpdateStackMode {
+		stack.UpdateStack(&context)
+		os.Exit(0)
+	}
+
 }

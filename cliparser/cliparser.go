@@ -31,6 +31,7 @@ var OfflineValidateMode = "validate_offline"
 var ConfigureMode = "configure"
 var CreateStackMode = "create-stack"
 var DestroyStackMode = "delete-stack"
+var UpdateStackMode = "update-stack"
 
 type CliArguments struct {
 	Mode              *string
@@ -83,6 +84,12 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 
 		deleteStack     = app.Command(DestroyStackMode, "Deletes a stack on aws")
 		deleteStackName = deleteStack.Arg("stack", "An AWS stack name.").Required().String()
+
+		updateStack            = app.Command(UpdateStackMode, "Updates a stacj on aws")
+		updateStackName        = updateStack.Arg("stack", "An AWS stack name").String()
+		updateStackTemplate    = updateStack.Arg("template", "A path to the template file.").String()
+		updateStackImpName     = createStack.Flag("stack", "Sn AWS stack name.").String()
+		updateStackImpTemplate = createStack.Flag("template", "A path to the template file.").String()
 	)
 	app.HelpFlag.Short('h')
 	app.Version(utilities.VersionStatus())
@@ -120,6 +127,22 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 	case deleteStack.FullCommand():
 		cliArguments.Mode = &DestroyStackMode
 		cliArguments.Stack = deleteStackName
+
+		// update Stack
+	case updateStack.FullCommand():
+		if len(*updateStackImpTemplate) > 0 && len(*updateStackImpName) > 0 {
+			cliArguments.Stack = updateStackImpName
+			cliArguments.TemplatePath = updateStackImpTemplate
+		} else if len(*updateStackName) > 0 && len(*updateStackTemplate) > 0 {
+			cliArguments.Stack = updateStackName
+			cliArguments.TemplatePath = updateStackTemplate
+		} else if len(*updateStackName) > 0 && len(*updateStackImpTemplate) > 0 {
+			cliArguments.Stack = updateStackName
+			cliArguments.TemplatePath = updateStackImpTemplate
+		} else {
+			err = errors.New("You have to specify stack name and template file, try --help")
+			return
+		}
 	}
 
 	// OTHER FLAGS
