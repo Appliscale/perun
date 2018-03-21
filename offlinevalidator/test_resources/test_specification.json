@@ -243,6 +243,15 @@
           "Type": "AttributePayload"
         }
       }
+    },
+    "AWS::Map3::DBParameterGroup": {
+      "Properties":{
+        "Parameters": {
+          "PrimitiveItemType": "String",
+          "Required": false,
+          "Type": "Map"
+        }
+      }
     }
   },
   "ResourceSpecificationVersion": "1.2.3"

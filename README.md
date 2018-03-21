@@ -67,15 +67,12 @@ Then type path and name of new configuration file.
 
 To create new stack you have to type:
 
-``~ $ perun --mode=create-stack
-             --template=<PATH TO YOUR TEMPLATE>
-             --stack=<NAME OF YOUR STACK>
+``~ $ perun create-stack <NAME OF THE STACK> <PATH TO YOUR TEMPLATE
 ``
 
 To destroy stack just type:
 
-``~ $ perun --mode=delete-stack
-             --stack=<NAME OF YOUR STACK>
+``~ $ perun delete-stack <NAME OF THE STACK>
 ``
 
 ### Configuration file
@@ -123,7 +120,7 @@ mfa_serial = <IDENTIFICATION NUMBER FOR MFA DEVICE>
 
 ### Working with stacks
 
-Perun allows to create and destroy stacks. 
+Perun allows to create and destroy stacks.
 
 To create stack it uses your template. It can be JSON or YAML format.
 
@@ -139,7 +136,7 @@ Example JSON template which describe S3 Bucket:
 }
 ```
 
-If you want to destroy stack just type its name. 
+If you want to destroy stack just type its name.
 Before you create stack you should validate it with perun :wink:.
 
 ## License
