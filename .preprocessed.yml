@@ -1,6 +1,0 @@
-Resources:
-  HelloBucket:
-    Properties:
-      AccessControl: 
-    Type: AWS::S3::Bucket
-
