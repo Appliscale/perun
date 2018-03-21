@@ -112,7 +112,6 @@ func (logger *Logger) GetInput(message string, v ...interface{}) error {
 	}
 	return nil
 }
-
 func (logger *Logger) log(verbosity Verbosity, message string) {
 	if !logger.Quiet && verbosity >= logger.Verbosity {
 		fmt.Println(verbosity.String() + ": " + message)
