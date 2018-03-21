@@ -1,2 +1,0 @@
-Key: { "Fn::Equals": [ value_1, "Fn::FindInMap": [ MapName, "Ref": TopLevelKeyRef, SecondLevelKey ] ]}
-
