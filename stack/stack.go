@@ -6,10 +6,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"io/ioutil"
+	"os"
 )
 
 // This function gets template and  name of stack. It creates "CreateStackInput" structure.
-func createStackInput(context *context.Context, template *string, stackName *string) cloudformation.CreateStackInput {
+func createStackInput(template *string, stackName *string) cloudformation.CreateStackInput {
 	templateStruct := cloudformation.CreateStackInput{
 		TemplateBody: template,
 		StackName:    stackName,
@@ -32,35 +33,33 @@ func getTemplateFromFile(context *context.Context) (string, string) {
 }
 
 // This function uses CreateStackInput variable to create Stack.
-func createStack(templateStruct cloudformation.CreateStackInput, session *session.Session) {
+func createStack(templateStruct cloudformation.CreateStackInput, session *session.Session, context *context.Context) {
 	api := cloudformation.New(session)
-	api.CreateStack(&templateStruct)
+	_, err := api.CreateStack(&templateStruct)
+	if err != nil {
+		context.Logger.Error(err.Error())
+		os.Exit(1)
+	}
 }
 
 // This function uses all functions above and session to create Stack.
 func NewStack(context *context.Context) {
 	template, stackName := getTemplateFromFile(context)
-	templateStruct := createStackInput(context, &template, &stackName)
-	tokenError := mysession.UpdateSessionToken(context.Config.DefaultProfile, context.Config.DefaultRegion, context.Config.DefaultDurationForMFA, context)
-	if tokenError != nil {
-		context.Logger.Error(tokenError.Error())
-	}
-	session, createSessionError := mysession.CreateSession(context, context.Config.DefaultProfile, &context.Config.DefaultRegion)
-	if createSessionError != nil {
-		context.Logger.Error(createSessionError.Error())
-	}
-	createStack(templateStruct, session)
+	templateStruct := createStackInput(&template, &stackName)
+	session := mysession.InitializeSession(context)
+	createStack(templateStruct, session, context)
 }
 
 // This function bases on "DeleteStackInput" structure and destroys stack. It uses "StackName" to choose which stack will be destroy. Before that it creates session.
 func DestroyStack(context *context.Context) {
 	delStackInput := deleteStackInput(context)
-	session, sessionError := mysession.CreateSession(context, context.Config.DefaultProfile, &context.Config.DefaultRegion)
-	if sessionError != nil {
-		context.Logger.Error(sessionError.Error())
-	}
+	session := mysession.InitializeSession(context)
 	api := cloudformation.New(session)
-	api.DeleteStack(&delStackInput)
+	_, err := api.DeleteStack(&delStackInput)
+	if err != nil {
+		context.Logger.Error(err.Error())
+		os.Exit(1)
+	}
 }
 
 // This function gets "StackName" from Stack in CliArguments and creates "DeleteStackInput" structure.
