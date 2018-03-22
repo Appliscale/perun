@@ -74,14 +74,7 @@ func DestroyStack(context *context.Context) {
 func UpdateStack(context *context.Context) {
 	template, stackName := getTemplateFromFile(context)
 	templateStruct := updateStackInput(context, &template, &stackName)
-	tokenError := mysession.UpdateSessionToken(context.Config.DefaultProfile, context.Config.DefaultRegion, context.Config.DefaultDurationForMFA, context)
-	if tokenError != nil {
-		context.Logger.Error(tokenError.Error())
-	}
-	session, createSessionError := mysession.CreateSession(context, context.Config.DefaultProfile, &context.Config.DefaultRegion)
-	if createSessionError != nil {
-		context.Logger.Error(createSessionError.Error())
-	}
+	session := mysession.InitializeSession(context)
 	err := updateStack(templateStruct, session)
 	if err != nil {
 		context.Logger.Error(err.Error())
