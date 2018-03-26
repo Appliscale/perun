@@ -19,6 +19,8 @@
 package offlinevalidator
 
 import (
+	"bufio"
+	"bytes"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -73,15 +75,21 @@ func Validate(context *context.Context) bool {
 	var perunTemplate template.Template
 	var goFormationTemplate cloudformation.Template
 
-	templateFileExtension := path.Ext(*context.CliArguments.TemplatePath)
-	if templateFileExtension == ".json" {
-		goFormationTemplate, err = parseJSON(rawTemplate, perunTemplate, context.Logger)
-	} else if templateFileExtension == ".yaml" || templateFileExtension == ".yml" {
-		goFormationTemplate, err = parseYAML(rawTemplate, perunTemplate, context.Logger)
-	} else {
-		err = errors.New("Invalid template file format.")
+	valid = findingAllowedValues(rawTemplate, context.Logger)
+	if valid == false {
+		return valid
 	}
 
+	templateFileExtension := path.Ext(*context.CliArguments.TemplatePath)
+	if templateFileExtension == ".json" {
+
+		goFormationTemplate, err = parseJSON(rawTemplate, perunTemplate, context.Logger)
+	} else if templateFileExtension == ".yaml" || templateFileExtension == ".yml" {
+
+		goFormationTemplate, err = parseYAML(rawTemplate, perunTemplate, context.Logger)
+	} else {
+		err = errors.New("Invalid template file format")
+	}
 	if err != nil {
 		context.Logger.Error(err.Error())
 		return false
@@ -94,6 +102,38 @@ func Validate(context *context.Context) bool {
 
 	valid = validateResources(resources, &specification, context.Logger, deadProperties, deadResources)
 	return valid
+}
+
+func findingAllowedValues(rawTemplate []byte, logger *logger.Logger) (valid bool) {
+	temp, _ := parseFileIntoLines(rawTemplate, logger)
+	valid = true
+	for i := 1; i < len(temp); i++ {
+		if strings.Contains(temp[i], "AllowedValues") {
+			if strings.Contains(temp[i-1], "Type") && !strings.Contains(temp[i-1], "String") {
+				valid = false
+				logger.Error("AllowedValues supports only type String.")
+			}
+
+		}
+	}
+	return valid
+}
+
+func parseFileIntoLines(template []byte, logger *logger.Logger) ([]string, error) {
+	bytesReader := bytes.NewReader(template)
+	lines := make([]string, 0)
+	scanner := bufio.NewScanner(bytesReader)
+
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+
+	if err := scanner.Err(); err != nil {
+		logger.Error(err.Error())
+		return nil, err
+	}
+
+	return lines, nil
 }
 
 func validateResources(resources map[string]template.Resource, specification *specification.Specification, sink *logger.Logger, deadProp []string, deadRes []string) bool {
