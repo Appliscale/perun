@@ -20,13 +20,8 @@ package offlinevalidator
 
 import (
 	"encoding/json"
-	"io/ioutil"
-	"reflect"
-	"strconv"
-	"strings"
-
 	"errors"
-
+	"fmt"
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/helpers"
 	"github.com/Appliscale/perun/logger"
@@ -36,6 +31,10 @@ import (
 	"github.com/awslabs/goformation"
 	"github.com/awslabs/goformation/cloudformation"
 	"github.com/mitchellh/mapstructure"
+	"io/ioutil"
+	"reflect"
+	"strconv"
+	"strings"
 )
 
 var validatorsMap = map[string]interface{}{
@@ -87,9 +86,52 @@ func Validate(context *context.Context) bool {
 	resources := obtainResources(deNilizedTemplate, perunTemplate, context.Logger)
 	deadResources := getNilResources(resources)
 	deadProperties := getNilProperties(resources)
+	hasAllowedValues := findingAllowedValues(goFormationTemplate, perunTemplate, context.Logger)
+	if hasAllowedValues == true {
+		return false
+	}
 
 	valid = validateResources(resources, &specification, context.Logger, deadProperties, deadResources)
 	return valid
+}
+
+func findingAllowedValues(goFormationTemplate cloudformation.Template, perunTemplate template.Template, logger *logger.Logger) bool {
+	parameteres := goFormationTemplate.Parameters
+	mapparameters := perunTemplate.Parameters
+	var temp map[string]interface{}
+
+	isType := false
+	isAllovedValues := false
+	mapstructure.Decode(parameteres, &mapparameters)
+
+	for _, propertycontent := range mapparameters {
+		mapstructure.Decode(propertycontent, &temp)
+		fmt.Println(temp)
+		fmt.Println("**")
+
+		isAllovedValues = false
+		isType = false
+		for name, value := range temp {
+
+			if name == "AllowedValues" {
+				isAllovedValues = true
+
+			}
+			if name == "Type" && value != "String" {
+				isType = true
+
+			}
+
+			if isAllovedValues && isType {
+
+				logger.Error("AllowedValues suports only Type String")
+				return true
+			}
+		}
+
+	}
+	return false
+
 }
 
 func validateResources(resources map[string]template.Resource, specification *specification.Specification, sink *logger.Logger, deadProp []string, deadRes []string) bool {
