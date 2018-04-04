@@ -141,10 +141,12 @@ If you want to destroy stack just type its name.
 Before you create stack you should validate it with perun :wink:.
 
 ### Capabilities
+
 If your template includes resources that can affect permissions in your AWS account, 
-you must explicitly acknowledge its capabilities by adding `--capabilities=CAPABILITIES` flag.
+you must explicitly acknowledge its capabilities by adding `--capabilities=CAPABILITY` flag.
 
 Valid values are `CAPABILITY_IAM` and `CAPABILITY_NAMED_IAM`.
+You can specify both of them by adding `--capabilities=CAPABILITY_IAM --capabilities=CAPABILITY_NAMED_IAM`.
 
 ## License
 
