@@ -67,13 +67,14 @@ Then type path and name of new configuration file.
 
 To create new stack you have to type:
 
-``~ $ perun create-stack <NAME OF THE STACK> <PATH TO YOUR TEMPLATE
+``~ $ perun create-stack [<FLAGS>] <NAME OF THE STACK> <PATH TO YOUR TEMPLATE
 ``
 
 To destroy stack just type:
 
 ``~ $ perun delete-stack <NAME OF THE STACK>
 ``
+
 
 ### Configuration file
 
@@ -138,6 +139,12 @@ Example JSON template which describe S3 Bucket:
 
 If you want to destroy stack just type its name.
 Before you create stack you should validate it with perun :wink:.
+
+### Capabilities
+If your template includes resources that can affect permissions in your AWS account, 
+you must explicitly acknowledge its capabilities by adding `--capabilities=CAPABILITIES` flag.
+
+Valid values are `CAPABILITY_IAM` and `CAPABILITY_NAMED_IAM`.
 
 ## License
 
