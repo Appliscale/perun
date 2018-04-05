@@ -15,7 +15,7 @@ var mapNature = functions[5:]
 
 /*
 FixFunctions : takes []byte file and firstly converts all single quotation marks to double ones (anything between single ones is treated as the rune in GoLang),
-then deconstructs file into lines, checks for intrinsic functions. The FixFunctions has modes: `multiline`, `elongate`, `correctlong`.
+then deconstructs file into lines, checks for intrinsic functions. The FixFunctions has modes: `multiline`, `elongate` and `correctlong`.
 Mode `multiline` looks for functions of a map nature where the function name is located in one line and it's body (map elements)
 are located in the following lines (if this would be not fixed an error would be thrown: `json: unsupported type: map[interface {}]interface {}`).
 The function changes the notation by putting function name in the next line with proper indentation.
