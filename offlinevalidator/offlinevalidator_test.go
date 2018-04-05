@@ -335,7 +335,14 @@ func TestInvalidMapProperty(t *testing.T) {
 
 	assert.False(t, validateResources(resources, &spec, &sink, deadProp, deadRes), "This resource should be valid")
 }
+func TestFindingAllowedValues(t *testing.T) {
+	temp := []byte{0, 0, 0}
+	sink = logger.Logger{}
+	valid := findingAllowedValues(temp, &sink)
+	myvalid := true
+	assert.Equal(t, myvalid, valid, "This value should be true")
 
+}
 func createResourceWithNestedProperties(resourceType string, propertyName string, nestedPropertyValue map[string]interface{}) template.Resource {
 
 	resource := template.Resource{}
