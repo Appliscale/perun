@@ -21,7 +21,6 @@ package offlinevalidator
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/helpers"
 	"github.com/Appliscale/perun/logger"
@@ -86,7 +85,7 @@ func Validate(context *context.Context) bool {
 	resources := obtainResources(deNilizedTemplate, perunTemplate, context.Logger)
 	deadResources := getNilResources(resources)
 	deadProperties := getNilProperties(resources)
-	hasAllowedValues := findingAllowedValues(goFormationTemplate, perunTemplate, context.Logger)
+	hasAllowedValues := findingAllowedValues(goFormationTemplate, context.Logger)
 	if hasAllowedValues == true {
 		return false
 	}
@@ -95,41 +94,42 @@ func Validate(context *context.Context) bool {
 	return valid
 }
 
-func findingAllowedValues(goFormationTemplate cloudformation.Template, perunTemplate template.Template, logger *logger.Logger) bool {
-	parameteres := goFormationTemplate.Parameters
-	mapparameters := perunTemplate.Parameters
-	var temp map[string]interface{}
+func findingAllowedValues(goFormationTemplate cloudformation.Template, logger *logger.Logger) bool {
+	parameters := goFormationTemplate.Parameters
 
 	isType := false
 	isAllovedValues := false
-	mapstructure.Decode(parameteres, &mapparameters)
 
-	for _, propertycontent := range mapparameters {
-		mapstructure.Decode(propertycontent, &temp)
-		fmt.Println(temp)
-		fmt.Println("**")
+	for _, value := range parameters {
+		v := reflect.ValueOf(value)
+		if v.Kind() == reflect.Map {
+			isAllovedValues = false
+			isType = false
+			for _, key := range v.MapKeys() {
+				strct := v.MapIndex(key)
+				textType := "Type"
+				keyString := key.Interface().(string)
+				textValues := "AllowedValues"
 
-		isAllovedValues = false
-		isType = false
-		for name, value := range temp {
+				if textType == keyString {
+					textString := "String"
+					strctString := strct.Interface().(string)
+					if textString != strctString {
+						isType = true
+					}
+				} else if textValues == keyString {
+					isAllovedValues = true
+				}
 
-			if name == "AllowedValues" {
-				isAllovedValues = true
-
+				if isAllovedValues && isType {
+					logger.Error("AllowedValues supports only Type String")
+					return true
+				}
 			}
-			if name == "Type" && value != "String" {
-				isType = true
 
-			}
-
-			if isAllovedValues && isType {
-
-				logger.Error("AllowedValues suports only Type String")
-				return true
-			}
 		}
-
 	}
+
 	return false
 
 }

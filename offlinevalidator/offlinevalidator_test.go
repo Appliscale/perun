@@ -23,6 +23,7 @@ import (
 	"github.com/Appliscale/perun/logger"
 	"github.com/Appliscale/perun/offlinevalidator/template"
 	"github.com/Appliscale/perun/specification"
+	"github.com/awslabs/goformation/cloudformation"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -336,6 +337,16 @@ func TestInvalidMapProperty(t *testing.T) {
 	assert.False(t, validateResources(resources, &spec, &sink, deadProp, deadRes), "This resource should be valid")
 }
 
+func TestFindingAllowedValues(t *testing.T) {
+	sink = logger.Logger{}
+	data := make(map[string]interface{})
+	data["AllowedValues"] = ""
+	data["Type"] = "AWS::EC2::VPC::Id"
+	parameters := createParameters("Incorrect", data)
+	assert.True(t, findingAllowedValues(parameters, &sink), "This template should be invalid")
+
+}
+
 func createResourceWithNestedProperties(resourceType string, propertyName string, nestedPropertyValue map[string]interface{}) template.Resource {
 
 	resource := template.Resource{}
@@ -353,4 +364,12 @@ func createResourceWithOneProperty(resourceType string, propertyName string, pro
 	resource.Properties[propertyName] = propertyValue
 
 	return resource
+}
+
+func createParameters(name string, value map[string]interface{}) cloudformation.Template {
+	parameters := cloudformation.Template{}
+	parameters.Parameters = make(map[string]interface{})
+	parameters.Parameters[name] = value
+	return parameters
+
 }
