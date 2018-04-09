@@ -340,15 +340,15 @@ func TestInvalidMapProperty(t *testing.T) {
 func TestFindingAllowedValues(t *testing.T) {
 	sink = logger.Logger{}
 	data := make(map[string]interface{})
+
 	data["AllowedValues"] = ""
 	data["Type"] = "AWS::EC2::VPC::Id"
 	parameters := createParameters("Incorrect", data)
-	assert.True(t, findingAllowedValues(parameters, &sink), "This template should be invalid")
 
+	assert.True(t, findingAllowedValues(parameters, &sink), "This template should be invalid")
 }
 
 func createResourceWithNestedProperties(resourceType string, propertyName string, nestedPropertyValue map[string]interface{}) template.Resource {
-
 	resource := template.Resource{}
 	resource.Type = resourceType
 	resource.Properties = make(map[string]interface{})
