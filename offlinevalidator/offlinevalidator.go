@@ -96,17 +96,16 @@ func Validate(context *context.Context) bool {
 
 func findingAllowedValues(goFormationTemplate cloudformation.Template, logger *logger.Logger) bool {
 	parameters := goFormationTemplate.Parameters
-
 	isType := false
 	isAllovedValues := false
 
 	for _, value := range parameters {
-		v := reflect.ValueOf(value)
-		if v.Kind() == reflect.Map {
+		valueof := reflect.ValueOf(value)
+		if valueof.Kind() == reflect.Map {
 			isAllovedValues = false
 			isType = false
-			for _, key := range v.MapKeys() {
-				strct := v.MapIndex(key)
+			for _, key := range valueof.MapKeys() {
+				strct := valueof.MapIndex(key)
 				textType := "Type"
 				keyString := key.Interface().(string)
 				textValues := "AllowedValues"
@@ -126,12 +125,9 @@ func findingAllowedValues(goFormationTemplate cloudformation.Template, logger *l
 					return true
 				}
 			}
-
 		}
 	}
-
 	return false
-
 }
 
 func validateResources(resources map[string]template.Resource, specification *specification.Specification, sink *logger.Logger, deadProp []string, deadRes []string) bool {
