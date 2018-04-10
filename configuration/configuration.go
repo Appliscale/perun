@@ -19,11 +19,12 @@ package configuration
 
 import (
 	"errors"
+	"io/ioutil"
+	"os"
+
 	"github.com/Appliscale/perun/cliparser"
 	"github.com/Appliscale/perun/logger"
 	"github.com/ghodss/yaml"
-	"io/ioutil"
-	"os"
 )
 
 // Perun configuration.
@@ -116,7 +117,7 @@ func getConfigurationPath(cliArguments cliparser.CliArguments, logger *logger.Lo
 	} else if path, ok := getConfigFileFromCurrentWorkingDirectory(os.Stat); ok {
 		notifyUserAboutConfigurationFile(path, logger)
 		return path, nil
-	} else if path, ok := getUserConfigFile(os.Stat); ok {
+	} else if path, ok := getUserConfigFile(os.Stat, "main.yaml"); ok {
 		notifyUserAboutConfigurationFile(path, logger)
 		return path, nil
 	} else if path, ok := getGlobalConfigFile(os.Stat); ok {

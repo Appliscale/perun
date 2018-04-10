@@ -18,6 +18,8 @@
 package main
 
 import (
+	"os"
+
 	"github.com/Appliscale/perun/cliparser"
 	"github.com/Appliscale/perun/configuration"
 	"github.com/Appliscale/perun/configurator"
@@ -28,11 +30,10 @@ import (
 	"github.com/Appliscale/perun/parameters"
 	"github.com/Appliscale/perun/progress"
 	"github.com/Appliscale/perun/stack"
-	"os"
 )
 
 func main() {
-	context, err := context.GetContext(cliparser.ParseCliArguments, configuration.GetConfiguration)
+	context, err := context.GetContext(cliparser.ParseCliArguments, configuration.GetConfiguration, configuration.ReadInconsistencyConfiguration)
 	if err != nil {
 		os.Exit(1)
 	}
