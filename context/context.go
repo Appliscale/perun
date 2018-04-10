@@ -34,7 +34,6 @@ type Context struct {
 
 type cliArgumentsParser func(args []string) (cliparser.CliArguments, error)
 type configurationReader func(cliparser.CliArguments, *logger.Logger) (configuration.Configuration, error)
-
 type inconsistenciesReader func(*logger.Logger) configuration.InconsistencyConfiguration
 
 // Create CLI context.
