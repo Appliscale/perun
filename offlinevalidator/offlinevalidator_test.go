@@ -337,7 +337,18 @@ func TestInvalidMapProperty(t *testing.T) {
 	assert.False(t, validateResources(resources, &spec, &sink, deadProp, deadRes), "This resource should be valid")
 }
 
-func TestFindingAllowedValues(t *testing.T) {
+func TestHasAllowedValuesParametersValid(t *testing.T) {
+	sink = logger.Logger{}
+	data := make(map[string]interface{})
+
+	data["AllowedValues"] = ""
+	data["Type"] = "String"
+	parameters := createParameters("Correct", data)
+
+	assert.True(t, hasAllowedValuesParametersValid(parameters, &sink), "This template has AllowedValues with Type String")
+}
+
+func TestHasAllowedValuesParametersInvalid(t *testing.T) {
 	sink = logger.Logger{}
 	data := make(map[string]interface{})
 
@@ -345,7 +356,7 @@ func TestFindingAllowedValues(t *testing.T) {
 	data["Type"] = "AWS::EC2::VPC::Id"
 	parameters := createParameters("Incorrect", data)
 
-	assert.True(t, findingAllowedValues(parameters, &sink), "This template should be invalid")
+	assert.False(t, hasAllowedValuesParametersValid(parameters, &sink), "This template has AllowedValues with Type other than String")
 }
 
 func createResourceWithNestedProperties(resourceType string, propertyName string, nestedPropertyValue map[string]interface{}) template.Resource {
@@ -370,6 +381,6 @@ func createParameters(name string, value map[string]interface{}) cloudformation.
 	parameters := cloudformation.Template{}
 	parameters.Parameters = make(map[string]interface{})
 	parameters.Parameters[name] = value
-	return parameters
 
+	return parameters
 }
