@@ -85,8 +85,8 @@ func Validate(context *context.Context) bool {
 	resources := obtainResources(deNilizedTemplate, perunTemplate, context.Logger)
 	deadResources := getNilResources(resources)
 	deadProperties := getNilProperties(resources)
-	hasAllowedValues := findingAllowedValues(goFormationTemplate, context.Logger)
-	if hasAllowedValues == true {
+	hasAllowedValuesValid := hasAllowedValuesParametersValid(goFormationTemplate, context.Logger)
+	if !hasAllowedValuesValid {
 		return false
 	}
 
@@ -94,40 +94,41 @@ func Validate(context *context.Context) bool {
 	return valid
 }
 
-func findingAllowedValues(goFormationTemplate cloudformation.Template, logger *logger.Logger) bool {
+//Looking for AllowedValues and checking what Type is it. If it finds Type other than String then it will return false.
+func hasAllowedValuesParametersValid(goFormationTemplate cloudformation.Template, logger *logger.Logger) bool {
 	parameters := goFormationTemplate.Parameters
+
 	isType := false
 	isAllovedValues := false
-
 	for _, value := range parameters {
 		valueof := reflect.ValueOf(value)
-		if valueof.Kind() == reflect.Map {
-			isAllovedValues = false
-			isType = false
-			for _, key := range valueof.MapKeys() {
-				strct := valueof.MapIndex(key)
-				textType := "Type"
-				keyString := key.Interface().(string)
-				textValues := "AllowedValues"
+		isAllovedValues = false
+		isType = false
 
-				if textType == keyString {
-					textString := "String"
-					strctString := strct.Interface().(string)
-					if textString != strctString {
-						isType = true
-					}
-				} else if textValues == keyString {
-					isAllovedValues = true
-				}
+		for _, key := range valueof.MapKeys() {
 
-				if isAllovedValues && isType {
-					logger.Error("AllowedValues supports only Type String")
-					return true
+			keyValue := valueof.MapIndex(key)
+			textType := "Type"
+			keyString := key.Interface().(string)
+			textValues := "AllowedValues"
+
+			if textType == keyString {
+				textString := "String"
+				keyValueString := keyValue.Interface().(string)
+				if textString != keyValueString {
+					isType = true
 				}
+			} else if textValues == keyString {
+				isAllovedValues = true
+			}
+
+			if isAllovedValues && isType {
+				logger.Error("AllowedValues supports only Type String")
+				return false
 			}
 		}
 	}
-	return false
+	return true
 }
 
 func validateResources(resources map[string]template.Resource, specification *specification.Specification, sink *logger.Logger, deadProp []string, deadRes []string) bool {
