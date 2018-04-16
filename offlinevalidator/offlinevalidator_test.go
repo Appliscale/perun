@@ -23,7 +23,6 @@ import (
 	"github.com/Appliscale/perun/logger"
 	"github.com/Appliscale/perun/offlinevalidator/template"
 	"github.com/Appliscale/perun/specification"
-	"github.com/awslabs/goformation/cloudformation"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -377,10 +376,9 @@ func createResourceWithOneProperty(resourceType string, propertyName string, pro
 	return resource
 }
 
-func createParameters(name string, value map[string]interface{}) cloudformation.Template {
-	parameters := cloudformation.Template{}
-	parameters.Parameters = make(map[string]interface{})
-	parameters.Parameters[name] = value
+func createParameters(name string, value map[string]interface{}) map[string]interface{} {
+	parameters := make(map[string]interface{})
+	parameters[name] = value
 
 	return parameters
 }

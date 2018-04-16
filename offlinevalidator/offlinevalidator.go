@@ -43,6 +43,8 @@ var validatorsMap = map[string]interface{}{
 	"AWS::EC2::VPC": validators.IsVpcValid,
 }
 
+type parameters map[string]interface{}
+
 func printResult(valid *bool, logger *logger.Logger) {
 	logger.PrintValidationErrors()
 	if !*valid {
@@ -88,8 +90,7 @@ func Validate(context *context.Context) bool {
 	resources := obtainResources(deNilizedTemplate, perunTemplate, context.Logger)
 	deadResources := getNilResources(resources)
 	deadProperties := getNilProperties(resources)
-	hasAllowedValuesValid := hasAllowedValuesParametersValid(goFormationTemplate, context.Logger)
-	if !hasAllowedValuesValid {
+	if !hasAllowedValuesParametersValid(goFormationTemplate.Parameters, context.Logger) {
 		return false
 	}
 
@@ -97,10 +98,8 @@ func Validate(context *context.Context) bool {
 	return valid
 }
 
-//Looking for AllowedValues and checking what Type is it. If it finds Type other than String then it will return false.
-func hasAllowedValuesParametersValid(goFormationTemplate cloudformation.Template, logger *logger.Logger) bool {
-	parameters := goFormationTemplate.Parameters
-
+// Looking for AllowedValues and checking what Type is it. If it finds Type other than String then it will return false.
+func hasAllowedValuesParametersValid(parameters parameters, logger *logger.Logger) bool {
 	isType := false
 	isAllovedValues := false
 	for _, value := range parameters {
