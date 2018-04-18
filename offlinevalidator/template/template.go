@@ -32,3 +32,5 @@ type Resource struct {
 	Type       string                 `yaml:"Type"`
 	Properties map[string]interface{} `yaml:"Properties"`
 }
+
+type Parameters map[string]interface{}
