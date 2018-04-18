@@ -43,8 +43,6 @@ var validatorsMap = map[string]interface{}{
 	"AWS::EC2::VPC": validators.IsVpcValid,
 }
 
-type parameters map[string]interface{}
-
 func printResult(valid *bool, logger *logger.Logger) {
 	logger.PrintValidationErrors()
 	if !*valid {
@@ -99,7 +97,7 @@ func Validate(context *context.Context) bool {
 }
 
 // Looking for AllowedValues and checking what Type is it. If it finds Type other than String then it will return false.
-func hasAllowedValuesParametersValid(parameters parameters, logger *logger.Logger) bool {
+func hasAllowedValuesParametersValid(parameters template.Parameters, logger *logger.Logger) bool {
 	isType := false
 	isAllovedValues := false
 	for _, value := range parameters {
