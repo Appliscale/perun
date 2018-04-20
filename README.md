@@ -157,12 +157,14 @@ You can specify both of them by adding `--capabilities=CAPABILITY_IAM --capabili
 - [Piotr Figwer](https://github.com/pfigwer)
 - [Sylwia Gargula](https://github.com/SylwiaGargula)
 - [Wojciech Gawroński](https://github.com/afronski)
-- [Jakub Lamparski](https://github.com/jlampar)
+- [Mateusz Piwowarczyk](https://github.com/piwowarc)
 
 ## Contributors
 
+- [Jakub Lamparski](https://github.com/jlampar)
 - [Aleksander Mamla](https://github.com/amamla)
 - [Kacper Patro](https://github.com/morfeush22)
 - [Paweł Pikuła](https://github.com/ppikula)
 - [Michał Połcik](https://github.com/mwpolcik)
+- [Tomasz Raus](https://github.com/rusty-2)
 - [Maksymilian Wojczuk](https://github.com/maxiwoj)
