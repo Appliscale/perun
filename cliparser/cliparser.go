@@ -37,6 +37,7 @@ var MfaMode = "mfa"
 var SetupSinkMode = "setup-remote-sink"
 var DestroySinkMode = "destroy-remote-sink"
 var CreateParametersMode = "create-parameters"
+var SetStackPolicyMode = "set-stack-policy"
 
 const JSON = "json"
 const YAML = "yaml"
@@ -60,6 +61,8 @@ type CliArguments struct {
 	PrettyPrint       *bool
 	Progress          *bool
 	ParametersFile    *string
+	Block             *bool
+	Unblock           *bool
 }
 
 // Get and validate CLI arguments. Returns error if validation fails.
@@ -117,6 +120,12 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		createParametersParamsOutputFile = createParameters.Flag("output", "A path to file where parameters will be saved.").String()
 		createParametersParams           = createParameters.Flag("parameter", "list of parameters").StringMap()
 		createParametersPrettyPrint      = createParameters.Flag("pretty-print", "Pretty printing JSON").Bool()
+
+		setStackPolicy                  = app.Command(SetStackPolicyMode, "Set stack policy using JSON file.")
+		setStackPolicyName              = setStackPolicy.Arg("stack", "An AWS stack name.").String()
+		setStackPolicyTemplate          = setStackPolicy.Arg("template", "A path to the template file.").String()
+		setDefaultBlockingStackPolicy   = setStackPolicy.Flag("block", "Blocking all actions.").Bool()
+		setDefaultUnblockingStackPolicy = setStackPolicy.Flag("unblock", "Unblocking all action.").Bool()
 	)
 
 	app.HelpFlag.Short('h')
@@ -185,6 +194,14 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		cliArguments.OutputFilePath = createParametersParamsOutputFile
 		cliArguments.Parameters = createParametersParams
 		cliArguments.PrettyPrint = createParametersPrettyPrint
+
+		// set stack policy
+	case setStackPolicy.FullCommand():
+		cliArguments.Mode = &SetStackPolicyMode
+		cliArguments.Block = setDefaultBlockingStackPolicy
+		cliArguments.Unblock = setDefaultUnblockingStackPolicy
+		cliArguments.Stack = setStackPolicyName
+		cliArguments.TemplatePath = setStackPolicyTemplate
 
 		// set up remote sink
 	case setupSink.FullCommand():

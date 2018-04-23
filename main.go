@@ -93,8 +93,13 @@ func main() {
 	}
 
 	if *context.CliArguments.Mode == cliparser.UpdateStackMode {
-		stack.UpdateStack(&context)
-		os.Exit(0)
+		err := stack.UpdateStack(&context)
+		if err == nil {
+			os.Exit(0)
+		} else {
+			context.Logger.Error(err.Error())
+			os.Exit(1)
+		}
 	}
 
 	if *context.CliArguments.Mode == cliparser.SetupSinkMode {
@@ -109,6 +114,11 @@ func main() {
 
 	if *context.CliArguments.Mode == cliparser.CreateParametersMode {
 		parameters.ConfigureParameters(&context)
+		os.Exit(0)
+	}
+
+	if *context.CliArguments.Mode == cliparser.SetStackPolicyMode {
+		stack.NewStackPolicy(&context)
 		os.Exit(0)
 	}
 }

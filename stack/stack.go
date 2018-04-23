@@ -2,12 +2,13 @@ package stack
 
 import (
 	"encoding/json"
+	"errors"
+	"path"
 
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/mysession"
 	//"github.com/Appliscale/perun/notificationservice"
 	"io/ioutil"
-	"os"
 
 	"github.com/Appliscale/perun/parameters"
 	"github.com/Appliscale/perun/progress"
@@ -15,8 +16,48 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 )
 
+// This function reads "StackName" from Stack in CliArguments and file from TemplatePath in CliArguments. It converts these to type string.
+func getTemplateFromFile(context *context.Context) (string, string, error) {
+	var rawTemplate []byte
+	var readFileError error
+	path, pathError := getPath(context)
+	if pathError != nil {
+		return "", "", pathError
+	}
+
+	rawTemplate, readFileError = ioutil.ReadFile(path)
+	if readFileError != nil {
+		context.Logger.Error(readFileError.Error())
+		return "", "", readFileError
+	}
+
+	rawStackName := *context.CliArguments.Stack
+	template := string(rawTemplate)
+	stackName := rawStackName
+	return template, stackName, nil
+}
+
+func getPath(context *context.Context) (path string, err error) {
+	if *context.CliArguments.Mode == "create-stack" {
+		path = *context.CliArguments.TemplatePath
+	} else if *context.CliArguments.Mode == "set-stack-policy" {
+		if *context.CliArguments.Unblock {
+			path = "./stack/defaultstackpolicy/unblocked.json"
+		} else if *context.CliArguments.Block {
+			path = "./stack/defaultstackpolicy/blocked.json"
+		} else if len(*context.CliArguments.TemplatePath) > 0 {
+			path = *context.CliArguments.TemplatePath
+		} else {
+			return "", errors.New("Incorrect path.")
+		}
+
+	}
+
+	return
+}
+
 // This function gets template and  name of stack. It creates "CreateStackInput" structure.
-func createStackInput(context *context.Context, template *string, stackName *string) cloudformation.CreateStackInput {
+func createStackInput(context *context.Context, template *string, stackName *string) (cloudformation.CreateStackInput, error) {
 
 	rawCapabilities := *context.CliArguments.Capabilities
 	capabilities := make([]*string, len(rawCapabilities))
@@ -26,7 +67,7 @@ func createStackInput(context *context.Context, template *string, stackName *str
 
 	params, err := getParameters(context)
 	if err != nil {
-		context.Logger.Error(err.Error())
+		return cloudformation.CreateStackInput{}, err
 	}
 
 	templateStruct := cloudformation.CreateStackInput{
@@ -35,7 +76,7 @@ func createStackInput(context *context.Context, template *string, stackName *str
 		StackName:    stackName,
 		Capabilities: capabilities,
 	}
-	return templateStruct
+	return templateStruct, nil
 }
 
 // This function gets template and  name of stack. It creates "CreateStackInput" structure.
@@ -53,32 +94,28 @@ func updateStackInput(context *context.Context, template *string, stackName *str
 	return templateStruct
 }
 
-// This function reads "StackName" from Stack in CliArguments and file from TemplatePath in CliArguments. It converts these to type string.
-func getTemplateFromFile(context *context.Context) (string, string) {
-
-	rawTemplate, readFileError := ioutil.ReadFile(*context.CliArguments.TemplatePath)
-	if readFileError != nil {
-		context.Logger.Error(readFileError.Error())
-	}
-
-	rawStackName := *context.CliArguments.Stack
-	template := string(rawTemplate)
-	stackName := rawStackName
-	return template, stackName
-}
-
 // This function uses CreateStackInput variable to create Stack.
 func createStack(templateStruct cloudformation.CreateStackInput, session *session.Session) (err error) {
 	api := cloudformation.New(session)
 	_, err = api.CreateStack(&templateStruct)
+
 	return
 }
 
-// This function uses all functions above and session to create Stack.
+// NewStack uses all functions above and session to create Stack.
 func NewStack(context *context.Context) {
-	template, stackName := getTemplateFromFile(context)
+	template, stackName, err := getTemplateFromFile(context)
+	if err != nil {
+		context.Logger.Error(err.Error())
+		return
+	}
 
-	templateStruct := createStackInput(context, &template, &stackName)
+	templateStruct, err := createStackInput(context, &template, &stackName)
+	if err != nil {
+		context.Logger.Error(err.Error())
+		return
+	}
+
 	currentSession := mysession.InitializeSession(context)
 
 	if *context.CliArguments.Progress {
@@ -103,7 +140,7 @@ func NewStack(context *context.Context) {
 	}
 }
 
-// This function bases on "DeleteStackInput" structure and destroys stack. It uses "StackName" to choose which stack will be destroy. Before that it creates session.
+// DestroyStack bases on "DeleteStackInput" structure and destroys stack. It uses "StackName" to choose which stack will be destroy. Before that it creates session.
 func DestroyStack(context *context.Context) {
 	delStackInput := deleteStackInput(context)
 	currentSession := mysession.InitializeSession(context)
@@ -124,17 +161,22 @@ func DestroyStack(context *context.Context) {
 	if err != nil {
 		context.Logger.Error(err.Error())
 	}
+
 }
 
-func UpdateStack(context *context.Context) {
-	template, stackName := getTemplateFromFile(context)
+func UpdateStack(context *context.Context) (err error) {
+	template, stackName, err := getTemplateFromFile(context)
+	if err != nil {
+		return
+	}
+
 	templateStruct := updateStackInput(context, &template, &stackName)
 	session := mysession.InitializeSession(context)
-	err := updateStack(templateStruct, session)
+	err = updateStack(templateStruct, session)
 	if err != nil {
-		context.Logger.Error(err.Error())
-		os.Exit(1)
+		return
 	}
+	return
 }
 
 func updateStack(updateStackInput cloudformation.UpdateStackInput, session *session.Session) error {
@@ -170,4 +212,64 @@ func getParameters(context *context.Context) (params []*cloudformation.Parameter
 		params = parameters.ParseParameterToAwsCompatible(readParameters)
 	}
 	return
+}
+
+// NewStackPolicy creates StackPolicy from JSON file.
+func NewStackPolicy(context *context.Context) {
+	template, stackName, incorrectPath := getTemplateFromFile(context)
+	if incorrectPath != nil {
+		context.Logger.Error(incorrectPath.Error())
+		return
+	}
+	templateStruct := createStackPolicyInput(&template, &stackName, context)
+
+	currentSession, sessionError := prepareSession(context)
+	if sessionError == nil {
+
+		err := createStackPolicy(templateStruct, currentSession)
+		if err != nil {
+			context.Logger.Error("Error creating stack policy: " + err.Error())
+			return
+		}
+	}
+}
+
+// Getting template from file and setting StackPolicy.
+func createStackPolicy(templateStruct cloudformation.SetStackPolicyInput, session *session.Session) (err error) {
+	api := cloudformation.New(session)
+	_, err = api.SetStackPolicy(&templateStruct)
+
+	return err
+}
+
+// This function gets template and  name of stack. It creates "CreateStackInput" structure.
+func createStackPolicyInput(template *string, stackName *string, context *context.Context) cloudformation.SetStackPolicyInput {
+	templateStruct := cloudformation.SetStackPolicyInput{
+		StackPolicyBody: template,
+		StackName:       stackName,
+	}
+	return templateStruct
+}
+
+// Creating SessionToken and Session.
+func prepareSession(context *context.Context) (*session.Session, error) {
+	tokenError := mysession.UpdateSessionToken(context.Config.DefaultProfile, context.Config.DefaultRegion, context.Config.DefaultDurationForMFA, context)
+	if tokenError != nil {
+		context.Logger.Error(tokenError.Error())
+	}
+	currentSession, createSessionError := mysession.CreateSession(context, context.Config.DefaultProfile, &context.Config.DefaultRegion)
+	if createSessionError != nil {
+		context.Logger.Error(createSessionError.Error())
+	}
+	return currentSession, createSessionError
+}
+
+// Checking if file is type JSON.
+func isStackPolicyFileJSON(filename string) bool {
+	templateFileExtension := path.Ext(filename)
+	if templateFileExtension == ".json" {
+		return true
+	}
+	return false
+
 }
