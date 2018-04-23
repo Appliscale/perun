@@ -94,4 +94,9 @@ func main() {
 		parameters.ConfigureParameters(&context)
 		os.Exit(0)
 	}
+
+	if *context.CliArguments.Mode == cliparser.SetStackPolicyMode {
+		stack.NewStackPolicy(&context)
+		os.Exit(0)
+	}
 }

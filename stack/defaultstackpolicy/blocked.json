@@ -1,0 +1,41 @@
+{
+  "Statement": [
+    {
+      "Effect": "Deny",
+      "Principal": "*",
+      "Action": [
+        "Update:*"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "ResourceType": [
+            "AWS::RDS::DBSubnetGroup",
+            "AWS::RDS::DBParameterGroup",
+            "AWS::RDS::DBInstance",
+
+            "AWS::IAM::Role",
+            "AWS::IAM::User",
+            "AWS::IAM::AccessKey",
+            "AWS::IAM::Policy",
+
+            "AWS::S3::Bucket",
+            "AWS::S3::BucketPolicy",
+
+            "AWS::ElastiCache::SubnetGroup",
+            "AWS::ElastiCache::CacheCluster",
+
+            "AWS::Route53::RecordSetGroup"
+          ]
+        }
+      }
+    },
+
+    {
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "Update:*",
+      "Resource": "*"
+    }
+  ]
+}

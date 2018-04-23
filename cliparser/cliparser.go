@@ -34,6 +34,7 @@ var DestroyStackMode = "delete-stack"
 var SetupSinkMode = "setup-remote-sink"
 var DestroySinkMode = "destroy-remote-sink"
 var CreateParametersMode = "create-parameters"
+var SetStackPolicyMode = "set-stack-policy"
 
 const JSON = "json"
 const YAML = "yaml"
@@ -56,6 +57,8 @@ type CliArguments struct {
 	PrettyPrint       *bool
 	Progress          *bool
 	ParametersFile    *string
+	Block             *bool
+	Unblock           *bool
 }
 
 // Get and validate CLI arguments. Returns error if validation fails.
@@ -113,6 +116,14 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		createParametersParamsOutputFile = createParameters.Flag("output", "A path to file where parameters will be saved.").String()
 		createParametersParams           = createParameters.Flag("parameter", "list of parameters").StringMap()
 		createParametersPrettyPrint      = createParameters.Flag("pretty-print", "Pretty printing JSON").Bool()
+
+		setStackPolicy                  = app.Command(SetStackPolicyMode, "Set stack policy using JSON file.")
+		setStackPolicyName              = setStackPolicy.Arg("stack", "An AWS stack name.").String()
+		setStackPolicyImpName           = setStackPolicy.Flag("stack", "Sn AWS stack name.").String()
+		setStackPolicyTemplate          = setStackPolicy.Arg("template", "A path to the template file.").String()
+		setStackPolicyImpTemplate       = setStackPolicy.Flag("template", "A path to the template file.").String()
+		setDefaultBlockingStackPolicy   = setStackPolicy.Flag("block", "Blocking all actions.").Bool()
+		setDefaultUnblockingStackPolicy = setStackPolicy.Flag("unblock", "Unblocking all action.").Bool()
 	)
 	app.HelpFlag.Short('h')
 	app.Version(utilities.VersionStatus())
@@ -206,10 +217,42 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 			cliArguments.TemplatePath = createParametersImpTemplate
 		} else {
 			err = errors.New("You have to specify the cloud formation template, try --help")
+			return
 		}
 		cliArguments.OutputFilePath = createParametersParamsOutputFile
 		cliArguments.Parameters = createParametersParams
 		cliArguments.PrettyPrint = createParametersPrettyPrint
+
+		// set stack policy
+	case setStackPolicy.FullCommand():
+		cliArguments.Mode = &SetStackPolicyMode
+		cliArguments.Block = setDefaultBlockingStackPolicy
+		cliArguments.Unblock = setDefaultUnblockingStackPolicy
+		if len(*setStackPolicyImpTemplate) > 0 && len(*setStackPolicyImpName) > 0 {
+			cliArguments.Stack = setStackPolicyImpName
+			cliArguments.TemplatePath = setStackPolicyImpTemplate
+		} else if len(*setStackPolicyName) > 0 && len(*setStackPolicyTemplate) > 0 {
+			cliArguments.Stack = setStackPolicyName
+			cliArguments.TemplatePath = setStackPolicyTemplate
+		} else if len(*setStackPolicyName) > 0 && len(*setStackPolicyImpTemplate) > 0 {
+			cliArguments.Stack = setStackPolicyName
+			cliArguments.TemplatePath = setStackPolicyImpTemplate
+		} else if len(*setStackPolicyName) > 0 && *setDefaultBlockingStackPolicy {
+			cliArguments.Stack = setStackPolicyName
+			cliArguments.Block = setDefaultBlockingStackPolicy
+		} else if len(*setStackPolicyImpName) > 0 && *setDefaultBlockingStackPolicy {
+			cliArguments.Stack = setStackPolicyImpName
+			cliArguments.Block = setDefaultBlockingStackPolicy
+		} else if len(*setStackPolicyName) > 0 && *setDefaultUnblockingStackPolicy {
+			cliArguments.Stack = setStackPolicyName
+			cliArguments.Unblock = setDefaultUnblockingStackPolicy
+		} else if len(*setStackPolicyImpName) > 0 && *setDefaultUnblockingStackPolicy {
+			cliArguments.Stack = setStackPolicyImpName
+			cliArguments.Unblock = setDefaultUnblockingStackPolicy
+		} else {
+			err = errors.New("You have to specify stack name and template file, try --help")
+			return
+		}
 
 		// set up remote sink
 	case setupSink.FullCommand():
