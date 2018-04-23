@@ -20,13 +20,7 @@ package offlinevalidator
 
 import (
 	"encoding/json"
-	"io/ioutil"
-	"reflect"
-	"strconv"
-	"strings"
-
 	"errors"
-
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/helpers"
 	"github.com/Appliscale/perun/logger"
@@ -36,6 +30,10 @@ import (
 	"github.com/awslabs/goformation"
 	"github.com/awslabs/goformation/cloudformation"
 	"github.com/mitchellh/mapstructure"
+	"io/ioutil"
+	"reflect"
+	"strconv"
+	"strings"
 )
 
 var validatorsMap = map[string]interface{}{
@@ -87,9 +85,47 @@ func Validate(context *context.Context) bool {
 	resources := obtainResources(deNilizedTemplate, perunTemplate, context.Logger)
 	deadResources := getNilResources(resources)
 	deadProperties := getNilProperties(resources)
+	if !hasAllowedValuesParametersValid(goFormationTemplate.Parameters, context.Logger) {
+		return false
+	}
 
 	valid = validateResources(resources, &specification, context.Logger, deadProperties, deadResources)
 	return valid
+}
+
+// Looking for AllowedValues and checking what Type is it. If it finds Type other than String then it will return false.
+func hasAllowedValuesParametersValid(parameters template.Parameters, logger *logger.Logger) bool {
+	isType := false
+	isAllovedValues := false
+	for _, value := range parameters {
+		valueof := reflect.ValueOf(value)
+		isAllovedValues = false
+		isType = false
+
+		for _, key := range valueof.MapKeys() {
+
+			keyValue := valueof.MapIndex(key)
+			textType := "Type"
+			keyString := key.Interface().(string)
+			textValues := "AllowedValues"
+
+			if textType == keyString {
+				textString := "String"
+				keyValueString := keyValue.Interface().(string)
+				if textString != keyValueString {
+					isType = true
+				}
+			} else if textValues == keyString {
+				isAllovedValues = true
+			}
+
+			if isAllovedValues && isType {
+				logger.Error("AllowedValues supports only Type String")
+				return false
+			}
+		}
+	}
+	return true
 }
 
 func validateResources(resources map[string]template.Resource, specification *specification.Specification, sink *logger.Logger, deadProp []string, deadRes []string) bool {
