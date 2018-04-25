@@ -118,7 +118,7 @@ func main() {
 	}
 
 	if *context.CliArguments.Mode == cliparser.SetStackPolicyMode {
-		stack.NewStackPolicy(&context)
+		stack.ApplyStackPolicy(&context)
 		os.Exit(0)
 	}
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/Appliscale/perun/mysession"
 	//"github.com/Appliscale/perun/notificationservice"
 	"io/ioutil"
+	"os/user"
 
 	"github.com/Appliscale/perun/parameters"
 	"github.com/Appliscale/perun/progress"
@@ -37,14 +38,20 @@ func getTemplateFromFile(context *context.Context) (string, string, error) {
 	return template, stackName, nil
 }
 
+// Looking for path to user/default template.
 func getPath(context *context.Context) (path string, err error) {
+	usr, userError := user.Current()
+	if userError != nil {
+		return "", errors.New("Incorrect user.")
+	}
+	homePath := usr.HomeDir
 	if *context.CliArguments.Mode == "create-stack" {
 		path = *context.CliArguments.TemplatePath
 	} else if *context.CliArguments.Mode == "set-stack-policy" {
 		if *context.CliArguments.Unblock {
-			path = "./stack/defaultstackpolicy/unblocked.json"
+			path = homePath + "/perun/unblocked.json"
 		} else if *context.CliArguments.Block {
-			path = "./stack/defaultstackpolicy/blocked.json"
+			path = homePath + "/perun/blocked.json"
 		} else if len(*context.CliArguments.TemplatePath) > 0 {
 			path = *context.CliArguments.TemplatePath
 		} else {
@@ -214,8 +221,8 @@ func getParameters(context *context.Context) (params []*cloudformation.Parameter
 	return
 }
 
-// NewStackPolicy creates StackPolicy from JSON file.
-func NewStackPolicy(context *context.Context) {
+// ApplyStackPolicy creates StackPolicy from JSON file.
+func ApplyStackPolicy(context *context.Context) {
 	template, stackName, incorrectPath := getTemplateFromFile(context)
 	if incorrectPath != nil {
 		context.Logger.Error(incorrectPath.Error())
