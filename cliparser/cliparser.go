@@ -43,26 +43,28 @@ const JSON = "json"
 const YAML = "yaml"
 
 type CliArguments struct {
-	Mode              *string
-	TemplatePath      *string
-	Parameters        *map[string]string
-	OutputFilePath    *string
-	ConfigurationPath *string
-	Quiet             *bool
-	Yes               *bool
-	Verbosity         *string
-	MFA               *bool
-	DurationForMFA    *int64
-	Profile           *string
-	Region            *string
-	Sandbox           *bool
-	Stack             *string
-	Capabilities      *[]string
-	PrettyPrint       *bool
-	Progress          *bool
-	ParametersFile    *string
-	Block             *bool
-	Unblock           *bool
+	Mode                    *string
+	TemplatePath            *string
+	Parameters              *map[string]string
+	OutputFilePath          *string
+	ConfigurationPath       *string
+	Quiet                   *bool
+	Yes                     *bool
+	Verbosity               *string
+	MFA                     *bool
+	DurationForMFA          *int64
+	Profile                 *string
+	Region                  *string
+	Sandbox                 *bool
+	Stack                   *string
+	Capabilities            *[]string
+	PrettyPrint             *bool
+	Progress                *bool
+	ParametersFile          *string
+	Block                   *bool
+	Unblock                 *bool
+	DisableStackTermination *bool
+	EnableStackTermination  *bool
 }
 
 // Get and validate CLI arguments. Returns error if validation fails.
@@ -125,7 +127,9 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		setStackPolicyName              = setStackPolicy.Arg("stack", "An AWS stack name.").String()
 		setStackPolicyTemplate          = setStackPolicy.Arg("template", "A path to the template file.").String()
 		setDefaultBlockingStackPolicy   = setStackPolicy.Flag("block", "Blocking all actions.").Bool()
-		setDefaultUnblockingStackPolicy = setStackPolicy.Flag("unblock", "Unblocking all action.").Bool()
+		setDefaultUnblockingStackPolicy = setStackPolicy.Flag("unblock", "Unblocking all actions.").Bool()
+		setDisableStackTermination      = setStackPolicy.Flag("disable-stack-termination", "Allow to delete a stack.").Bool()
+		setEnableStackTermination       = setStackPolicy.Flag("enable-stack-termination", "Protecting a stack from being deleted.").Bool()
 	)
 
 	app.HelpFlag.Short('h')
@@ -202,6 +206,8 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		cliArguments.Unblock = setDefaultUnblockingStackPolicy
 		cliArguments.Stack = setStackPolicyName
 		cliArguments.TemplatePath = setStackPolicyTemplate
+		cliArguments.DisableStackTermination = setDisableStackTermination
+		cliArguments.EnableStackTermination = setEnableStackTermination
 
 		// set up remote sink
 	case setupSink.FullCommand():

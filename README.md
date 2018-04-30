@@ -76,7 +76,7 @@ Then type path and name of new configuration file.
 To create new stack you have to type:
 
 ```bash
-~ $ perun create-stack <PATH TO YOUR TEMPLATE> <NAME OF YOUR STACK>
+~ $ perun create-stack <NAME OF YOUR STACK>  <PATH TO YOUR TEMPLATE>
 ```
 
 To destroy stack just type:
@@ -111,6 +111,55 @@ To destroy remote sink just type:
 ```bash
 ~ $ perun destroy-remote-sink
 ``` 
+
+#### Protecting Stack
+
+You can protect your stack by using Stack Policy file. It's JSON file where you describe which action is allowed or denied.
+This example allows to all Update actions.
+
+```ini
+{
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "Update:*",
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+To apply your Stack Policy file you have to type:
+
+```bash
+~ $ perun set-stack-policy <NAME OF YOUR STACK>  <PATH TO YOUR TEMPLATE>
+```
+
+or
+```bash 
+~ $ perun set-stack-policy --stack=<NAME OF YOUR STACK> --template=<PATH TO YOUR TEMPLATE>
+```
+
+Perun has some default flags:
+
+``--block``
+Block all Update actions in stack.
+
+``--unblock``
+Unblock all Update actions in stack.
+
+``--disable-stack-termination``
+Protect stack from being deleted.
+
+``--enable-stack-termination`` 
+Allow to destroy stack.
+
+You use flag instead of template.
+
+```bash
+~ $ perun set-stack-policy <NAME OF YOUR STACK> <FLAG>
+```
 
 ### Configuration file
 
