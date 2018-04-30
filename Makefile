@@ -6,8 +6,8 @@ config-install:
 	mkdir -p "$(HOME)/.config/perun"
 	cp defaults/main.yaml "$(HOME)/.config/perun/main.yaml"
 	mkdir -p "$(HOME)/perun"
-	cp stack/defaultstackpolicy/blocked.json "$(HOME)/perun/blocked.json"
-	cp stack/defaultstackpolicy/unblocked.json "$(HOME)/perun/unblocked.json"
+	cp defaults/blocked.json "$(HOME)/perun/blocked.json"
+	cp defaults/unblocked.json "$(HOME)/perun/unblocked.json"
 
 get-deps:
 	go get -t -v ./...

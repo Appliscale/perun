@@ -96,7 +96,11 @@ func main() {
 	}
 
 	if *context.CliArguments.Mode == cliparser.SetStackPolicyMode {
-		stack.ApplyStackPolicy(&context)
+		if *context.CliArguments.DisableStackTermination || *context.CliArguments.EnableStackTermination {
+			stack.SetTerminationProtection(&context)
+		} else {
+			stack.ApplyStackPolicy(&context)
+		}
 		os.Exit(0)
 	}
 }

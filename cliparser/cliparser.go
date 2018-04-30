@@ -40,25 +40,27 @@ const JSON = "json"
 const YAML = "yaml"
 
 type CliArguments struct {
-	Mode              *string
-	TemplatePath      *string
-	Parameters        *map[string]string
-	OutputFilePath    *string
-	ConfigurationPath *string
-	Quiet             *bool
-	Yes               *bool
-	Verbosity         *string
-	MFA               *bool
-	DurationForMFA    *int64
-	Profile           *string
-	Region            *string
-	Sandbox           *bool
-	Stack             *string
-	PrettyPrint       *bool
-	Progress          *bool
-	ParametersFile    *string
-	Block             *bool
-	Unblock           *bool
+	Mode                    *string
+	TemplatePath            *string
+	Parameters              *map[string]string
+	OutputFilePath          *string
+	ConfigurationPath       *string
+	Quiet                   *bool
+	Yes                     *bool
+	Verbosity               *string
+	MFA                     *bool
+	DurationForMFA          *int64
+	Profile                 *string
+	Region                  *string
+	Sandbox                 *bool
+	Stack                   *string
+	PrettyPrint             *bool
+	Progress                *bool
+	ParametersFile          *string
+	Block                   *bool
+	Unblock                 *bool
+	DisableStackTermination *bool
+	EnableStackTermination  *bool
 }
 
 // Get and validate CLI arguments. Returns error if validation fails.
@@ -97,7 +99,7 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		createStack               = app.Command(CreateStackMode, "Creates a stack on aws")
 		createStackName           = createStack.Arg("stack", "An AWS stack name.").String()
 		createStackTemplate       = createStack.Arg("template", "A path to the template file.").String()
-		createStackImpName        = createStack.Flag("stack", "Sn AWS stack name.").String()
+		createStackImpName        = createStack.Flag("stack", "An AWS stack name.").String()
 		createStackImpTemplate    = createStack.Flag("template", "A path to the template file.").String()
 		createStackParams         = createStack.Flag("parameter", "list of parameters").StringMap()
 		createStackParametersFile = createStack.Flag("parameters-file", "filename with parameters").String()
@@ -119,11 +121,13 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 
 		setStackPolicy                  = app.Command(SetStackPolicyMode, "Set stack policy using JSON file.")
 		setStackPolicyName              = setStackPolicy.Arg("stack", "An AWS stack name.").String()
-		setStackPolicyImpName           = setStackPolicy.Flag("stack", "Sn AWS stack name.").String()
+		setStackPolicyImpName           = setStackPolicy.Flag("stack", "An AWS stack name.").String()
 		setStackPolicyTemplate          = setStackPolicy.Arg("template", "A path to the template file.").String()
 		setStackPolicyImpTemplate       = setStackPolicy.Flag("template", "A path to the template file.").String()
 		setDefaultBlockingStackPolicy   = setStackPolicy.Flag("block", "Blocking all actions.").Bool()
-		setDefaultUnblockingStackPolicy = setStackPolicy.Flag("unblock", "Unblocking all action.").Bool()
+		setDefaultUnblockingStackPolicy = setStackPolicy.Flag("unblock", "Unblocking all actions.").Bool()
+		setDisableStackTermination      = setStackPolicy.Flag("disable-stack-termination", "Allow to delete a stack.").Bool()
+		setEnableStackTermination       = setStackPolicy.Flag("enable-stack-termination", "Protecting a stack from being deleted.").Bool()
 	)
 	app.HelpFlag.Short('h')
 	app.Version(utilities.VersionStatus())
@@ -228,6 +232,8 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		cliArguments.Mode = &SetStackPolicyMode
 		cliArguments.Block = setDefaultBlockingStackPolicy
 		cliArguments.Unblock = setDefaultUnblockingStackPolicy
+		cliArguments.DisableStackTermination = setDisableStackTermination
+		cliArguments.EnableStackTermination = setEnableStackTermination
 		if len(*setStackPolicyImpTemplate) > 0 && len(*setStackPolicyImpName) > 0 {
 			cliArguments.Stack = setStackPolicyImpName
 			cliArguments.TemplatePath = setStackPolicyImpTemplate
@@ -249,8 +255,20 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		} else if len(*setStackPolicyImpName) > 0 && *setDefaultUnblockingStackPolicy {
 			cliArguments.Stack = setStackPolicyImpName
 			cliArguments.Unblock = setDefaultUnblockingStackPolicy
+		} else if len(*setStackPolicyName) > 0 && *setDisableStackTermination {
+			cliArguments.Stack = setStackPolicyName
+			cliArguments.DisableStackTermination = setDisableStackTermination
+		} else if len(*setStackPolicyImpName) > 0 && *setDisableStackTermination {
+			cliArguments.Stack = setStackPolicyImpName
+			cliArguments.DisableStackTermination = setDisableStackTermination
+		} else if len(*setStackPolicyName) > 0 && *setEnableStackTermination {
+			cliArguments.Stack = setStackPolicyName
+			cliArguments.EnableStackTermination = setEnableStackTermination
+		} else if len(*setStackPolicyImpName) > 0 && *setEnableStackTermination {
+			cliArguments.Stack = setStackPolicyImpName
+			cliArguments.EnableStackTermination = setEnableStackTermination
 		} else {
-			err = errors.New("You have to specify stack name and template file, try --help")
+			err = errors.New("You have to specify stack name and template file or flag, try --help")
 			return
 		}
 
