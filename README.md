@@ -115,7 +115,7 @@ To destroy remote sink just type:
 #### Protecting Stack
 
 You can protect your stack by using Stack Policy file. It's JSON file where you describe which action is allowed or denied.
-This example allows to all Update actions.
+This example allows to all Update Actions.
 
 ```ini
 {

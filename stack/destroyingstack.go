@@ -7,7 +7,7 @@ import (
 )
 
 // DestroyStack bases on "DeleteStackInput" structure and destroys stack. It uses "StackName" to choose which stack will be destroy. Before that it creates session.
-func DestroyStack(context *context.Context) {
+func DestroyStack(context *context.Context) error {
 	delStackInput := deleteStackInput(context)
 	currentSession, sessionError := prepareSession(context)
 	if sessionError == nil {
@@ -18,7 +18,7 @@ func DestroyStack(context *context.Context) {
 			conn, err := progress.GetRemoteSink(context, currentSession)
 			if err != nil {
 				context.Logger.Error("Error getting remote sink configuration: " + err.Error())
-				return
+				return err
 			}
 			_, err = api.DeleteStack(&delStackInput)
 			conn.MonitorQueue()
@@ -27,8 +27,13 @@ func DestroyStack(context *context.Context) {
 		}
 		if err != nil {
 			context.Logger.Error(err.Error())
+			return err
 		}
+	} else {
+		context.Logger.Error(sessionError.Error())
+		return sessionError
 	}
+	return nil
 }
 
 // This function gets "StackName" from Stack in CliArguments and creates "DeleteStackInput" structure.

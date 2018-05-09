@@ -7,23 +7,27 @@ import (
 )
 
 // ApplyStackPolicy creates StackPolicy from JSON file.
-func ApplyStackPolicy(context *context.Context) {
+func ApplyStackPolicy(context *context.Context) error {
 	template, stackName, incorrectPath := getTemplateFromFile(context)
 	if incorrectPath != nil {
 		context.Logger.Error(incorrectPath.Error())
-		return
+		return incorrectPath
 	}
 	templateStruct := createStackPolicyInput(&template, &stackName, context)
 
 	currentSession, sessionError := prepareSession(context)
 	if sessionError == nil {
 
-		err := createStackPolicy(templateStruct, currentSession)
-		if err != nil {
-			context.Logger.Error("Error creating stack policy: " + err.Error())
-			return
+		creationError := createStackPolicy(templateStruct, currentSession)
+		if creationError != nil {
+			context.Logger.Error("Error creating stack policy: " + creationError.Error())
+			return creationError
 		}
+	} else {
+		context.Logger.Error(sessionError.Error())
+		return sessionError
 	}
+	return nil
 }
 
 // Getting template from file and setting StackPolicy.

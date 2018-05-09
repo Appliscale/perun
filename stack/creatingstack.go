@@ -32,40 +32,44 @@ func createStack(templateStruct cloudformation.CreateStackInput, session *sessio
 }
 
 // NewStack uses all functions above and session to create Stack.
-func NewStack(context *context.Context) {
+func NewStack(context *context.Context) error {
 	template, stackName, incorrectPath := getTemplateFromFile(context)
 	if incorrectPath != nil {
 		context.Logger.Error(incorrectPath.Error())
-		return
+		return incorrectPath
 	}
 	templateStruct, templateError := createStackInput(&template, &stackName, context)
 	if templateError != nil {
 		context.Logger.Error(templateError.Error())
-		return
+		return templateError
 	}
 
 	currentSession, sessionError := prepareSession(context)
 	if sessionError == nil {
 
 		if *context.CliArguments.Progress {
-			conn, err := progress.GetRemoteSink(context, currentSession)
-			if err != nil {
-				context.Logger.Error("Error getting remote sink configuration: " + err.Error())
-				return
+			conn, remoteSinkError := progress.GetRemoteSink(context, currentSession)
+			if remoteSinkError != nil {
+				context.Logger.Error("Error getting remote sink configuration: " + remoteSinkError.Error())
+				return remoteSinkError
 			}
 			templateStruct.NotificationARNs = []*string{conn.TopicArn}
-			err = createStack(templateStruct, currentSession)
-			if err != nil {
-				context.Logger.Error("Error creating stack: " + err.Error())
-				return
+			creationError := createStack(templateStruct, currentSession)
+			if creationError != nil {
+				context.Logger.Error("Error creating stack: " + creationError.Error())
+				return creationError
 			}
 			conn.MonitorQueue()
 		} else {
-			err := createStack(templateStruct, currentSession)
-			if err != nil {
-				context.Logger.Error("Error creating stack: " + err.Error())
-				return
+			creationError := createStack(templateStruct, currentSession)
+			if creationError != nil {
+				context.Logger.Error("Error creating stack: " + creationError.Error())
+				return creationError
 			}
 		}
+	} else {
+		context.Logger.Error(sessionError.Error())
+		return sessionError
 	}
+	return nil
 }

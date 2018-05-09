@@ -48,9 +48,9 @@ func getPath(context *context.Context) (path string, err error) {
 		path = *context.CliArguments.TemplatePath
 	} else if *context.CliArguments.Mode == "set-stack-policy" {
 		if *context.CliArguments.Unblock {
-			path = homePath + "/perun/unblocked.json"
+			path = homePath + "/.config/perun/stack-policies/unblocked.json"
 		} else if *context.CliArguments.Block {
-			path = homePath + "/perun/blocked.json"
+			path = homePath + "/.config/perun/stack-policies/blocked.json"
 		} else if len(*context.CliArguments.TemplatePath) > 0 && isStackPolicyFileJSON(*context.CliArguments.TemplatePath) {
 			path = *context.CliArguments.TemplatePath
 		} else {
