@@ -1,5 +1,6 @@
 # Perun [![Build Status](https://travis-ci.org/Appliscale/perun.svg?branch=master)](https://travis-ci.org/Appliscale/perun) [![GoDoc](https://godoc.org/github.com/Appliscale/perun?status.svg)](https://godoc.org/github.com/Appliscale/perun)
 
+![Perun logo](Perun_logo.png)
 A swiss army knife for *AWS CloudFormation* templates - validation, conversion, generators and other various stuff.
 
 ## Goal
@@ -126,7 +127,7 @@ To destroy remote sink just type:
 #### Protecting Stack
 
 You can protect your stack by using Stack Policy file. It's JSON file where you describe which action is allowed or denied.
-This example allows to all Update actions.
+This example allows to all Update Actions.
 
 ```ini
 {

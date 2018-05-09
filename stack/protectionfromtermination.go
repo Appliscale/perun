@@ -37,11 +37,11 @@ func isProtectionEnable(context *context.Context) (bool, error) {
 }
 
 // SetTerminationProtection turn off or on stack protection from being deleted.
-func SetTerminationProtection(context *context.Context) {
+func SetTerminationProtection(context *context.Context) error {
 	stackName := context.CliArguments.Stack
 	isProtectionEnable, stackTerminationError := isProtectionEnable(context)
 	if stackTerminationError != nil {
-		return
+		return stackTerminationError
 	}
 	templateStruct := createUpdateTerminationProtectionInput(*stackName, isProtectionEnable)
 	currentSession, sessionError := prepareSession(context)
@@ -49,7 +49,10 @@ func SetTerminationProtection(context *context.Context) {
 		apiError := createUpdateTerminationProtection(templateStruct, currentSession)
 		if apiError != nil {
 			context.Logger.Error("Error setting stack termination protection: " + apiError.Error())
-			return
+			return apiError
 		}
+	} else {
+		return sessionError
 	}
+	return nil
 }

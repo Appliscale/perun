@@ -71,13 +71,21 @@ func main() {
 	}
 
 	if *context.CliArguments.Mode == cliparser.CreateStackMode {
-		stack.NewStack(&context)
-		os.Exit(0)
+		creationError := stack.NewStack(&context)
+		if creationError != nil {
+			os.Exit(1)
+		} else {
+			os.Exit(0)
+		}
 	}
 
 	if *context.CliArguments.Mode == cliparser.DestroyStackMode {
-		stack.DestroyStack(&context)
-		os.Exit(0)
+		deletingError := stack.DestroyStack(&context)
+		if deletingError != nil {
+			os.Exit(1)
+		} else {
+			os.Exit(0)
+		}
 	}
 
 	if *context.CliArguments.Mode == cliparser.SetupSinkMode {
@@ -97,10 +105,19 @@ func main() {
 
 	if *context.CliArguments.Mode == cliparser.SetStackPolicyMode {
 		if *context.CliArguments.DisableStackTermination || *context.CliArguments.EnableStackTermination {
-			stack.SetTerminationProtection(&context)
+			protectionError := stack.SetTerminationProtection(&context)
+			if protectionError != nil {
+				os.Exit(1)
+			} else {
+				os.Exit(0)
+			}
 		} else {
-			stack.ApplyStackPolicy(&context)
+			stackPolicyError := stack.ApplyStackPolicy(&context)
+			if stackPolicyError != nil {
+				os.Exit(1)
+			} else {
+				os.Exit(0)
+			}
 		}
-		os.Exit(0)
 	}
 }
