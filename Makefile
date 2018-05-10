@@ -3,9 +3,8 @@
 all: get-deps code-analysis test
 
 config-install:
-	mkdir -p "$(HOME)/.config/perun"
-	cp defaults/main.yaml "$(HOME)/.config/perun/main.yaml"
 	mkdir -p "$(HOME)/.config/perun/stack-policies"
+	cp defaults/main.yaml "$(HOME)/.config/perun/main.yaml"
 	cp defaults/blocked.json "$(HOME)/.config/perun/stack-policies/blocked.json"
 	cp defaults/unblocked.json "$(HOME)/.config/perun/stack-policies/unblocked.json"
 
