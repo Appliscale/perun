@@ -3,7 +3,6 @@
 A swiss army knife for *AWS CloudFormation* templates - validation, conversion, generators and other various stuff.
 
 ## Goal
-
 Perun was created to support work with CloudFormation templates. CloudFormation works in a way that it runs template online in AWS infrastructure and fails after first error - in many cases it is related with particular name length (e.g. maximum length is 64 characters). Instead of doing a round-trip, we would like to detect such cases locally.
 
 ## Building and Installation
@@ -31,7 +30,6 @@ Then build and install configuration for the application inside perun directory 
 perun $ make config-install
 perun $ make all
 ```
-
 With first command a default configuration file (`defaults/main.yaml`) will be copied to your home directory under the `~/.config/perun/main.yaml` path. After second command application will be compiled as a `perun` binary inside `bin` directory in your `$GOPATH/perun` workspace.
 
 ## Working with Perun
@@ -45,7 +43,6 @@ To validate your template with AWS API (*online validation*), just type:
 ```bash
 ~ $ perun validate <PATH TO YOUR TEMPLATE>
 ```
-
 To validate your template offline (*well*, almost offline :wink: - *AWS CloudFormation Resource Specification* still needs to be downloaded for a fresh installation) use `validate_offline` mode:
 
 ```bash
@@ -95,7 +92,6 @@ or
 ```bash
 ~ $ perun delete-stack --stack=<NAME OF YOUR STACK>
 ```
-
 You can use option ``--progress`` to show the stack creation/deletion progress in the console, but
 note, that this requires setting up a remote sink.
 
@@ -106,16 +102,17 @@ To setup remote sink type:
 ```bash
 ~ $ perun setup-remote-sink
 ```
-
 This will create an sns topic and sqs queue with permissions for the sns topic to publish on the sqs
 queue. Using above services may produce some cost:
 According to the AWS SQS and SNS pricing:
-- SNS:
-  - notifications to the SQS queue are free
-- SQS:
-  - The first 1 million monthly requests are free.
+
+- SNS: 
+  - notifications to the SQS queue are free 
+- SQS: 
+  - The first 1 million monthly requests are free. 
   - After that: 0.40$ per million requests after Free Tier (Monthly)
-  - Typical stack creation uses around a hundred requests
+  - Typical stack creation uses around a hundred requests 
+</p>
 
 To destroy remote sink just type:
 
@@ -125,10 +122,9 @@ To destroy remote sink just type:
 
 #### Protecting Stack
 
-You can protect your stack by using Stack Policy file. It's JSON file where you describe which action is allowed or denied.
-This example allows to all Update Actions.
+You can protect your stack by using Stack Policy file. It's JSON file where you describe which action is allowed or denied. This example allows to all Update Actions.
 
-```ini
+```json
 {
   "Statement": [
     {
@@ -148,23 +144,20 @@ To apply your Stack Policy file you have to type:
 ```
 
 or
+
 ```bash 
 ~ $ perun set-stack-policy --stack=<NAME OF YOUR STACK> --template=<PATH TO YOUR TEMPLATE>
 ```
 
 Perun has some default flags:
 
-``--block``
-Block all Update actions in stack.
+- ``--block`` - Block all Update actions in stack.
 
-``--unblock``
-Unblock all Update actions in stack.
+- ``--unblock`` - Unblock all Update actions in stack.
 
-``--disable-stack-termination``
-Protect stack from being deleted.
+- ``--disable-stack-termination`` - Protect stack from being deleted.
 
-``--enable-stack-termination`` 
-Allow to destroy stack.
+- ``--enable-stack-termination`` - Allow to destroy stack.
 
 You use flag instead of template.
 
@@ -223,7 +216,7 @@ To create stack it uses your template. It can be JSON or YAML format.
 
 Example JSON template which describe S3 Bucket:
 
-```ini
+```json
 {
     "Resources" : {
         "HelloPerun" : {
