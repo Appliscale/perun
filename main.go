@@ -28,24 +28,9 @@ import (
 	"github.com/Appliscale/perun/parameters"
 	"github.com/Appliscale/perun/progress"
 	"github.com/Appliscale/perun/stack"
+	"github.com/Appliscale/perun/utilities"
 	"os"
 )
-
-func checkErrorCodeAndExit(err error) {
-	if err != nil {
-		os.Exit(1)
-	} else {
-		os.Exit(0)
-	}
-}
-
-func checkFlagAndExit(valid bool) {
-	if valid {
-		os.Exit(0)
-	} else {
-		os.Exit(1)
-	}
-}
 
 func main() {
 	context, err := context.GetContext(cliparser.ParseCliArguments, configuration.GetConfiguration)
@@ -54,17 +39,17 @@ func main() {
 	}
 
 	if *context.CliArguments.Mode == cliparser.ValidateMode {
-		checkFlagAndExit(onlinevalidator.ValidateAndEstimateCosts(&context))
+		utilities.CheckFlagAndExit(onlinevalidator.ValidateAndEstimateCosts(&context))
 
 	}
 
 	if *context.CliArguments.Mode == cliparser.ConvertMode {
-		checkErrorCodeAndExit(converter.Convert(&context))
+		utilities.CheckErrorCodeAndExit(converter.Convert(&context))
 
 	}
 
 	if *context.CliArguments.Mode == cliparser.OfflineValidateMode {
-		checkFlagAndExit(offlinevalidator.Validate(&context))
+		utilities.CheckFlagAndExit(offlinevalidator.Validate(&context))
 
 	}
 
@@ -74,12 +59,12 @@ func main() {
 	}
 
 	if *context.CliArguments.Mode == cliparser.CreateStackMode {
-		checkErrorCodeAndExit(stack.NewStack(&context))
+		utilities.CheckErrorCodeAndExit(stack.NewStack(&context))
 
 	}
 
 	if *context.CliArguments.Mode == cliparser.DestroyStackMode {
-		checkErrorCodeAndExit(stack.DestroyStack(&context))
+		utilities.CheckErrorCodeAndExit(stack.DestroyStack(&context))
 
 	}
 
@@ -100,9 +85,9 @@ func main() {
 
 	if *context.CliArguments.Mode == cliparser.SetStackPolicyMode {
 		if *context.CliArguments.DisableStackTermination || *context.CliArguments.EnableStackTermination {
-			checkErrorCodeAndExit(stack.SetTerminationProtection(&context))
+			utilities.CheckErrorCodeAndExit(stack.SetTerminationProtection(&context))
 		} else {
-			checkErrorCodeAndExit(stack.ApplyStackPolicy(&context))
+			utilities.CheckErrorCodeAndExit(stack.ApplyStackPolicy(&context))
 		}
 	}
 }
