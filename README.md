@@ -3,6 +3,7 @@
 A swiss army knife for *AWS CloudFormation* templates - validation, conversion, generators and other various stuff.
 
 ## Goal
+
 Perun was created to support work with CloudFormation templates. CloudFormation works in a way that it runs template online in AWS infrastructure and fails after first error - in many cases it is related with particular name length (e.g. maximum length is 64 characters). Instead of doing a round-trip, we would like to detect such cases locally.
 
 ## Building and Installation
@@ -30,6 +31,7 @@ Then build and install configuration for the application inside perun directory 
 perun $ make config-install
 perun $ make all
 ```
+
 With first command a default configuration file (`defaults/main.yaml`) will be copied to your home directory under the `~/.config/perun/main.yaml` path. After second command application will be compiled as a `perun` binary inside `bin` directory in your `$GOPATH/perun` workspace.
 
 ## Working with Perun
@@ -43,6 +45,7 @@ To validate your template with AWS API (*online validation*), just type:
 ```bash
 ~ $ perun validate <PATH TO YOUR TEMPLATE>
 ```
+
 To validate your template offline (*well*, almost offline :wink: - *AWS CloudFormation Resource Specification* still needs to be downloaded for a fresh installation) use `validate_offline` mode:
 
 ```bash
@@ -59,6 +62,7 @@ To convert your template between JSON and YAML formats you have to type:
            <PATH FOR A CONVERTED FILE, INCLUDING FILE NAME>
            <JSON or YAML>
 ```
+
 #### Configuration
 
 To create your own configuration file use `configure` mode:
@@ -66,6 +70,7 @@ To create your own configuration file use `configure` mode:
 ```bash
 ~ $ perun configure
 ```
+
 Then type path and name of new configuration file.
 
 #### Stack Creation
@@ -89,9 +94,11 @@ To destroy stack just type:
 ```
 
 or
+
 ```bash
 ~ $ perun delete-stack --stack=<NAME OF YOUR STACK>
 ```
+
 You can use option ``--progress`` to show the stack creation/deletion progress in the console, but
 note, that this requires setting up a remote sink.
 
@@ -102,6 +109,7 @@ To setup remote sink type:
 ```bash
 ~ $ perun setup-remote-sink
 ```
+
 This will create an sns topic and sqs queue with permissions for the sns topic to publish on the sqs
 queue. Using above services may produce some cost:
 According to the AWS SQS and SNS pricing:
@@ -112,7 +120,6 @@ According to the AWS SQS and SNS pricing:
   - The first 1 million monthly requests are free. 
   - After that: 0.40$ per million requests after Free Tier (Monthly)
   - Typical stack creation uses around a hundred requests 
-</p>
 
 To destroy remote sink just type:
 
