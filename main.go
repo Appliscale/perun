@@ -33,6 +33,22 @@ import (
 	"github.com/Appliscale/perun/stack"
 )
 
+func checkErrorCodeAndExit(err error) {
+	if err != nil {
+		os.Exit(1)
+	} else {
+		os.Exit(0)
+	}
+}
+
+func checkFlagAndExit(valid bool) {
+	if valid {
+		os.Exit(0)
+	} else {
+		os.Exit(1)
+	}
+}
+
 func main() {
 	context, err := context.GetContext(cliparser.ParseCliArguments, configuration.GetConfiguration)
 	if err != nil {
@@ -40,31 +56,18 @@ func main() {
 	}
 
 	if *context.CliArguments.Mode == cliparser.ValidateMode {
-		valid := onlinevalidator.ValidateAndEstimateCosts(&context)
-		if valid {
-			os.Exit(0)
-		} else {
-			os.Exit(1)
-		}
+		checkFlagAndExit(onlinevalidator.ValidateAndEstimateCosts(&context))
+
 	}
 
 	if *context.CliArguments.Mode == cliparser.ConvertMode {
-		err := converter.Convert(&context)
-		if err == nil {
-			os.Exit(0)
-		} else {
-			context.Logger.Error(err.Error())
-			os.Exit(1)
-		}
+		checkErrorCodeAndExit(converter.Convert(&context))
+
 	}
 
 	if *context.CliArguments.Mode == cliparser.OfflineValidateMode {
-		valid := offlinevalidator.Validate(&context)
-		if valid {
-			os.Exit(0)
-		} else {
-			os.Exit(1)
-		}
+		checkFlagAndExit(offlinevalidator.Validate(&context))
+
 	}
 
 	if *context.CliArguments.Mode == cliparser.ConfigureMode {
@@ -73,21 +76,13 @@ func main() {
 	}
 
 	if *context.CliArguments.Mode == cliparser.CreateStackMode {
-		creationError := stack.NewStack(&context)
-		if creationError != nil {
-			os.Exit(1)
-		} else {
-			os.Exit(0)
-		}
+		checkErrorCodeAndExit(stack.NewStack(&context))
+
 	}
 
 	if *context.CliArguments.Mode == cliparser.DestroyStackMode {
-		deletingError := stack.DestroyStack(&context)
-		if deletingError != nil {
-			os.Exit(1)
-		} else {
-			os.Exit(0)
-		}
+		checkErrorCodeAndExit(stack.DestroyStack(&context))
+
 	}
 
 	if *context.CliArguments.Mode == cliparser.MfaMode {
@@ -127,19 +122,9 @@ func main() {
 
 	if *context.CliArguments.Mode == cliparser.SetStackPolicyMode {
 		if *context.CliArguments.DisableStackTermination || *context.CliArguments.EnableStackTermination {
-			protectionError := stack.SetTerminationProtection(&context)
-			if protectionError != nil {
-				os.Exit(1)
-			} else {
-				os.Exit(0)
-			}
+			checkErrorCodeAndExit(stack.SetTerminationProtection(&context))
 		} else {
-			stackPolicyError := stack.ApplyStackPolicy(&context)
-			if stackPolicyError != nil {
-				os.Exit(1)
-			} else {
-				os.Exit(0)
-			}
+			checkErrorCodeAndExit(stack.ApplyStackPolicy(&context))
 		}
 	}
 }
