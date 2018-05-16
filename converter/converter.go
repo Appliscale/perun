@@ -42,7 +42,9 @@ func Convert(context *context.Context) error {
 
 	// If input type file is JSON convert to YAML.
 	if format == "JSON" {
+
 		outputTemplate, err = jsonToYaml(rawTemplate)
+
 		if err != nil {
 			return err
 		}
@@ -55,6 +57,7 @@ func Convert(context *context.Context) error {
 			context.Logger.Error(preprocessingError.Error())
 		}
 		if *context.CliArguments.PrettyPrint == false {
+
 			outputTemplate, err = yamlToJson(preprocessed)
 		} else if *context.CliArguments.PrettyPrint == true {
 			outputTemplate, err = yamlToPrettyJson(preprocessed)
@@ -116,6 +119,7 @@ func saveToFile(template []byte, path string, logger *logger.Logger) error {
 }
 
 func detectFormatFromContent(rawTemplate []byte) (format string) {
+
 	_, errorYAML := jsonToYaml(rawTemplate)
 	_, errorJSON := yamlToJson(rawTemplate)
 

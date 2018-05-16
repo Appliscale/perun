@@ -71,13 +71,14 @@ Then type path and name of new configuration file.
 
 To create new stack you have to type:
 
-``~ $ perun create-stack <NAME OF THE STACK> <PATH TO YOUR TEMPLATE
+``~ $ perun create-stack [<FLAGS>] <NAME OF THE STACK> <PATH TO YOUR TEMPLATE
 ``
 
 To destroy stack just type:
 
 ``~ $ perun delete-stack <NAME OF THE STACK>
 ``
+
 
 ### Configuration file
 
@@ -143,6 +144,14 @@ Example JSON template which describe S3 Bucket:
 If you want to destroy stack just type its name.
 Before you create stack you should validate it with perun :wink:.
 
+### Capabilities
+
+If your template includes resources that can affect permissions in your AWS account, 
+you must explicitly acknowledge its capabilities by adding `--capabilities=CAPABILITY` flag.
+
+Valid values are `CAPABILITY_IAM` and `CAPABILITY_NAMED_IAM`.
+You can specify both of them by adding `--capabilities=CAPABILITY_IAM --capabilities=CAPABILITY_NAMED_IAM`.
+
 ## License
 
 [Apache License 2.0](LICENSE)
@@ -152,12 +161,14 @@ Before you create stack you should validate it with perun :wink:.
 - [Piotr Figwer](https://github.com/pfigwer)
 - [Sylwia Gargula](https://github.com/SylwiaGargula)
 - [Wojciech Gawroński](https://github.com/afronski)
-- [Jakub Lamparski](https://github.com/jlampar)
+- [Mateusz Piwowarczyk](https://github.com/piwowarc)
 
 ## Contributors
 
+- [Jakub Lamparski](https://github.com/jlampar)
 - [Aleksander Mamla](https://github.com/amamla)
 - [Kacper Patro](https://github.com/morfeush22)
 - [Paweł Pikuła](https://github.com/ppikula)
 - [Michał Połcik](https://github.com/mwpolcik)
+- [Tomasz Raus](https://github.com/rusty-2)
 - [Maksymilian Wojczuk](https://github.com/maxiwoj)

@@ -266,25 +266,25 @@ func obtainResources(goformationTemplate cloudformation.Template, perunTemplate 
 
 	for propertyName, propertyContent := range perunResources {
 		if propertyContent.Properties == nil {
-			logger.Always("WARNING! " + propertyName + " <--- is nil.")
+			logger.Debug(propertyName + " <--- is nil.")
 		} else {
 			for element, elementValue := range propertyContent.Properties {
 				if elementValue == nil {
-					logger.Always("WARNING! " + propertyName + ": " + element + " <--- is nil.")
+					logger.Debug(propertyName + ": " + element + " <--- is nil.")
 				} else if elementMap, ok := elementValue.(map[string]interface{}); ok {
 					for key, value := range elementMap {
 						if value == nil {
-							logger.Always("WARNING! " + propertyName + ": " + element + ": " + key + " <--- is nil.")
+							logger.Debug(propertyName + ": " + element + ": " + key + " <--- is nil.")
 						} else if elementOfElement, ok := value.(map[string]interface{}); ok {
 							for subKey, subValue := range elementOfElement {
 								if subValue == nil {
-									logger.Always("WARNING! " + propertyName + ": " + element + ": " + key + ": " + subKey + " <--- is nil.")
+									logger.Debug(propertyName + ": " + element + ": " + key + ": " + subKey + " <--- is nil.")
 								}
 							}
 						} else if sliceOfElement, ok := value.([]interface{}); ok {
 							for indexKey, indexValue := range sliceOfElement {
 								if indexValue == nil {
-									logger.Always("WARNING! " + propertyName + ": " + element + ": " + key + "[" + strconv.Itoa(indexKey) + "] <--- is nil.")
+									logger.Debug(propertyName + ": " + element + ": " + key + "[" + strconv.Itoa(indexKey) + "] <--- is nil.")
 								}
 							}
 						}
@@ -292,17 +292,17 @@ func obtainResources(goformationTemplate cloudformation.Template, perunTemplate 
 				} else if elementSlice, ok := elementValue.([]interface{}); ok {
 					for index, value := range elementSlice {
 						if value == nil {
-							logger.Always("WARNING! " + propertyName + ": " + element + "[" + strconv.Itoa(index) + "] <--- is nil.")
+							logger.Debug(propertyName + ": " + element + "[" + strconv.Itoa(index) + "] <--- is nil.")
 						} else if elementOfElement, ok := value.(map[string]interface{}); ok {
 							for subKey, subValue := range elementOfElement {
 								if subValue == nil {
-									logger.Always("WARNING! " + propertyName + ": " + element + "[" + strconv.Itoa(index) + "]: " + subKey + " <--- is nil.")
+									logger.Debug(propertyName + ": " + element + "[" + strconv.Itoa(index) + "]: " + subKey + " <--- is nil.")
 								}
 							}
 						} else if sliceOfElement, ok := value.([]interface{}); ok {
 							for indexKey, indexValue := range sliceOfElement {
 								if indexValue == nil {
-									logger.Always("WARNING! " + propertyName + ": " + element + "[" + strconv.Itoa(index) + "][" + strconv.Itoa(indexKey) + "] <--- is nil.")
+									logger.Debug(propertyName + ": " + element + "[" + strconv.Itoa(index) + "][" + strconv.Itoa(indexKey) + "] <--- is nil.")
 								}
 							}
 						}
