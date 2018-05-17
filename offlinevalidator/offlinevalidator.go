@@ -27,6 +27,7 @@ import (
 
 	"errors"
 
+	"github.com/Appliscale/perun/configuration"
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/helpers"
 	"github.com/Appliscale/perun/logger"
@@ -88,11 +89,13 @@ func Validate(context *context.Context) bool {
 	deadResources := getNilResources(resources)
 	deadProperties := getNilProperties(resources)
 
-	valid = validateResources(resources, &specification, context.Logger, deadProperties, deadResources)
+	specInconsistency := context.InconsistencyConfig.SpecificationInconsistency
+
+	valid = validateResources(resources, &specification, context.Logger, deadProperties, deadResources, specInconsistency)
 	return valid
 }
 
-func validateResources(resources map[string]template.Resource, specification *specification.Specification, sink *logger.Logger, deadProp []string, deadRes []string) bool {
+func validateResources(resources map[string]template.Resource, specification *specification.Specification, sink *logger.Logger, deadProp []string, deadRes []string, specInconsistency map[string]configuration.Property) bool {
 
 	for resourceName, resourceValue := range resources {
 		if deadResource := helpers.SliceContains(deadRes, resourceName); !deadResource {
@@ -101,7 +104,7 @@ func validateResources(resources map[string]template.Resource, specification *sp
 			if resourceSpecification, ok := specification.ResourceTypes[resourceValue.Type]; ok {
 				for propertyName, propertyValue := range resourceSpecification.Properties {
 					if deadProperty := helpers.SliceContains(deadProp, propertyName); !deadProperty {
-						validateProperties(specification, resourceValue, propertyName, propertyValue, resourceValidation)
+						validateProperties(specification, resourceValue, propertyName, propertyValue, resourceValidation, specInconsistency, sink)
 					}
 				}
 			} else {
@@ -121,19 +124,33 @@ func validateProperties(
 	resourceValue template.Resource,
 	propertyName string,
 	propertyValue specification.Property,
-	resourceValidation *logger.ResourceValidation) {
+	resourceValidation *logger.ResourceValidation,
+	specInconsistency map[string]configuration.Property,
+	logger *logger.Logger) {
 
+	warnAboutSpecificationInconsistencies(propertyName, specInconsistency[resourceValue.Type], logger)
 	if _, ok := resourceValue.Properties[propertyName]; !ok {
 		if propertyValue.Required {
 			resourceValidation.AddValidationError("Property " + propertyName + " is required")
 		}
 	} else if len(propertyValue.Type) > 0 {
 		if propertyValue.Type != "List" && propertyValue.Type != "Map" {
-			checkNestedProperties(specification, resourceValue.Properties, resourceValue.Type, propertyName, propertyValue.Type, resourceValidation)
+			checkNestedProperties(specification, resourceValue.Properties, resourceValue.Type, propertyName, propertyValue.Type, resourceValidation, specInconsistency, logger)
 		} else if propertyValue.Type == "List" {
-			checkListProperties(specification, resourceValue.Properties, resourceValue.Type, propertyName, propertyValue.ItemType, resourceValidation)
+			checkListProperties(specification, resourceValue.Properties, resourceValue.Type, propertyName, propertyValue.ItemType, resourceValidation, specInconsistency, logger)
 		} else if propertyValue.Type == "Map" {
 			checkMapProperties(resourceValue.Properties, propertyName, resourceValidation)
+		}
+	}
+}
+
+// check should be before validate, someone might add property because he thought it is required and here he would not get notified about inconsistency...
+func warnAboutSpecificationInconsistencies(subpropertyName string, specInconsistentProperty configuration.Property, logger *logger.Logger) {
+	if specInconsistentProperty[subpropertyName] != nil {
+		for _, inconsistentPropertyName := range specInconsistentProperty[subpropertyName] {
+			if inconsistentPropertyName == "Required" {
+				logger.Warning(subpropertyName + "->" + inconsistentPropertyName + " in documentation is not consistent with specification")
+			}
 		}
 	}
 }
@@ -142,7 +159,9 @@ func checkListProperties(
 	spec *specification.Specification,
 	resourceProperties map[string]interface{},
 	resourceValueType, propertyName, listItemType string,
-	resourceValidation *logger.ResourceValidation) {
+	resourceValidation *logger.ResourceValidation,
+	specInconsistency map[string]configuration.Property,
+	logger *logger.Logger) {
 
 	if listItemType == "" {
 		resourceSubproperties := toStringList(resourceProperties, propertyName)
@@ -150,17 +169,17 @@ func checkListProperties(
 			resourceValidation.AddValidationError(propertyName + " must be a List")
 		}
 	} else if propertySpec, hasSpec := spec.PropertyTypes[resourceValueType+"."+listItemType]; hasSpec {
-
 		resourceSubproperties := toMapList(resourceProperties, propertyName)
 		for subpropertyName, subpropertyValue := range propertySpec.Properties {
 			for _, listItem := range resourceSubproperties {
+				warnAboutSpecificationInconsistencies(subpropertyName, specInconsistency[resourceValueType+"."+listItemType], logger)
 				if _, isPresent := listItem[subpropertyName]; !isPresent {
 					if subpropertyValue.Required {
 						resourceValidation.AddValidationError("Property " + subpropertyName + " is required in " + listItemType)
 					}
 				} else if isPresent {
 					if subpropertyValue.IsSubproperty() {
-						checkNestedProperties(spec, listItem, resourceValueType, subpropertyName, subpropertyValue.Type, resourceValidation)
+						checkNestedProperties(spec, listItem, resourceValueType, subpropertyName, subpropertyValue.Type, resourceValidation, specInconsistency, logger)
 					} else if subpropertyValue.Type == "Map" {
 						checkMapProperties(listItem, propertyName, resourceValidation)
 					}
@@ -174,20 +193,23 @@ func checkNestedProperties(
 	spec *specification.Specification,
 	resourceProperties map[string]interface{},
 	resourceValueType, propertyName, propertyType string,
-	resourceValidation *logger.ResourceValidation) {
+	resourceValidation *logger.ResourceValidation,
+	specInconsistency map[string]configuration.Property,
+	logger *logger.Logger) {
 
 	if propertySpec, hasSpec := spec.PropertyTypes[resourceValueType+"."+propertyType]; hasSpec {
 		resourceSubproperties, _ := toMap(resourceProperties, propertyName)
 		for subpropertyName, subpropertyValue := range propertySpec.Properties {
+			warnAboutSpecificationInconsistencies(subpropertyName, specInconsistency[resourceValueType+"."+propertyName], logger)
 			if _, isPresent := resourceSubproperties[subpropertyName]; !isPresent {
 				if subpropertyValue.Required {
-					resourceValidation.AddValidationError("Property " + subpropertyName + " is required" + "in " + propertyName)
+					resourceValidation.AddValidationError("Property " + subpropertyName + " is required " + "in " + propertyName)
 				}
 			} else if isPresent {
 				if subpropertyValue.IsSubproperty() {
-					checkNestedProperties(spec, resourceSubproperties, resourceValueType, subpropertyName, subpropertyValue.Type, resourceValidation)
+					checkNestedProperties(spec, resourceSubproperties, resourceValueType, subpropertyName, subpropertyValue.Type, resourceValidation, specInconsistency, logger)
 				} else if subpropertyValue.Type == "List" {
-					checkListProperties(spec, resourceSubproperties, resourceValueType, subpropertyName, subpropertyValue.ItemType, resourceValidation)
+					checkListProperties(spec, resourceSubproperties, resourceValueType, subpropertyName, subpropertyValue.ItemType, resourceValidation, specInconsistency, logger)
 				} else if subpropertyValue.Type == "Map" {
 					checkMapProperties(resourceSubproperties, subpropertyName, resourceValidation)
 				}
