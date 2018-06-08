@@ -81,7 +81,12 @@ func main() {
 	}
 
 	if *context.CliArguments.Mode == cliparser.MfaMode {
-		mysession.UpdateSessionToken(context.Config.DefaultProfile, context.Config.DefaultRegion, context.Config.DefaultDurationForMFA, &context)
-		os.Exit(0)
+		err := mysession.UpdateSessionToken(context.Config.DefaultProfile, context.Config.DefaultRegion, context.Config.DefaultDurationForMFA, &context)
+		if err == nil {
+			os.Exit(0)
+		} else {
+			context.Logger.Error(err.Error())
+			os.Exit(1)
+		}
 	}
 }
