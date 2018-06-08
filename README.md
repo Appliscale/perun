@@ -79,6 +79,11 @@ To destroy stack just type:
 ``~ $ perun delete-stack <NAME OF THE STACK>
 ``
 
+To create temporary secure credentials with MFA type:
+
+```bash
+~ $ perun mfa
+```
 
 ### Configuration file
 
