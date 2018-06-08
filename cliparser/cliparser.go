@@ -20,6 +20,7 @@ package cliparser
 
 import (
 	"errors"
+
 	"github.com/Appliscale/perun/logger"
 	"github.com/Appliscale/perun/utilities"
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -31,6 +32,7 @@ var OfflineValidateMode = "validate_offline"
 var ConfigureMode = "configure"
 var CreateStackMode = "create-stack"
 var DestroyStackMode = "delete-stack"
+var MfaMode = "mfa"
 
 type CliArguments struct {
 	Mode              *string
@@ -85,6 +87,8 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 
 		deleteStack     = app.Command(DestroyStackMode, "Deletes a stack on aws")
 		deleteStackName = deleteStack.Arg("stack", "An AWS stack name.").Required().String()
+
+		mfaCommand = app.Command(MfaMode, "Create temporary secure credentials with MFA.")
 	)
 
 	app.HelpFlag.Short('h')
@@ -124,6 +128,11 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 	case deleteStack.FullCommand():
 		cliArguments.Mode = &DestroyStackMode
 		cliArguments.Stack = deleteStackName
+
+		// generate MFA token
+	case mfaCommand.FullCommand():
+		cliArguments.Mode = &MfaMode
+
 	}
 
 	// OTHER FLAGS

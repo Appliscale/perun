@@ -79,7 +79,6 @@ To destroy stack just type:
 ``~ $ perun delete-stack <NAME OF THE STACK>
 ``
 
-
 ### Configuration file
 
 You can find an example configuration file in the main directory of the repository in file `defaults/main.yml`.
@@ -121,6 +120,11 @@ Example profile you need to setup - in this case `default`:
 aws_access_key_id = <YOUR ACCESS KEY>
 aws_secret_access_key = <YOUR SECRET ACCESS KEY>
 mfa_serial = <IDENTIFICATION NUMBER FOR MFA DEVICE>
+```
+You do not need to use Perun for validation, you can just use it to obtain security credentials and use them in AWS CLI. To do this type:
+
+```bash
+~ $ perun mfa
 ```
 
 ### Working with stacks
