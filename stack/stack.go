@@ -10,10 +10,18 @@ import (
 )
 
 // This function gets template and  name of stack. It creates "CreateStackInput" structure.
-func createStackInput(template *string, stackName *string) cloudformation.CreateStackInput {
+func createStackInput(context *context.Context, template *string, stackName *string) cloudformation.CreateStackInput {
+
+	rawCapabilities := *context.CliArguments.Capabilities
+	capabilities := make([]*string, len(rawCapabilities))
+	for i, capability := range rawCapabilities {
+		capabilities[i] = &capability
+	}
+
 	templateStruct := cloudformation.CreateStackInput{
 		TemplateBody: template,
 		StackName:    stackName,
+		Capabilities: capabilities,
 	}
 	return templateStruct
 }
@@ -42,21 +50,21 @@ func getTemplateFromFile(context *context.Context) (string, string) {
 }
 
 // This function uses CreateStackInput variable to create Stack.
-func createStack(templateStruct cloudformation.CreateStackInput, session *session.Session, context *context.Context) {
+func createStack(templateStruct cloudformation.CreateStackInput, session *session.Session) (err error) {
 	api := cloudformation.New(session)
-	_, err := api.CreateStack(&templateStruct)
-	if err != nil {
-		context.Logger.Error(err.Error())
-		os.Exit(1)
-	}
+	_, err = api.CreateStack(&templateStruct)
+	return
 }
 
 // This function uses all functions above and session to create Stack.
 func NewStack(context *context.Context) {
 	template, stackName := getTemplateFromFile(context)
-	templateStruct := createStackInput(&template, &stackName)
+	templateStruct := createStackInput(context, &template, &stackName)
 	session := mysession.InitializeSession(context)
-	createStack(templateStruct, session, context)
+	createStackError := createStack(templateStruct, session)
+	if createStackError != nil {
+		context.Logger.Error(createStackError.Error())
+	}
 }
 
 // This function bases on "DeleteStackInput" structure and destroys stack. It uses "StackName" to choose which stack will be destroy. Before that it creates session.

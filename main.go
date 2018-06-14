@@ -18,6 +18,8 @@
 package main
 
 import (
+	"os"
+
 	"github.com/Appliscale/perun/cliparser"
 	"github.com/Appliscale/perun/configuration"
 	"github.com/Appliscale/perun/configurator"
@@ -26,7 +28,7 @@ import (
 	"github.com/Appliscale/perun/offlinevalidator"
 	"github.com/Appliscale/perun/onlinevalidator"
 	"github.com/Appliscale/perun/stack"
-	"os"
+	"github.com/Appliscale/perun/mysession"
 )
 
 func main() {
@@ -76,6 +78,16 @@ func main() {
 	if *context.CliArguments.Mode == cliparser.DestroyStackMode {
 		stack.DestroyStack(&context)
 		os.Exit(0)
+	}
+
+	if *context.CliArguments.Mode == cliparser.MfaMode {
+		err := mysession.UpdateSessionToken(context.Config.DefaultProfile, context.Config.DefaultRegion, context.Config.DefaultDurationForMFA, &context)
+		if err == nil {
+			os.Exit(0)
+		} else {
+			context.Logger.Error(err.Error())
+			os.Exit(1)
+		}
 	}
 
 	if *context.CliArguments.Mode == cliparser.UpdateStackMode {

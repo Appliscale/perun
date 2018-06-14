@@ -20,6 +20,7 @@ package cliparser
 
 import (
 	"errors"
+
 	"github.com/Appliscale/perun/logger"
 	"github.com/Appliscale/perun/utilities"
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -32,6 +33,7 @@ var ConfigureMode = "configure"
 var CreateStackMode = "create-stack"
 var DestroyStackMode = "delete-stack"
 var UpdateStackMode = "update-stack"
+var MfaMode = "mfa"
 
 type CliArguments struct {
 	Mode              *string
@@ -47,6 +49,7 @@ type CliArguments struct {
 	Region            *string
 	Sandbox           *bool
 	Stack             *string
+	Capabilities      *[]string
 	PrettyPrint       *bool
 }
 
@@ -78,9 +81,10 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 
 		configure = app.Command(ConfigureMode, "Create your own configuration mode")
 
-		createStack         = app.Command(CreateStackMode, "Creates a stack on aws")
-		createStackName     = createStack.Arg("stack", "An AWS stack name.").Required().String()
-		createStackTemplate = createStack.Arg("template", "A path to the template file.").Required().String()
+		createStack             = app.Command(CreateStackMode, "Creates a stack on aws")
+		createStackName         = createStack.Arg("stack", "An AWS stack name.").Required().String()
+		createStackTemplate     = createStack.Arg("template", "A path to the template file.").Required().String()
+		createStackCapabilities = createStack.Flag("capabilities", "Capabilities: CAPABILITY_IAM | CAPABILITY_NAMED_IAM").Enums("CAPABILITY_IAM", "CAPABILITY_NAMED_IAM")
 
 		deleteStack     = app.Command(DestroyStackMode, "Deletes a stack on aws")
 		deleteStackName = deleteStack.Arg("stack", "An AWS stack name.").Required().String()
@@ -90,7 +94,10 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		updateStackTemplate    = updateStack.Arg("template", "A path to the template file.").String()
 		updateStackImpName     = createStack.Flag("stack", "Sn AWS stack name.").String()
 		updateStackImpTemplate = createStack.Flag("template", "A path to the template file.").String()
+
+		mfaCommand = app.Command(MfaMode, "Create temporary secure credentials with MFA.")
 	)
+
 	app.HelpFlag.Short('h')
 	app.Version(utilities.VersionStatus())
 
@@ -122,11 +129,17 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		cliArguments.Mode = &CreateStackMode
 		cliArguments.TemplatePath = createStackTemplate
 		cliArguments.Stack = createStackName
+		cliArguments.Capabilities = createStackCapabilities
 
 		// delete Stack
 	case deleteStack.FullCommand():
 		cliArguments.Mode = &DestroyStackMode
 		cliArguments.Stack = deleteStackName
+
+		// generate MFA token
+	case mfaCommand.FullCommand():
+		cliArguments.Mode = &MfaMode
+
 
 		// update Stack
 	case updateStack.FullCommand():
