@@ -28,9 +28,15 @@ func createStackInput(context *context.Context, template *string, stackName *str
 
 // This function gets template and  name of stack. It creates "CreateStackInput" structure.
 func updateStackInput(context *context.Context, template *string, stackName *string) cloudformation.UpdateStackInput {
+	rawCapabilities := *context.CliArguments.Capabilities
+	capabilities := make([]*string, len(rawCapabilities))
+	for i, capability := range rawCapabilities {
+		capabilities[i] = &capability
+	}
 	templateStruct := cloudformation.UpdateStackInput{
 		TemplateBody: template,
 		StackName:    stackName,
+		Capabilities: capabilities,
 	}
 	return templateStruct
 }
