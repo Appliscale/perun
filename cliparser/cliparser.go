@@ -89,11 +89,11 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		deleteStack     = app.Command(DestroyStackMode, "Deletes a stack on aws")
 		deleteStackName = deleteStack.Arg("stack", "An AWS stack name.").Required().String()
 
-		updateStack            = app.Command(UpdateStackMode, "Updates a stacj on aws")
-		updateStackName        = updateStack.Arg("stack", "An AWS stack name").String()
-		updateStackTemplate    = updateStack.Arg("template", "A path to the template file.").String()
-		updateStackImpName     = updateStack.Flag("stack", "Sn AWS stack name.").String()
-		updateStackImpTemplate = updateStack.Flag("template", "A path to the template file.").String()
+		updateStack             = app.Command(UpdateStackMode, "Updates a stack on aws")
+		updateStackName         = updateStack.Arg("stack", "An AWS stack name").String()
+		updateStackTemplate     = updateStack.Arg("template", "A path to the template file.").String()
+		updateStackImpName      = updateStack.Flag("stack", "Sn AWS stack name.").String()
+		updateStackImpTemplate  = updateStack.Flag("template", "A path to the template file.").String()
 		updateStackCapabilities = updateStack.Flag("capabilities", "Capabilities: CAPABILITY_IAM | CAPABILITY_NAMED_IAM").Enums("CAPABILITY_IAM", "CAPABILITY_NAMED_IAM")
 
 		mfaCommand = app.Command(MfaMode, "Create temporary secure credentials with MFA.")
@@ -141,10 +141,10 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 	case mfaCommand.FullCommand():
 		cliArguments.Mode = &MfaMode
 
-
 		// update Stack
 	case updateStack.FullCommand():
-		cliArguments.Capabilities = updateStackCapabilities;
+		cliArguments.Mode = &UpdateStackMode
+		cliArguments.Capabilities = updateStackCapabilities
 		if len(*updateStackImpTemplate) > 0 && len(*updateStackImpName) > 0 {
 			cliArguments.Stack = updateStackImpName
 			cliArguments.TemplatePath = updateStackImpTemplate

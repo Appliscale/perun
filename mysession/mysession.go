@@ -2,16 +2,16 @@ package mysession
 
 import (
 	"errors"
+	"github.com/Appliscale/perun/cliparser"
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/utilities"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/go-ini/ini"
+	"os"
 	"os/user"
 	"time"
-	"os"
-	"github.com/Appliscale/perun/cliparser"
 )
 
 const dateFormat = "2006-01-02 15:04:05 MST"

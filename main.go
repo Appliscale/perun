@@ -25,10 +25,10 @@ import (
 	"github.com/Appliscale/perun/configurator"
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/converter"
+	"github.com/Appliscale/perun/mysession"
 	"github.com/Appliscale/perun/offlinevalidator"
 	"github.com/Appliscale/perun/onlinevalidator"
 	"github.com/Appliscale/perun/stack"
-	"github.com/Appliscale/perun/mysession"
 )
 
 func main() {
