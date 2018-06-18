@@ -52,24 +52,20 @@ func (config Configuration) GetSpecificationFileURLForCurrentRegion() (string, e
 
 // Return perun configuration read from file.
 func GetConfiguration(cliArguments cliparser.CliArguments, logger *logger.Logger) (config Configuration, err error) {
-	if getMode(cliArguments) != cliparser.ConfigureMode {
-		var configPath string
-		configPath, err = getConfigurationPath(cliArguments, logger)
-		if err != nil {
-			return
-		}
-		var rawConfiguration []byte
-		rawConfiguration, err = ioutil.ReadFile(configPath)
-		if err != nil {
-			return
-		}
-		err = yaml.Unmarshal(rawConfiguration, &config)
-		if err != nil {
-			return
-		}
-		postProcessing(&config, cliArguments)
+	mode := getMode(cliArguments)
+
+	if mode == cliparser.ConfigureMode {
 		return
 	}
+
+	config, err = getConfigurationFromFile(cliArguments, logger)
+	if err != nil && mode != cliparser.MfaMode {
+		return
+	}
+
+	err = nil
+	postProcessing(&config, cliArguments)
+
 	return
 }
 
@@ -142,4 +138,22 @@ func SaveToFile(config Configuration, path string, logger logger.Logger) {
 	}
 	obj, _ := yaml.Marshal(config)
 	_, err = file.Write(obj)
+}
+
+func getConfigurationFromFile(cliArguments cliparser.CliArguments, logger *logger.Logger) (config Configuration, err error) {
+	var configPath string
+	configPath, err = getConfigurationPath(cliArguments, logger)
+	if err != nil {
+		return
+	}
+	var rawConfiguration []byte
+	rawConfiguration, err = ioutil.ReadFile(configPath)
+	if err != nil {
+		return
+	}
+	err = yaml.Unmarshal(rawConfiguration, &config)
+	if err != nil {
+		return
+	}
+	return
 }

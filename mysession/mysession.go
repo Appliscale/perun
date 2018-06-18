@@ -8,9 +8,10 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/go-ini/ini"
-	"os"
 	"os/user"
 	"time"
+	"os"
+	"github.com/Appliscale/perun/cliparser"
 )
 
 const dateFormat = "2006-01-02 15:04:05 MST"
@@ -49,7 +50,7 @@ func CreateSession(context *context.Context, profile string, region *string) (*s
 }
 
 func UpdateSessionToken(profile string, region string, defaultDuration int64, context *context.Context) error {
-	if *context.CliArguments.MFA {
+	if *context.CliArguments.MFA || *context.CliArguments.Mode == cliparser.MfaMode {
 		user, userError := user.Current()
 		if userError != nil {
 			return userError
