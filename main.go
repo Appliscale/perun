@@ -89,4 +89,10 @@ func main() {
 			os.Exit(1)
 		}
 	}
+
+	if *context.CliArguments.Mode == cliparser.UpdateStackMode {
+		stack.UpdateStack(&context)
+		os.Exit(0)
+	}
+
 }

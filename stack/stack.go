@@ -26,6 +26,21 @@ func createStackInput(context *context.Context, template *string, stackName *str
 	return templateStruct
 }
 
+// This function gets template and  name of stack. It creates "CreateStackInput" structure.
+func updateStackInput(context *context.Context, template *string, stackName *string) cloudformation.UpdateStackInput {
+	rawCapabilities := *context.CliArguments.Capabilities
+	capabilities := make([]*string, len(rawCapabilities))
+	for i, capability := range rawCapabilities {
+		capabilities[i] = &capability
+	}
+	templateStruct := cloudformation.UpdateStackInput{
+		TemplateBody: template,
+		StackName:    stackName,
+		Capabilities: capabilities,
+	}
+	return templateStruct
+}
+
 // This function reads "StackName" from Stack in CliArguments and file from TemplatePath in CliArguments. It converts these to type string.
 func getTemplateFromFile(context *context.Context) (string, string) {
 
@@ -68,6 +83,23 @@ func DestroyStack(context *context.Context) {
 		context.Logger.Error(err.Error())
 		os.Exit(1)
 	}
+}
+
+func UpdateStack(context *context.Context) {
+	template, stackName := getTemplateFromFile(context)
+	templateStruct := updateStackInput(context, &template, &stackName)
+	session := mysession.InitializeSession(context)
+	err := updateStack(templateStruct, session)
+	if err != nil {
+		context.Logger.Error(err.Error())
+		os.Exit(1)
+	}
+}
+
+func updateStack(updateStackInput cloudformation.UpdateStackInput, session *session.Session) error {
+	api := cloudformation.New(session)
+	_, err := api.UpdateStack(&updateStackInput)
+	return err
 }
 
 // This function gets "StackName" from Stack in CliArguments and creates "DeleteStackInput" structure.
