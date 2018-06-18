@@ -2,6 +2,7 @@ package mysession
 
 import (
 	"errors"
+	"github.com/Appliscale/perun/cliparser"
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/utilities"
 	"github.com/aws/aws-sdk-go/aws"
@@ -49,7 +50,7 @@ func CreateSession(context *context.Context, profile string, region *string) (*s
 }
 
 func UpdateSessionToken(profile string, region string, defaultDuration int64, context *context.Context) error {
-	if *context.CliArguments.MFA {
+	if *context.CliArguments.MFA || *context.CliArguments.Mode == cliparser.MfaMode {
 		user, userError := user.Current()
 		if userError != nil {
 			return userError
