@@ -244,11 +244,6 @@ func checkMapProperties(
 	if err != nil {
 		resourceValidation.AddValidationError(err.Error())
 	}
-	for subpropertyName, subpropertyValue := range resourceProperties {
-		if reflect.TypeOf(subpropertyValue).Kind() != reflect.Map {
-			resourceValidation.AddValidationError(subpropertyName + " must be a Map")
-		}
-	}
 }
 
 func ParseJSON(templateFile []byte, refTemplate template.Template, logger *logger.Logger) (template cloudformation.Template, err error) {
