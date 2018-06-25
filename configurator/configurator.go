@@ -3,8 +3,8 @@ package configurator
 import (
 	"github.com/Appliscale/perun/configuration"
 	"github.com/Appliscale/perun/context"
+	"github.com/Appliscale/perun/myuser"
 	"os"
-	"os/user"
 	"strconv"
 )
 
@@ -26,7 +26,12 @@ var resourceSpecificationURL = map[string]string{
 }
 
 func FileName(context *context.Context) {
-	context.Logger.Always("Configure file could be in \n  " + makeUserPath() + "\n  /etc/perun")
+	homePath, pathError := myuser.GetUserHomeDir()
+	if pathError != nil {
+		context.Logger.Error(pathError.Error())
+	}
+	homePath += "/.config/perun"
+	context.Logger.Always("Configure file could be in \n  " + homePath + "\n  /etc/perun")
 	var yourPath string
 	var yourName string
 	context.Logger.GetInput("Your path ", &yourPath)
@@ -44,13 +49,6 @@ func findFile(path string, context *context.Context) {
 	} else {
 		context.Logger.Always("File already exists in this path")
 	}
-}
-
-func makeUserPath() (path string) {
-	usr, _ := user.Current()
-	path = usr.HomeDir
-	path = path + "/.config/perun"
-	return
 }
 
 func showRegions(context *context.Context) {
