@@ -119,7 +119,7 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 
 		createParameters                 = app.Command(CreateParametersMode, "Creates a JSON parameters configuration suitable for give cloud formation file")
 		createParametersTemplate         = createParameters.Arg("template", "A path to the template file.").String()
-		createParametersParamsOutputFile = createParameters.Flag("output", "A path to file where parameters will be saved.").String()
+		createParametersParamsOutputFile = createParameters.Arg("output", "A path to file where parameters will be saved.").String()
 		createParametersParams           = createParameters.Flag("parameter", "list of parameters").StringMap()
 		createParametersPrettyPrint      = createParameters.Flag("pretty-print", "Pretty printing JSON").Bool()
 
