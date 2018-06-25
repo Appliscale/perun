@@ -20,8 +20,6 @@ package main
 import (
 	"os"
 
-	"os"
-
 	"github.com/Appliscale/perun/cliparser"
 	"github.com/Appliscale/perun/configuration"
 	"github.com/Appliscale/perun/configurator"
@@ -82,9 +80,9 @@ func main() {
 		}
 	}
 
-	// if *context.CliArguments.Mode == cliparser.UpdateStackMode {
-	// 	utilities.CheckErrorCodeAndExit(stack.UpdateStack(&context))
-	// }
+	if *context.CliArguments.Mode == cliparser.UpdateStackMode {
+		utilities.CheckErrorCodeAndExit(stack.UpdateStack(&context))
+	}
 
 	if *context.CliArguments.Mode == cliparser.SetupSinkMode {
 		progress.ConfigureRemoteSink(&context)
