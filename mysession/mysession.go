@@ -2,6 +2,10 @@ package mysession
 
 import (
 	"errors"
+	"os"
+	"os/user"
+	"time"
+
 	"github.com/Appliscale/perun/cliparser"
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/utilities"
@@ -9,12 +13,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/go-ini/ini"
-	"os"
-	"os/user"
-	"time"
 )
 
-const dateFormat = "2006-01-02 15:04:05 MST"
+const dateFormat = "2006-01-02 15:04:05"
 
 func InitializeSession(context *context.Context) *session.Session {
 	tokenError := UpdateSessionToken(context.Config.DefaultProfile, context.Config.DefaultRegion, context.Config.DefaultDurationForMFA, context)
