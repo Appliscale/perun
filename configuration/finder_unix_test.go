@@ -20,10 +20,11 @@ package configuration
 
 import (
 	"errors"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"os/user"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func existStub(string) (os.FileInfo, error) {
@@ -36,14 +37,14 @@ func notExistStub(string) (os.FileInfo, error) {
 
 func TestGetUserConfigFile(t *testing.T) {
 	t.Run("File exist", func(t *testing.T) {
-		path, ok := getUserConfigFile(existStub)
+		path, ok := getUserConfigFile(existStub, "main.yaml")
 		usr, _ := user.Current()
 		assert.Equal(t, usr.HomeDir+"/.config/perun/main.yaml", path, "Should contain user home")
 		assert.True(t, ok, "Should exist")
 	})
 
 	t.Run("File does not exist", func(t *testing.T) {
-		_, ok := getUserConfigFile(notExistStub)
+		_, ok := getUserConfigFile(notExistStub, "main.yaml")
 		assert.False(t, ok, "Should not exist")
 	})
 }
