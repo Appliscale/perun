@@ -19,9 +19,9 @@
 package converter
 
 import (
-	"encoding/json"
 	"errors"
 	"github.com/Appliscale/perun/context"
+	"github.com/Appliscale/perun/helpers"
 	"github.com/Appliscale/perun/intrinsicsolver"
 	"github.com/Appliscale/perun/logger"
 	"github.com/asaskevich/govalidator"
@@ -82,21 +82,21 @@ func jsonToYaml(jsonTemplate []byte) ([]byte, error) {
 		return nil, errors.New("This is not a valid JSON file")
 	}
 
-	yamlTemplate, error := yaml.JSONToYAML(jsonTemplate)
+	yamlTemplate, err := yaml.JSONToYAML(jsonTemplate)
 
-	return yamlTemplate, error
+	return yamlTemplate, err
 }
 
 func yamlToJson(yamlTemplate []byte) ([]byte, error) {
-	jsonTemplate, error := yaml.YAMLToJSON(yamlTemplate)
-	return jsonTemplate, error
+	jsonTemplate, err := yaml.YAMLToJSON(yamlTemplate)
+	return jsonTemplate, err
 }
 
 func yamlToPrettyJson(yamlTemplate []byte) ([]byte, error) {
 	var YAMLObj interface{}
 	templateError := yaml.Unmarshal(yamlTemplate, &YAMLObj)
 
-	jsonTemplate, templateError := json.MarshalIndent(YAMLObj, "", "    ")
+	jsonTemplate, templateError := helpers.PrettyPrintJSON(YAMLObj)
 
 	return jsonTemplate, templateError
 

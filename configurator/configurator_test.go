@@ -17,12 +17,6 @@ func TestConfigurePath(t *testing.T) {
 	subproc.Wait()
 }
 
-func TestMakeUserPath(t *testing.T) {
-	path := makeUserPath()
-	a := "/.config/perun"
-	assert.Containsf(t, path, a, "Inccorect path")
-}
-
 func TestSetProfile(t *testing.T) {
 	subproc := exec.Command("cmd")
 	input := ""

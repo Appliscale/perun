@@ -42,6 +42,7 @@ With first command a default configuration file (`defaults/main.yaml`) will be c
 
 ### Commands
 
+#### Validation
 To validate your template with AWS API (*online validation*), just type:
 
 ```bash
@@ -54,6 +55,7 @@ To validate your template offline (*well*, almost offline :wink: - *AWS CloudFor
 ~ $ perun validate_offline <PATH TO YOUR TEMPLATE>
 ```
 
+#### Conversion
 To convert your template between JSON and YAML formats you have to type:
 
 ```bash
@@ -62,22 +64,101 @@ To convert your template between JSON and YAML formats you have to type:
            <PATH FOR A CONVERTED FILE, INCLUDING FILE NAME>
            <JSON or YAML>
 ```
+
+#### Configuration
 To create your own configuration file use `configure` mode:
 
 ```bash
 ~ $ perun configure
 ```
+
 Then type path and name of new configuration file.
 
+#### Stack Creation
 To create new stack you have to type:
 
-``~ $ perun create-stack [<FLAGS>] <NAME OF THE STACK> <PATH TO YOUR TEMPLATE
-``
+```bash
+~ $ perun create-stack <NAME OF YOUR STACK>  <PATH TO YOUR TEMPLATE>
+```
 
 To destroy stack just type:
 
-``~ $ perun delete-stack <NAME OF THE STACK>
-``
+```bash
+~ $ perun delete-stack <NAME OF YOUR STACK>
+```
+
+You can use option ``--progress`` to show the stack creation/deletion progress in the console, but
+note, that this requires setting up a remote sink.
+
+##### Remote sink
+
+To setup remote sink type:
+
+```bash
+~ $ perun setup-remote-sink
+```
+
+This will create an sns topic and sqs queue with permissions for the sns topic to publish on the sqs
+queue. Using above services may produce some cost: 
+According to the AWS SQS and SNS pricing:
+
+- SNS: 
+  - notifications to the SQS queue are free 
+- SQS: 
+  - The first 1 million monthly requests are free. 
+  - After that: 0.40$ per million requests after Free Tier (Monthly)
+  - Typical stack creation uses around a hundred requests
+  
+To destroy remote sink just type:
+
+```bash
+~ $ perun destroy-remote-sink
+``` 
+
+#### Protecting Stack
+
+You can protect your stack by using Stack Policy file. It's JSON file where you describe which action is allowed or denied. This example allows to all Update Actions.
+
+```json
+{
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "Update:*",
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+To apply your Stack Policy file you have to type:
+
+```bash
+~ $ perun set-stack-policy <NAME OF YOUR STACK>  <PATH TO YOUR TEMPLATE>
+```
+
+or
+
+```bash 
+~ $ perun set-stack-policy --stack=<NAME OF YOUR STACK> --template=<PATH TO YOUR TEMPLATE>
+```
+
+Perun has some default flags:
+
+- ``--block`` - Block all Update actions in stack.
+
+- ``--unblock`` - Unblock all Update actions in stack.
+
+- ``--disable-stack-termination`` - Protect stack from being deleted.
+
+- ``--enable-stack-termination`` - Allow to destroy stack.
+
+You use flag instead of template.
+
+```bash
+~ $ perun set-stack-policy <NAME OF YOUR STACK> <FLAG>
+```
 
 ### Configuration file
 
@@ -135,7 +216,7 @@ To create stack it uses your template. It can be JSON or YAML format.
 
 Example JSON template which describe S3 Bucket:
 
-```ini
+```json
 {
     "Resources" : {
         "HelloPerun" : {
