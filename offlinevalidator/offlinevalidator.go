@@ -30,12 +30,14 @@ import (
 	"github.com/Appliscale/perun/configuration"
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/helpers"
+	"github.com/Appliscale/perun/intrinsicsolver"
 	"github.com/Appliscale/perun/logger"
 	"github.com/Appliscale/perun/offlinevalidator/template"
 	"github.com/Appliscale/perun/offlinevalidator/validators"
 	"github.com/Appliscale/perun/specification"
 	"github.com/awslabs/goformation"
 	"github.com/awslabs/goformation/cloudformation"
+	"github.com/ghodss/yaml"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -88,11 +90,49 @@ func Validate(context *context.Context) bool {
 	resources := obtainResources(deNilizedTemplate, perunTemplate, context.Logger)
 	deadResources := getNilResources(resources)
 	deadProperties := getNilProperties(resources)
+	if !hasAllowedValuesParametersValid(goFormationTemplate.Parameters, context.Logger) {
+		return false
+	}
 
 	specInconsistency := context.InconsistencyConfig.SpecificationInconsistency
 
 	valid = validateResources(resources, &specification, context.Logger, deadProperties, deadResources, specInconsistency)
 	return valid
+}
+
+// Looking for AllowedValues and checking what Type is it. If it finds Type other than String then it will return false.
+func hasAllowedValuesParametersValid(parameters template.Parameters, logger *logger.Logger) bool {
+	isType := false
+	isAllovedValues := false
+	for _, value := range parameters {
+		valueof := reflect.ValueOf(value)
+		isAllovedValues = false
+		isType = false
+
+		for _, key := range valueof.MapKeys() {
+
+			keyValue := valueof.MapIndex(key)
+			textType := "Type"
+			keyString := key.Interface().(string)
+			textValues := "AllowedValues"
+
+			if textType == keyString {
+				textString := "String"
+				keyValueString := keyValue.Interface().(string)
+				if textString != keyValueString {
+					isType = true
+				}
+			} else if textValues == keyString {
+				isAllovedValues = true
+			}
+
+			if isAllovedValues && isType {
+				logger.Error("AllowedValues supports only Type String")
+				return false
+			}
+		}
+	}
+	return true
 }
 
 func validateResources(resources map[string]template.Resource, specification *specification.Specification, sink *logger.Logger, deadProp []string, deadRes []string, specInconsistency map[string]configuration.Property) bool {
@@ -227,6 +267,38 @@ func checkMapProperties(
 	if err != nil {
 		resourceValidation.AddValidationError(err.Error())
 	}
+}
+
+func ParseJSON(templateFile []byte, refTemplate template.Template, logger *logger.Logger) (template cloudformation.Template, err error) {
+
+	err = json.Unmarshal(templateFile, &refTemplate)
+	if err != nil {
+		return template, err
+	}
+
+	tempJSON, err := goformation.ParseJSON(templateFile)
+	if err != nil {
+		logger.Error(err.Error())
+	}
+
+	returnTemplate := *tempJSON
+
+	return returnTemplate, nil
+}
+
+func ParseYAML(templateFile []byte, refTemplate template.Template, logger *logger.Logger) (template cloudformation.Template, err error) {
+
+	err = yaml.Unmarshal(templateFile, &refTemplate)
+	if err != nil {
+		return template, err
+	}
+
+	preprocessed, preprocessingError := intrinsicsolver.FixFunctions(templateFile, logger, "multiline", "elongate", "correctlong")
+	if preprocessingError != nil {
+		logger.Error(preprocessingError.Error())
+	}
+	tempYAML, err := goformation.ParseYAML(preprocessed)
+	return *tempYAML, err
 }
 
 func obtainResources(goformationTemplate cloudformation.Template, perunTemplate template.Template, logger *logger.Logger) map[string]template.Resource {

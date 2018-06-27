@@ -25,11 +25,13 @@ import (
 	"github.com/Appliscale/perun/configurator"
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/converter"
+	"github.com/Appliscale/perun/mysession"
 	"github.com/Appliscale/perun/offlinevalidator"
 	"github.com/Appliscale/perun/onlinevalidator"
 	"github.com/Appliscale/perun/parameters"
 	"github.com/Appliscale/perun/progress"
 	"github.com/Appliscale/perun/stack"
+	"github.com/Appliscale/perun/utilities"
 )
 
 func main() {
@@ -39,31 +41,18 @@ func main() {
 	}
 
 	if *context.CliArguments.Mode == cliparser.ValidateMode {
-		valid := onlinevalidator.ValidateAndEstimateCosts(&context)
-		if valid {
-			os.Exit(0)
-		} else {
-			os.Exit(1)
-		}
+		utilities.CheckFlagAndExit(onlinevalidator.ValidateAndEstimateCosts(&context))
+
 	}
 
 	if *context.CliArguments.Mode == cliparser.ConvertMode {
-		err := converter.Convert(&context)
-		if err == nil {
-			os.Exit(0)
-		} else {
-			context.Logger.Error(err.Error())
-			os.Exit(1)
-		}
+		utilities.CheckErrorCodeAndExit(converter.Convert(&context))
+
 	}
 
 	if *context.CliArguments.Mode == cliparser.OfflineValidateMode {
-		valid := offlinevalidator.Validate(&context)
-		if valid {
-			os.Exit(0)
-		} else {
-			os.Exit(1)
-		}
+		utilities.CheckFlagAndExit(offlinevalidator.Validate(&context))
+
 	}
 
 	if *context.CliArguments.Mode == cliparser.ConfigureMode {
@@ -72,13 +61,27 @@ func main() {
 	}
 
 	if *context.CliArguments.Mode == cliparser.CreateStackMode {
-		stack.NewStack(&context)
-		os.Exit(0)
+		utilities.CheckErrorCodeAndExit(stack.NewStack(&context))
+
 	}
 
 	if *context.CliArguments.Mode == cliparser.DestroyStackMode {
-		stack.DestroyStack(&context)
-		os.Exit(0)
+		utilities.CheckErrorCodeAndExit(stack.DestroyStack(&context))
+
+	}
+
+	if *context.CliArguments.Mode == cliparser.MfaMode {
+		err := mysession.UpdateSessionToken(context.Config.DefaultProfile, context.Config.DefaultRegion, context.Config.DefaultDurationForMFA, &context)
+		if err == nil {
+			os.Exit(0)
+		} else {
+			context.Logger.Error(err.Error())
+			os.Exit(1)
+		}
+	}
+
+	if *context.CliArguments.Mode == cliparser.UpdateStackMode {
+		utilities.CheckErrorCodeAndExit(stack.UpdateStack(&context))
 	}
 
 	if *context.CliArguments.Mode == cliparser.SetupSinkMode {
@@ -94,5 +97,13 @@ func main() {
 	if *context.CliArguments.Mode == cliparser.CreateParametersMode {
 		parameters.ConfigureParameters(&context)
 		os.Exit(0)
+	}
+
+	if *context.CliArguments.Mode == cliparser.SetStackPolicyMode {
+		if *context.CliArguments.DisableStackTermination || *context.CliArguments.EnableStackTermination {
+			utilities.CheckErrorCodeAndExit(stack.SetTerminationProtection(&context))
+		} else {
+			utilities.CheckErrorCodeAndExit(stack.ApplyStackPolicy(&context))
+		}
 	}
 }

@@ -338,8 +338,29 @@ func TestInvalidMapProperty(t *testing.T) {
 	assert.False(t, validateResources(resources, &spec, &sink, deadProp, deadRes, specInconsistency), "This resource should be valid")
 }
 
-func createResourceWithNestedProperties(resourceType string, propertyName string, nestedPropertyValue map[string]interface{}) template.Resource {
+func TestHasAllowedValuesParametersValid(t *testing.T) {
+	sink = logger.Logger{}
+	data := make(map[string]interface{})
 
+	data["AllowedValues"] = ""
+	data["Type"] = "String"
+	parameters := createParameters("Correct", data)
+
+	assert.True(t, hasAllowedValuesParametersValid(parameters, &sink), "This template has AllowedValues with Type String")
+}
+
+func TestHasAllowedValuesParametersInvalid(t *testing.T) {
+	sink = logger.Logger{}
+	data := make(map[string]interface{})
+
+	data["AllowedValues"] = ""
+	data["Type"] = "AWS::EC2::VPC::Id"
+	parameters := createParameters("Incorrect", data)
+
+	assert.False(t, hasAllowedValuesParametersValid(parameters, &sink), "This template has AllowedValues with Type other than String")
+}
+
+func createResourceWithNestedProperties(resourceType string, propertyName string, nestedPropertyValue map[string]interface{}) template.Resource {
 	resource := template.Resource{}
 	resource.Type = resourceType
 	resource.Properties = make(map[string]interface{})
@@ -355,4 +376,11 @@ func createResourceWithOneProperty(resourceType string, propertyName string, pro
 	resource.Properties[propertyName] = propertyValue
 
 	return resource
+}
+
+func createParameters(name string, value map[string]interface{}) map[string]interface{} {
+	parameters := make(map[string]interface{})
+	parameters[name] = value
+
+	return parameters
 }
