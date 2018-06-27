@@ -29,8 +29,9 @@ type Template struct {
 }
 
 type Resource struct {
-	Type       string                 `yaml:"Type"`
-	Properties map[string]interface{} `yaml:"Properties"`
+	Type           string                 `yaml:"Type"`
+	Properties     map[string]interface{} `yaml:"Properties"`
+	DeletionPolicy string                 `yaml:"DeletionPolicy"`
 }
 
 type Parameters map[string]interface{}

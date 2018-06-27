@@ -12,6 +12,7 @@ import (
 	"github.com/awslabs/goformation"
 	"github.com/awslabs/goformation/cloudformation"
 	"github.com/ghodss/yaml"
+	"regexp"
 )
 
 func GetParser(filename string) (func([]byte, template.Template, *logger.Logger) (cloudformation.Template, error), error) {
@@ -58,18 +59,26 @@ func ParseYAML(templateFile []byte, refTemplate template.Template, logger *logge
 		return template, err
 	}
 
+	for resource := range refTemplate.Resources {
+		var validDeletionPolicy = regexp.MustCompile("(^$)|(Delete)$|(Retain)$|(Snapshot)$")
+		if !validDeletionPolicy.MatchString(refTemplate.Resources[resource].DeletionPolicy) {
+			err = errors.New("Deletion Policy in resource: " + resource + " has to be a string literal, cannot be parametrized")
+		}
+	}
+
 	preprocessed, preprocessingError := intrinsicsolver.FixFunctions(templateFile, logger, "multiline", "elongate", "correctlong")
 	if preprocessingError != nil {
 		logger.Error(preprocessingError.Error())
 	}
-	tempYAML, err := goformation.ParseYAML(preprocessed)
-	if err != nil {
-		logger.Error(err.Error())
+
+	tempYAML, parseError := goformation.ParseYAML(preprocessed)
+	if parseError != nil {
+		logger.Error(parseError.Error())
 	}
 
 	returnTemplate := *tempYAML
 
-	return returnTemplate, nil
+	return returnTemplate, err
 }
 
 func PrettyPrintJSON(toPrint interface{}) ([]byte, error) {
