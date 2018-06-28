@@ -36,7 +36,7 @@ perun $ make config-install
 perun $ make all
 ```
 
-With first command a default configuration file (`defaults/main.yaml`) will be copied to your home directory under the `~/.config/perun/main.yaml` path. After second command application will be compiled as a `perun` binary inside `bin` directory in your `$GOPATH/perun` workspace.
+With first command a default configuration files (`defaults/main.yaml` and `defaults/specification_inconsistency.yaml`) will be copied to your home directory under the `~/.config/perun/` path. After second command application will be compiled as a `perun` binary inside `bin` directory in your `$GOPATH/perun` workspace.
 
 ## Working with Perun
 
@@ -236,6 +236,21 @@ you must explicitly acknowledge its capabilities by adding `--capabilities=CAPAB
 
 Valid values are `CAPABILITY_IAM` and `CAPABILITY_NAMED_IAM`.
 You can specify both of them by adding `--capabilities=CAPABILITY_IAM --capabilities=CAPABILITY_NAMED_IAM`.
+
+### Inconsistencies between official documentation and Resource Specification 
+
+We cannot trust entirely Resource Specification from AWS API, as there exist inconsistencies. Perun implements a mechanism that allows patching those exceptions in place via configuration.
+
+To specify inconsistencies edit `~/.config/perun/specification_inconsistency.yaml` file.
+
+Example configuration file:
+
+```yaml
+  SpecificationInconsistency:
+    AWS::CloudFront::Distribution.DistributionConfig:
+      DefaultCacheBehavior:
+        - Required 
+```
 
 ## License
 
