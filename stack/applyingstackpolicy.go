@@ -2,6 +2,7 @@ package stack
 
 import (
 	"github.com/Appliscale/perun/context"
+	"github.com/Appliscale/perun/mysession"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 )
@@ -13,20 +14,16 @@ func ApplyStackPolicy(context *context.Context) error {
 		context.Logger.Error(incorrectPath.Error())
 		return incorrectPath
 	}
-	templateStruct := createStackPolicyInput(&template, &stackName, context)
+	templateStruct := createStackPolicyInput(&template, &stackName)
 
-	currentSession, sessionError := prepareSession(context)
-	if sessionError == nil {
+	currentSession := mysession.InitializeSession(context)
 
-		creationError := createStackPolicy(templateStruct, currentSession)
-		if creationError != nil {
-			context.Logger.Error("Error creating stack policy: " + creationError.Error())
-			return creationError
-		}
-	} else {
-		context.Logger.Error(sessionError.Error())
-		return sessionError
+	creationError := createStackPolicy(templateStruct, currentSession)
+	if creationError != nil {
+		context.Logger.Error("Error creating stack policy: " + creationError.Error())
+		return creationError
 	}
+
 	return nil
 }
 
@@ -39,11 +36,10 @@ func createStackPolicy(templateStruct cloudformation.SetStackPolicyInput, sessio
 }
 
 // This function gets template and  name of stack. It creates "CreateStackInput" structure.
-func createStackPolicyInput(template *string, stackName *string, context *context.Context) cloudformation.SetStackPolicyInput {
+func createStackPolicyInput(template *string, stackName *string) cloudformation.SetStackPolicyInput {
 	templateStruct := cloudformation.SetStackPolicyInput{
 		StackPolicyBody: template,
 		StackName:       stackName,
 	}
-
 	return templateStruct
 }

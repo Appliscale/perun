@@ -23,7 +23,11 @@ const updateRollbackCompleteCleanupInProgressStatus = "UPDATE_ROLLBACK_COMPLETE_
 const updateRollbackFailedStatus = "UPDATE_ROLLBACK_FAILED"
 const updateRollbackInProgressStatus = "UPDATE_ROLLBACK_IN_PROGRESS"
 
-type parseWriter struct {
+const add = "Add"
+const remove = "Remove"
+const modify = "Modify"
+
+type ParseWriter struct {
 	linesPrinted   int
 	bgRed          func(a ...interface{}) string
 	fgRed          func(a ...interface{}) string
@@ -36,8 +40,8 @@ type parseWriter struct {
 	statusColorMap map[string]func(a ...interface{}) string
 }
 
-func newParseWriter() (pw *parseWriter) {
-	pw = &parseWriter{}
+func NewParseWriter() (pw *ParseWriter) {
+	pw = &ParseWriter{}
 	pw.linesPrinted = 0
 	pw.bgRed = color.New(color.BgHiRed).SprintFunc()
 	pw.fgRed = color.New(color.FgRed).SprintFunc()
@@ -66,17 +70,20 @@ func newParseWriter() (pw *parseWriter) {
 		createCompleteStatus:                          pw.bgGreen,
 		updateCompleteStatus:                          pw.bgGreen,
 		reviewInProgressStatus:                        pw.cyan,
+		add:    pw.bgGreen,
+		remove: pw.bgRed,
+		modify: pw.fgOrange,
 	}
 	return
 }
 
-func (pw *parseWriter) Write(p []byte) (n int, err error) {
+func (pw *ParseWriter) Write(p []byte) (n int, err error) {
 	var newString = pw.colorStatuses(string(p))
 	print(newString)
 	pw.linesPrinted += strings.Count(newString, "\n") - strings.Count(newString, "\033[A")
 	return len(p), nil
 }
-func (pw *parseWriter) colorStatuses(s string) string {
+func (pw *ParseWriter) colorStatuses(s string) string {
 	for status, colorizeFun := range pw.statusColorMap {
 		if strings.Contains(s, status) {
 			s = strings.Replace(s, status, colorizeFun(status), -1)
@@ -85,7 +92,7 @@ func (pw *parseWriter) colorStatuses(s string) string {
 	return s
 }
 
-func (pw *parseWriter) returnWritten() {
+func (pw *ParseWriter) returnWritten() {
 	for i := 0; i < pw.linesPrinted; i++ {
 		print("\033[A")
 	}

@@ -2,6 +2,7 @@ package stack
 
 import (
 	"github.com/Appliscale/perun/context"
+	"github.com/Appliscale/perun/mysession"
 	"github.com/Appliscale/perun/progress"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
@@ -44,32 +45,28 @@ func NewStack(context *context.Context) error {
 		return templateError
 	}
 
-	currentSession, sessionError := prepareSession(context)
-	if sessionError == nil {
+	currentSession := mysession.InitializeSession(context)
 
-		if *context.CliArguments.Progress {
-			conn, remoteSinkError := progress.GetRemoteSink(context, currentSession)
-			if remoteSinkError != nil {
-				context.Logger.Error("Error getting remote sink configuration: " + remoteSinkError.Error())
-				return remoteSinkError
-			}
-			templateStruct.NotificationARNs = []*string{conn.TopicArn}
-			creationError := createStack(templateStruct, currentSession)
-			if creationError != nil {
-				context.Logger.Error("Error creating stack: " + creationError.Error())
-				return creationError
-			}
-			conn.MonitorQueue()
-		} else {
-			creationError := createStack(templateStruct, currentSession)
-			if creationError != nil {
-				context.Logger.Error("Error creating stack: " + creationError.Error())
-				return creationError
-			}
+	if *context.CliArguments.Progress {
+		conn, remoteSinkError := progress.GetRemoteSink(context, currentSession)
+		if remoteSinkError != nil {
+			context.Logger.Error("Error getting remote sink configuration: " + remoteSinkError.Error())
+			return remoteSinkError
 		}
+		templateStruct.NotificationARNs = []*string{conn.TopicArn}
+		creationError := createStack(templateStruct, currentSession)
+		if creationError != nil {
+			context.Logger.Error("Error creating stack: " + creationError.Error())
+			return creationError
+		}
+		conn.MonitorStackQueue()
 	} else {
-		context.Logger.Error(sessionError.Error())
-		return sessionError
+		creationError := createStack(templateStruct, currentSession)
+		if creationError != nil {
+			context.Logger.Error("Error creating stack: " + creationError.Error())
+			return creationError
+		}
 	}
+
 	return nil
 }

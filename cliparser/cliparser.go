@@ -24,6 +24,7 @@ import (
 	"github.com/Appliscale/perun/logger"
 	"github.com/Appliscale/perun/utilities"
 	"gopkg.in/alecthomas/kingpin.v2"
+	"time"
 )
 
 var ValidateMode = "validate"
@@ -38,6 +39,9 @@ var SetupSinkMode = "setup-remote-sink"
 var DestroySinkMode = "destroy-remote-sink"
 var CreateParametersMode = "create-parameters"
 var SetStackPolicyMode = "set-stack-policy"
+var CreateChangeSetMode = "create-change-set"
+
+var ChangeSetDefaultName string
 
 const JSON = "json"
 const YAML = "yaml"
@@ -65,6 +69,7 @@ type CliArguments struct {
 	Unblock                 *bool
 	DisableStackTermination *bool
 	EnableStackTermination  *bool
+	ChangeSet               *string
 }
 
 // Get and validate CLI arguments. Returns error if validation fails.
@@ -84,14 +89,14 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		showProgress      = app.Flag("progress", "Show progress of stack creation. Option available only after setting up a remote sink").Bool()
 
 		onlineValidate         = app.Command(ValidateMode, "Online template Validation")
-		onlineValidateTemplate = onlineValidate.Arg("template", "A path to the template file.").String()
+		onlineValidateTemplate = onlineValidate.Arg("template", "A path to the template file.").Required().String()
 
 		offlineValidate         = app.Command(OfflineValidateMode, "Offline Template Validation")
-		offlineValidateTemplate = offlineValidate.Arg("template", "A path to the template file.").String()
+		offlineValidateTemplate = offlineValidate.Arg("template", "A path to the template file.").Required().String()
 
 		convert            = app.Command(ConvertMode, "Convertion between JSON and YAML of template files")
-		convertTemplate    = convert.Arg("template", "A path to the template file.").String()
-		convertOutputFile  = convert.Arg("output", "A path where converted file will be saved.").String()
+		convertTemplate    = convert.Arg("template", "A path to the template file.").Required().String()
+		convertOutputFile  = convert.Arg("output", "A path where converted file will be saved.").Required().String()
 		convertPrettyPrint = convert.Flag("pretty-print", "Pretty printing JSON").Bool()
 
 		configure = app.Command(ConfigureMode, "Create your own configuration mode")
@@ -103,13 +108,22 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		createStackParams         = createStack.Flag("parameter", "list of parameters").StringMap()
 		createStackParametersFile = createStack.Flag("parameters-file", "filename with parameters").String()
 
-		deleteStack     = app.Command(DestroyStackMode, "Deletes a stack on aws")
-		deleteStackName = deleteStack.Arg("stack", "An AWS stack name.").String()
+		createChangeSet               = app.Command(CreateChangeSetMode, "Creates a changeSet on aws")
+		changeSetStackName            = createChangeSet.Arg("stack", "An AWS stack name").Required().String()
+		changeSetTemplate             = createChangeSet.Arg("template", "A path to the template file").Required().String()
+		createChangeSetName           = createChangeSet.Arg("changeSet", "An AWS Change Set name").String()
+		createChangeSetParams         = createChangeSet.Flag("parameter", "list of parameters").StringMap()
+		createChangeSetParametersFile = createChangeSet.Flag("parameters-file", "filename with parameters").String()
 
-		updateStack             = app.Command(UpdateStackMode, "Updates a stack on aws")
-		updateStackName         = updateStack.Arg("stack", "An AWS stack name").String()
-		updateStackTemplate     = updateStack.Arg("template", "A path to the template file.").String()
-		updateStackCapabilities = updateStack.Flag("capabilities", "Capabilities: CAPABILITY_IAM | CAPABILITY_NAMED_IAM").Enums("CAPABILITY_IAM", "CAPABILITY_NAMED_IAM")
+		deleteStack     = app.Command(DestroyStackMode, "Deletes a stack on aws")
+		deleteStackName = deleteStack.Arg("stack", "An AWS stack name.").Required().String()
+
+		updateStack               = app.Command(UpdateStackMode, "Updates a stack on aws")
+		updateStackName           = updateStack.Arg("stack", "An AWS stack name").Required().String()
+		updateStackTemplate       = updateStack.Arg("template", "A path to the template file.").Required().String()
+		updateStackCapabilities   = updateStack.Flag("capabilities", "Capabilities: CAPABILITY_IAM | CAPABILITY_NAMED_IAM").Enums("CAPABILITY_IAM", "CAPABILITY_NAMED_IAM")
+		updateStackParams         = updateStack.Flag("parameter", "list of parameters").StringMap()
+		updateStackParametersFile = updateStack.Flag("parameters-file", "filename with parameters").String()
 
 		mfaCommand = app.Command(MfaMode, "Create temporary secure credentials with MFA.")
 
@@ -118,14 +132,14 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		destroySink = app.Command(DestroySinkMode, "Destroys resources created with setup-remote-sink")
 
 		createParameters                 = app.Command(CreateParametersMode, "Creates a JSON parameters configuration suitable for give cloud formation file")
-		createParametersTemplate         = createParameters.Arg("template", "A path to the template file.").String()
-		createParametersParamsOutputFile = createParameters.Arg("output", "A path to file where parameters will be saved.").String()
+		createParametersTemplate         = createParameters.Arg("template", "A path to the template file.").Required().String()
+		createParametersParamsOutputFile = createParameters.Arg("output", "A path to file where parameters will be saved.").Required().String()
 		createParametersParams           = createParameters.Flag("parameter", "list of parameters").StringMap()
 		createParametersPrettyPrint      = createParameters.Flag("pretty-print", "Pretty printing JSON").Bool()
 
 		setStackPolicy                  = app.Command(SetStackPolicyMode, "Set stack policy using JSON file.")
-		setStackPolicyName              = setStackPolicy.Arg("stack", "An AWS stack name.").String()
-		setStackPolicyTemplate          = setStackPolicy.Arg("template", "A path to the template file.").String()
+		setStackPolicyName              = setStackPolicy.Arg("stack", "An AWS stack name.").Required().String()
+		setStackPolicyTemplate          = setStackPolicy.Arg("template", "A path to the template file.").Required().String()
 		setDefaultBlockingStackPolicy   = setStackPolicy.Flag("block", "Blocking all actions.").Bool()
 		setDefaultUnblockingStackPolicy = setStackPolicy.Flag("unblock", "Unblocking all actions.").Bool()
 		setDisableStackTermination      = setStackPolicy.Flag("disable-stack-termination", "Allow to delete a stack.").Bool()
@@ -182,6 +196,8 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		cliArguments.Stack = updateStackName
 		cliArguments.TemplatePath = updateStackTemplate
 		cliArguments.Capabilities = updateStackCapabilities
+		cliArguments.ParametersFile = updateStackParametersFile
+		cliArguments.Parameters = updateStackParams
 
 		// create Parameters
 	case createParameters.FullCommand():
@@ -208,6 +224,19 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		cliArguments.TemplatePath = setStackPolicyTemplate
 		cliArguments.DisableStackTermination = setDisableStackTermination
 		cliArguments.EnableStackTermination = setEnableStackTermination
+
+	case createChangeSet.FullCommand():
+		cliArguments.Mode = &CreateChangeSetMode
+		if *createChangeSetName != "" {
+			cliArguments.ChangeSet = createChangeSetName
+		} else {
+			ChangeSetDefaultName = *changeSetStackName + time.Now().Format("-2006-01-02--15-04-05")
+			cliArguments.ChangeSet = &ChangeSetDefaultName
+		}
+		cliArguments.TemplatePath = changeSetTemplate
+		cliArguments.Stack = changeSetStackName
+		cliArguments.Parameters = createChangeSetParams
+		cliArguments.ParametersFile = createChangeSetParametersFile
 
 		// set up remote sink
 	case setupSink.FullCommand():
