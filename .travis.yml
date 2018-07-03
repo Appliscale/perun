@@ -1,34 +1,29 @@
 language: go
-
 go:
   - 1.9.x
-
+env:
+  global:
+    - secure: "P+mNX77uTNYI/xpI+2w+y1+d6w81ovEVxpB8mp4QTb0CTJGc+Ms1Mqp4ja3O75wiPRsaEYHQOveehXcVlQPWn10m95K/HRxFeBIvBb4DiugHq53gchbjPADDVjt7fCh5x9YNVH5Bho8wuDbG966vfFnTS1k0BjpHOOt6GK7lquVTbjonKF/V8BvdYTlhlajN158dj6kw2AiWguNdswZNM1DNI3YILZSGJqkXn3BVGTBUiKKLB6FI+uJJDpr+giktytU1Xx+HllMN30rICvI4Y7Ro3u/ZAs6/vMVERvfj31N2uibfCoPlyFozEPv/iBevlCqL/QxltiAj04eMRW4nMHk/Ey0ZyWbBc7dgCZ3f+Kej6/HKmLdVel3LFCBYH31q9D21S/6kpwQkMYSyzWdwWYdB8CBTKGv/szbMMo7QhCMN54WBy5VldiBlrtealP9UJNxSUbb8MG3qsuuxAaeqVcmmY1AWiPJtJEHh5HmE6dPsOzZK5qn/8U3PWsn3lYhUtiivBXnH3reiY7UT55eqyb5vT6AWoFrjyiPq7DjYa/o5hQEiAgKZV8Mxh8WQoSkG1uoK+ipE//5n8UkK2VV6xhilcPavBvfbKDNs1jKRgFUyG7TvAVVl+uC51BP2zGgsy88DGH7xlz3sWukpX7rIXwqD/1RxlfsK9cIa3nDdwBM="
+    - git: "9d2f7a3c7e004941046d1fc3e09b59068831d7cf"
 install: make config-install get-deps
 
 script:
   - make code-analysis
   - make test
-
-before_deploy:
-  - 'mkdir -p release'
-  - 'GOOS=linux GOARCH=amd64 go build -o release/perun-linux-amd64'
-  - 'GOOS=darwin GOARCH=amd64 go build -o release/perun-darwin-amd64'
-  - 'GOOS=windows GOARCH=amd64 go build -o release/perun-windows-amd64.exe'
-  - 'GOOS=windows GOARCH=386 go build -o release/perun-windows-386.exe'
-  - 'tar -C release -czf release/perun-linux-amd64.tar.gz perun-linux-amd64'
-  - 'tar -C release -czf release/perun-darwin-amd64.tar.gz perun-darwin-amd64'
-  - 'tar -C release -czf release/perun-windows-amd64.tar.gz perun-windows-amd64.exe'
-  - 'tar -C release -czf release/perun-windows-386.tar.gz perun-windows-386.exe'
-
-deploy:
-  provider: releases
-  api_key:
-    secure: eLTZravNiDVvQ1dekb7NvWYJBIG2X6CzfHEqUKJ2JCDlKSqYXrvqZF/B3XxmYvmF1tEAmAa08LMDzzzApl9IML1DVSoW8i6uy+uetg+xbvumAf9fq14nMd0JQEEA1qruE7pwjyQs7h9gXYtyAR01CPhj/xNUQmYV1i8NCTHoljBkO+NsMFyi3WMbW7HTRQZQZXbPBagI06L3tSOCfN/w5KVmRsKFQ3lvmnzs+mTrIvOy2CBQC+0Cp3PQ/p7yyhEWRFd5J6n2jYGxneetnBq0FAfbOF4RIwvrWuu9XI/znxhYMOB5lra0qUwuG+prJStB6oaQ/vHStRcxQorV75Jtm4u/EHcFmmaxTQvPksdZQ8VSIbFonz1qbnuurP5sloiAR1RnJQtQWZKj7I7ioknEBh4kqCGvLUIbt0VpHTNoPKN0a8GYiPSE9UO6J+CNS+FR5mahW3xsHx5dHMV+R4mxcbt16dlg0g8m4tah06bd3P/t91kkgliTWmkHDMX4ES4hh+ribMnsLB0k7iqtuoO2P+gFn80CR5ooAX9Z3u8P8MaEovuPSaO7DqsGfX3uCaFInyBpc5EteCNwgN9dGAfh4mscJlijx28qgJ5quNU56fhcfQ8DoC5nXTM7RRRSu0OB1xSDa9OEf5Nh1AlkDwQKxjAYD+ujYFCXxqSWcntUbqE=
-  file:
-    - release/perun-linux-amd64.tar.gz
-    - release/perun-darwin-amd64.tar.gz
-    - release/perun-windows-amd64.tar.gz
-    - release/perun-windows-386.tar.gz
-  skip_cleanup: true
-  on:
-    tags: true
+	
+after_success:
+  - 'git clone https://github.com/Appliscale/rpmbuild.git'
+  - 'cd SOURCES'
+  - 'rm perun-linux-amd64.tar.gz'
+  - 'wget -P SOURCES https://github.com/Appliscale/perun/releases/download/1.2.0/perun-linux-amd64.tar.gz'
+  - 'wget -P SOURCES https://raw.githubusercontent.com/Appliscale/perun/master/defaults/main.yaml'
+  - 'wget -p SOURCES https://raw.githubusercontent.com/Appliscale/perun/master/LICENSE'
+  - 'tar xvzf perun-linux-amd64.tar.gz'
+  - 'rm perun-linux-amd64.tar.gz'
+  - 'tar cvzf perun-linux-amd64.tar.gz perun-linux-amd64 LICENSE main.yaml'
+  - 'rm LICENSE main.yaml perun-linux-amd64'
+  - 'cd ..'
+  - 'rpmbuild -ba /SPEC/perun-linux-amd64.spec'
+  - 'git add .'
+  - 'git commit -m "update rpm by travis"'
+  - 'git push "https://${git}@github.com/SylwiaGargula/rpmbuild.git" master
