@@ -80,6 +80,13 @@ func main() {
 		}
 	}
 
+	if *context.CliArguments.Mode == cliparser.CreateChangeSetMode {
+		err := stack.NewChangeSet(&context)
+		if err != nil {
+			context.Logger.Error(err.Error())
+		}
+	}
+
 	if *context.CliArguments.Mode == cliparser.UpdateStackMode {
 		utilities.CheckErrorCodeAndExit(stack.UpdateStack(&context))
 	}

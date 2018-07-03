@@ -2,6 +2,7 @@ package stack
 
 import (
 	"github.com/Appliscale/perun/context"
+	"github.com/Appliscale/perun/mysession"
 	"github.com/Appliscale/perun/progress"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 )
@@ -9,29 +10,24 @@ import (
 // DestroyStack bases on "DeleteStackInput" structure and destroys stack. It uses "StackName" to choose which stack will be destroy. Before that it creates session.
 func DestroyStack(context *context.Context) error {
 	delStackInput := deleteStackInput(context)
-	currentSession, sessionError := prepareSession(context)
-	if sessionError == nil {
-		api := cloudformation.New(currentSession)
+	currentSession := mysession.InitializeSession(context)
+	api := cloudformation.New(currentSession)
 
-		var err error = nil
-		if *context.CliArguments.Progress {
-			conn, err := progress.GetRemoteSink(context, currentSession)
-			if err != nil {
-				context.Logger.Error("Error getting remote sink configuration: " + err.Error())
-				return err
-			}
-			_, err = api.DeleteStack(&delStackInput)
-			conn.MonitorQueue()
-		} else {
-			_, err = api.DeleteStack(&delStackInput)
-		}
+	var err error = nil
+	if *context.CliArguments.Progress {
+		conn, err := progress.GetRemoteSink(context, currentSession)
 		if err != nil {
-			context.Logger.Error(err.Error())
+			context.Logger.Error("Error getting remote sink configuration: " + err.Error())
 			return err
 		}
+		_, err = api.DeleteStack(&delStackInput)
+		conn.MonitorStackQueue()
 	} else {
-		context.Logger.Error(sessionError.Error())
-		return sessionError
+		_, err = api.DeleteStack(&delStackInput)
+	}
+	if err != nil {
+		context.Logger.Error(err.Error())
+		return err
 	}
 	return nil
 }

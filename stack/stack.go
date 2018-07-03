@@ -7,11 +7,10 @@ import (
 
 	"io/ioutil"
 
+	"github.com/Appliscale/perun/cliparser"
 	"github.com/Appliscale/perun/context"
-	"github.com/Appliscale/perun/mysession"
 	"github.com/Appliscale/perun/myuser"
 	"github.com/Appliscale/perun/parameters"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 )
 
@@ -19,12 +18,12 @@ import (
 func getTemplateFromFile(context *context.Context) (string, string, error) {
 	var rawTemplate []byte
 	var readFileError error
-	path, pathError := getPath(context)
+	templatePath, pathError := getPath(context)
 	if pathError != nil {
 		return "", "", pathError
 	}
 
-	rawTemplate, readFileError = ioutil.ReadFile(path)
+	rawTemplate, readFileError = ioutil.ReadFile(templatePath)
 	if readFileError != nil {
 		context.Logger.Error(readFileError.Error())
 		return "", "", readFileError
@@ -44,7 +43,9 @@ func getPath(context *context.Context) (path string, err error) {
 		return "", pathError
 	}
 
-	if *context.CliArguments.Mode == "create-stack" {
+	if *context.CliArguments.Mode == cliparser.CreateStackMode ||
+		*context.CliArguments.Mode == cliparser.CreateChangeSetMode ||
+		*context.CliArguments.Mode == cliparser.UpdateStackMode {
 		path = *context.CliArguments.TemplatePath
 	} else if *context.CliArguments.Mode == "set-stack-policy" {
 		if *context.CliArguments.Unblock {
@@ -80,19 +81,6 @@ func getParameters(context *context.Context) (params []*cloudformation.Parameter
 		params = parameters.ParseParameterToAwsCompatible(readParameters)
 	}
 	return
-}
-
-// Creating SessionToken and Session.
-func prepareSession(context *context.Context) (*session.Session, error) {
-	tokenError := mysession.UpdateSessionToken(context.Config.DefaultProfile, context.Config.DefaultRegion, context.Config.DefaultDurationForMFA, context)
-	if tokenError != nil {
-		context.Logger.Error(tokenError.Error())
-	}
-	currentSession, createSessionError := mysession.CreateSession(context, context.Config.DefaultProfile, &context.Config.DefaultRegion)
-	if createSessionError != nil {
-		context.Logger.Error(createSessionError.Error())
-	}
-	return currentSession, createSessionError
 }
 
 // Checking is file type JSON.

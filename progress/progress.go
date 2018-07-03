@@ -65,7 +65,7 @@ func ConfigureRemoteSink(context *context.Context) (err error) {
 
 		if err == nil {
 			context.Logger.Info("Remote sink configuration successful")
-			context.Logger.Warning("It's configuration may take up to a minute, wait before calling 'create-stack' with flag --progress")
+			context.Logger.Warning("It's configuration may take up to a minute, wait before using Perun with flag --progress")
 		}
 		return
 	}
@@ -157,14 +157,14 @@ type Message struct {
 }
 
 // Monitor queue, that delivers messages sent by cloud formation stack progress
-func (conn *Connection) MonitorQueue() {
+func (conn *Connection) MonitorStackQueue() {
 	waitTimeSeconds := int64(3)
 	receiveMessageInput := sqs.ReceiveMessageInput{
 		QueueUrl:        conn.sqsQueueOutput.QueueUrl,
 		WaitTimeSeconds: &waitTimeSeconds,
 	}
 
-	pw, table := initTableWriter()
+	pw, table := initStackTableWriter()
 
 	tolerance, err := time.ParseDuration("1s")
 	if err != nil {
@@ -218,8 +218,8 @@ func (conn *Connection) MonitorQueue() {
 		}
 	}
 }
-func initTableWriter() (*parseWriter, *tablewriter.Table) {
-	pw := newParseWriter()
+func initStackTableWriter() (*ParseWriter, *tablewriter.Table) {
+	pw := NewParseWriter()
 	table := tablewriter.NewWriter(pw)
 	table.SetHeader([]string{"Time", "Status", "Type", "LogicalID", "Status Reason"})
 	table.SetBorder(false)
