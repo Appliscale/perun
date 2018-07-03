@@ -18,23 +18,26 @@
 package context
 
 import (
+	"os"
+
 	"github.com/Appliscale/perun/cliparser"
 	"github.com/Appliscale/perun/configuration"
 	"github.com/Appliscale/perun/logger"
-	"os"
 )
 
 type Context struct {
-	CliArguments cliparser.CliArguments
-	Logger       *logger.Logger
-	Config       configuration.Configuration
+	CliArguments        cliparser.CliArguments
+	Logger              *logger.Logger
+	Config              configuration.Configuration
+	InconsistencyConfig configuration.InconsistencyConfiguration
 }
 
 type cliArgumentsParser func(args []string) (cliparser.CliArguments, error)
 type configurationReader func(cliparser.CliArguments, *logger.Logger) (configuration.Configuration, error)
+type inconsistenciesReader func(*logger.Logger) configuration.InconsistencyConfiguration
 
 // Create CLI context.
-func GetContext(cliArgParser cliArgumentsParser, confReader configurationReader) (context Context, err error) {
+func GetContext(cliArgParser cliArgumentsParser, confReader configurationReader, inconsistReader inconsistenciesReader) (context Context, err error) {
 	logger := logger.CreateDefaultLogger()
 
 	cliArguments, err := cliArgParser(os.Args)
@@ -59,11 +62,13 @@ func GetContext(cliArgParser cliArgumentsParser, confReader configurationReader)
 
 	logger.SetVerbosity(config.DefaultVerbosity)
 
-	context = Context{
-		CliArguments: cliArguments,
-		Logger:       &logger,
-		Config:       config,
-	}
+	iconsistenciesConfig := inconsistReader(&logger)
 
+	context = Context{
+		CliArguments:        cliArguments,
+		Logger:              &logger,
+		Config:              config,
+		InconsistencyConfig: iconsistenciesConfig,
+	}
 	return
 }

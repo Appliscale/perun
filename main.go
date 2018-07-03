@@ -35,7 +35,7 @@ import (
 )
 
 func main() {
-	context, err := context.GetContext(cliparser.ParseCliArguments, configuration.GetConfiguration)
+	context, err := context.GetContext(cliparser.ParseCliArguments, configuration.GetConfiguration, configuration.ReadInconsistencyConfiguration)
 	if err != nil {
 		os.Exit(1)
 	}
