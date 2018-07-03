@@ -4,7 +4,7 @@ go:
 env:
   global:
     - secure: "P+mNX77uTNYI/xpI+2w+y1+d6w81ovEVxpB8mp4QTb0CTJGc+Ms1Mqp4ja3O75wiPRsaEYHQOveehXcVlQPWn10m95K/HRxFeBIvBb4DiugHq53gchbjPADDVjt7fCh5x9YNVH5Bho8wuDbG966vfFnTS1k0BjpHOOt6GK7lquVTbjonKF/V8BvdYTlhlajN158dj6kw2AiWguNdswZNM1DNI3YILZSGJqkXn3BVGTBUiKKLB6FI+uJJDpr+giktytU1Xx+HllMN30rICvI4Y7Ro3u/ZAs6/vMVERvfj31N2uibfCoPlyFozEPv/iBevlCqL/QxltiAj04eMRW4nMHk/Ey0ZyWbBc7dgCZ3f+Kej6/HKmLdVel3LFCBYH31q9D21S/6kpwQkMYSyzWdwWYdB8CBTKGv/szbMMo7QhCMN54WBy5VldiBlrtealP9UJNxSUbb8MG3qsuuxAaeqVcmmY1AWiPJtJEHh5HmE6dPsOzZK5qn/8U3PWsn3lYhUtiivBXnH3reiY7UT55eqyb5vT6AWoFrjyiPq7DjYa/o5hQEiAgKZV8Mxh8WQoSkG1uoK+ipE//5n8UkK2VV6xhilcPavBvfbKDNs1jKRgFUyG7TvAVVl+uC51BP2zGgsy88DGH7xlz3sWukpX7rIXwqD/1RxlfsK9cIa3nDdwBM="
-    - git: "9d2f7a3c7e004941046d1fc3e09b59068831d7cf"
+    - git: "b946ea1a81da66a6bd121d4bdfc3b97357d996d5"
 install: make config-install get-deps
 
 script:
@@ -13,7 +13,7 @@ script:
 	
 after_success:
   - 'git clone https://github.com/Appliscale/rpmbuild.git'
-  - 'cd SOURCES'
+  - 'cd rpmbuild/SOURCES'
   - 'rm perun-linux-amd64.tar.gz'
   - 'wget -P SOURCES https://github.com/Appliscale/perun/releases/download/1.2.0/perun-linux-amd64.tar.gz'
   - 'wget -P SOURCES https://raw.githubusercontent.com/Appliscale/perun/master/defaults/main.yaml'
@@ -26,4 +26,4 @@ after_success:
   - 'rpmbuild -ba /SPEC/perun-linux-amd64.spec'
   - 'git add .'
   - 'git commit -m "update rpm by travis"'
-  - 'git push "https://${git}@github.com/SylwiaGargula/rpmbuild.git" master
+  - 'git push "https://${git}@github.com/SylwiaGargula/rpmbuild.git" master'
