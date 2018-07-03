@@ -32,8 +32,7 @@ func InitializeSession(context *context.Context) *session.Session {
 }
 
 func CreateSession(context *context.Context, profile string, region *string) (*session.Session, error) {
-	context.Logger.Info("Profile: " + profile)
-	context.Logger.Info("Region: " + *region)
+	context.Logger.Info("Creating new session. Profile: " + profile + " Region: " + *region)
 
 	session, sessionWithOptionError := session.NewSessionWithOptions(
 		session.Options{

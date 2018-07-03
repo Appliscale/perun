@@ -20,7 +20,10 @@ package offlinevalidator
 
 import (
 	"encoding/json"
+	"fmt"
+	"io"
 	"io/ioutil"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -32,9 +35,13 @@ import (
 	"github.com/Appliscale/perun/helpers"
 	"github.com/Appliscale/perun/intrinsicsolver"
 	"github.com/Appliscale/perun/logger"
+	"github.com/Appliscale/perun/mysession"
 	"github.com/Appliscale/perun/offlinevalidator/template"
 	"github.com/Appliscale/perun/offlinevalidator/validators"
 	"github.com/Appliscale/perun/specification"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/awslabs/goformation"
 	"github.com/awslabs/goformation/cloudformation"
 	"github.com/ghodss/yaml"
@@ -45,19 +52,23 @@ var validatorsMap = map[string]interface{}{
 	"AWS::EC2::VPC": validators.IsVpcValid,
 }
 
-func printResult(valid *bool, logger *logger.Logger) {
+func printResult(templateName string, valid *bool, logger *logger.Logger) {
 	logger.PrintValidationErrors()
 	if !*valid {
-		logger.Error("Template is invalid!")
+		logger.Error(fmt.Sprintf("Template %s is invalid!", templateName))
 	} else {
-		logger.Info("Template is valid!")
+		logger.Info(fmt.Sprintf("Template %s is valid!", templateName))
 	}
 }
 
 // Validate CloudFormation template.
 func Validate(context *context.Context) bool {
+	return validateTemplateFile(*context.CliArguments.TemplatePath, *context.CliArguments.TemplatePath, context)
+}
+
+func validateTemplateFile(templatePath string, templateName string, context *context.Context) bool {
 	valid := false
-	defer printResult(&valid, context.Logger)
+	defer printResult(templateName, &valid, context.Logger)
 
 	specification, err := specification.GetSpecification(context)
 
@@ -66,7 +77,7 @@ func Validate(context *context.Context) bool {
 		return false
 	}
 
-	rawTemplate, err := ioutil.ReadFile(*context.CliArguments.TemplatePath)
+	rawTemplate, err := ioutil.ReadFile(templatePath)
 	if err != nil {
 		context.Logger.Error(err.Error())
 		return false
@@ -96,7 +107,7 @@ func Validate(context *context.Context) bool {
 
 	specInconsistency := context.InconsistencyConfig.SpecificationInconsistency
 
-	valid = validateResources(resources, &specification, context.Logger, deadProperties, deadResources, specInconsistency)
+	valid = validateResources(resources, &specification, deadProperties, deadResources, specInconsistency, context)
 	return valid
 }
 
@@ -135,12 +146,12 @@ func hasAllowedValuesParametersValid(parameters template.Parameters, logger *log
 	return true
 }
 
-func validateResources(resources map[string]template.Resource, specification *specification.Specification, sink *logger.Logger, deadProp []string, deadRes []string, specInconsistency map[string]configuration.Property) bool {
-
+func validateResources(resources map[string]template.Resource, specification *specification.Specification, deadProp []string, deadRes []string, specInconsistency map[string]configuration.Property, context *context.Context) bool {
+	sink := context.Logger
 	for resourceName, resourceValue := range resources {
 		if deadResource := helpers.SliceContains(deadRes, resourceName); !deadResource {
 			resourceValidation := sink.AddResourceForValidation(resourceName)
-
+			processNestedTemplates(resourceValue.Properties, context)
 			if resourceSpecification, ok := specification.ResourceTypes[resourceValue.Type]; ok {
 				for propertyName, propertyValue := range resourceSpecification.Properties {
 					if deadProperty := helpers.SliceContains(deadProp, propertyName); !deadProperty {
@@ -256,6 +267,71 @@ func checkNestedProperties(
 			}
 		}
 	}
+}
+
+func processNestedTemplates(properties map[string]interface{}, context *context.Context) {
+	if rawTemplateURL, ok := properties["TemplateURL"]; ok {
+		if templateURL, ok := rawTemplateURL.(string); ok {
+			err := validateNestedTemplate(templateURL, context)
+			if err != nil {
+				context.Logger.Error(err.Error())
+				os.Exit(1)
+			}
+		}
+	}
+}
+
+func validateNestedTemplate(templateURL string, context *context.Context) error {
+	mysession.InitializeSession(context)
+
+	tempfile, err := ioutil.TempFile("", "")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(tempfile.Name())
+
+	if err := downloadTemplateFromBucket(templateURL, tempfile, context); err != nil {
+		return err
+	}
+
+	validateTemplateFile(tempfile.Name(), templateURL, context)
+
+	if err = tempfile.Close(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func downloadTemplateFromBucket(templateURL string, file io.WriterAt, context *context.Context) error {
+	region, bucket, key := fetchBucketDataFromURL(templateURL)
+
+	session, err := mysession.CreateSession(context, context.Config.DefaultProfile, &region)
+	if err != nil {
+		return err
+	}
+
+	downloader := s3manager.NewDownloader(session)
+
+	_, err = downloader.Download(file, &s3.GetObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func fetchBucketDataFromURL(url string) (region string, bucket string, key string) {
+	path := strings.SplitN(url, "/", 5)
+	host := strings.Split(path[2], ".")
+
+	region = host[1]
+	bucket = path[3]
+	key = path[4]
+	return
 }
 
 func checkMapProperties(
