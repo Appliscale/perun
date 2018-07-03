@@ -284,7 +284,7 @@ func processNestedTemplates(properties map[string]interface{}, context *context.
 func validateNestedTemplate(templateURL string, context *context.Context) error {
 	mysession.InitializeSession(context)
 
-	tempfile, err := ioutil.TempFile("", "")
+	tempfile, err := ioutil.TempFile(context.Config.DefaultTemporaryFilesDirectory, "")
 	if err != nil {
 		return err
 	}

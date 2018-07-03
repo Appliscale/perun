@@ -41,6 +41,8 @@ type Configuration struct {
 	DefaultDurationForMFA int64
 	// Logger verbosity.
 	DefaultVerbosity string
+	// Direcotry for temporary files.
+	DefaultTemporaryFilesDirectory string
 }
 
 // Return URL to specification file. If there is no specification file for selected region, return error.
