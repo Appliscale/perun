@@ -25,8 +25,8 @@ import (
 
 type myStat func(string) (os.FileInfo, error)
 
-func getUserConfigFile(existenceChecker myStat) (val string, ok bool) {
-	const relativeUserConfigPath = "/.config/perun/main.yaml"
+func getUserConfigFile(existenceChecker myStat, fileName string) (val string, ok bool) {
+	relativeUserConfigPath := "/.config/perun/" + fileName
 
 	var err error
 	var usr *user.User

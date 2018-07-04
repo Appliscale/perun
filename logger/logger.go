@@ -42,6 +42,7 @@ const (
 	DEBUG
 	INFO
 	ERROR
+	WARNING
 )
 
 var verboseModes = [...]string{
@@ -49,6 +50,7 @@ var verboseModes = [...]string{
 	"DEBUG",
 	" INFO",
 	"ERROR",
+	"WARNING",
 }
 
 func (verbosity Verbosity) String() string {
@@ -76,6 +78,11 @@ func CreateQuietLogger() Logger {
 // Log always - no matter the verbosity level.
 func (logger *Logger) Always(message string) {
 	fmt.Println(message)
+}
+
+// Log error.
+func (logger *Logger) Warning(warning string) {
+	logger.log(WARNING, warning)
 }
 
 // Log error.
@@ -112,7 +119,6 @@ func (logger *Logger) GetInput(message string, v ...interface{}) error {
 	}
 	return nil
 }
-
 func (logger *Logger) log(verbosity Verbosity, message string) {
 	if !logger.Quiet && verbosity >= logger.Verbosity {
 		fmt.Println(verbosity.String() + ": " + message)
@@ -169,6 +175,7 @@ func IsVerbosityValid(verbosity string) bool {
 		"TRACE",
 		"DEBUG",
 		"INFO",
+		"WARNING",
 		"ERROR":
 		return true
 	}

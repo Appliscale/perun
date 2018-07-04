@@ -20,6 +20,7 @@ package utilities
 
 import (
 	"fmt"
+	"os"
 	"time"
 )
 
@@ -34,4 +35,20 @@ func VersionStatus() string {
 
 func TruncateDuration(d time.Duration) time.Duration {
 	return -(d - d%(time.Duration(1)*time.Second))
+}
+
+func CheckErrorCodeAndExit(err error) {
+	if err != nil {
+		os.Exit(1)
+	} else {
+		os.Exit(0)
+	}
+}
+
+func CheckFlagAndExit(valid bool) {
+	if valid {
+		os.Exit(0)
+	} else {
+		os.Exit(1)
+	}
 }

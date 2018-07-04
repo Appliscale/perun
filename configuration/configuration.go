@@ -19,11 +19,12 @@ package configuration
 
 import (
 	"errors"
+	"io/ioutil"
+	"os"
+
 	"github.com/Appliscale/perun/cliparser"
 	"github.com/Appliscale/perun/logger"
 	"github.com/ghodss/yaml"
-	"io/ioutil"
-	"os"
 )
 
 // Perun configuration.
@@ -52,24 +53,20 @@ func (config Configuration) GetSpecificationFileURLForCurrentRegion() (string, e
 
 // Return perun configuration read from file.
 func GetConfiguration(cliArguments cliparser.CliArguments, logger *logger.Logger) (config Configuration, err error) {
-	if getMode(cliArguments) != cliparser.ConfigureMode {
-		var configPath string
-		configPath, err = getConfigurationPath(cliArguments, logger)
-		if err != nil {
-			return
-		}
-		var rawConfiguration []byte
-		rawConfiguration, err = ioutil.ReadFile(configPath)
-		if err != nil {
-			return
-		}
-		err = yaml.Unmarshal(rawConfiguration, &config)
-		if err != nil {
-			return
-		}
-		postProcessing(&config, cliArguments)
+	mode := getMode(cliArguments)
+
+	if mode == cliparser.ConfigureMode {
 		return
 	}
+
+	config, err = getConfigurationFromFile(cliArguments, logger)
+	if err != nil && mode != cliparser.MfaMode {
+		return
+	}
+
+	err = nil
+	postProcessing(&config, cliArguments)
+
 	return
 }
 
@@ -97,8 +94,10 @@ func postProcessing(config *Configuration, cliArguments cliparser.CliArguments) 
 	if *cliArguments.Profile != "" {
 		config.DefaultProfile = *cliArguments.Profile
 	}
-	if *cliArguments.MFA != config.DefaultDecisionForMFA {
+	if *cliArguments.MFA {
 		config.DefaultDecisionForMFA = *cliArguments.MFA
+	} else {
+		*cliArguments.MFA = config.DefaultDecisionForMFA
 	}
 	if *cliArguments.DurationForMFA > 0 {
 		config.DefaultDurationForMFA = *cliArguments.DurationForMFA
@@ -116,7 +115,7 @@ func getConfigurationPath(cliArguments cliparser.CliArguments, logger *logger.Lo
 	} else if path, ok := getConfigFileFromCurrentWorkingDirectory(os.Stat); ok {
 		notifyUserAboutConfigurationFile(path, logger)
 		return path, nil
-	} else if path, ok := getUserConfigFile(os.Stat); ok {
+	} else if path, ok := getUserConfigFile(os.Stat, "main.yaml"); ok {
 		notifyUserAboutConfigurationFile(path, logger)
 		return path, nil
 	} else if path, ok := getGlobalConfigFile(os.Stat); ok {
@@ -140,4 +139,22 @@ func SaveToFile(config Configuration, path string, logger logger.Logger) {
 	}
 	obj, _ := yaml.Marshal(config)
 	_, err = file.Write(obj)
+}
+
+func getConfigurationFromFile(cliArguments cliparser.CliArguments, logger *logger.Logger) (config Configuration, err error) {
+	var configPath string
+	configPath, err = getConfigurationPath(cliArguments, logger)
+	if err != nil {
+		return
+	}
+	var rawConfiguration []byte
+	rawConfiguration, err = ioutil.ReadFile(configPath)
+	if err != nil {
+		return
+	}
+	err = yaml.Unmarshal(rawConfiguration, &config)
+	if err != nil {
+		return
+	}
+	return
 }
