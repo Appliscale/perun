@@ -2,9 +2,7 @@ package stack
 
 import (
 	"github.com/Appliscale/perun/context"
-	"github.com/Appliscale/perun/mysession"
 	"github.com/Appliscale/perun/progress"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 )
 
@@ -24,14 +22,6 @@ func createStackInput(template *string, stackName *string, context *context.Cont
 	return templateStruct, nil
 }
 
-// This function uses CreateStackInput variable to create Stack.
-func createStack(templateStruct cloudformation.CreateStackInput, session *session.Session) (err error) {
-	api := cloudformation.New(session)
-	_, err = api.CreateStack(&templateStruct)
-
-	return
-}
-
 // NewStack uses all functions above and session to create Stack.
 func NewStack(context *context.Context) error {
 	template, stackName, incorrectPath := getTemplateFromFile(context)
@@ -45,23 +35,23 @@ func NewStack(context *context.Context) error {
 		return templateError
 	}
 
-	currentSession := mysession.InitializeSession(context)
+	context.InitializeAwsAPI()
 
 	if *context.CliArguments.Progress {
-		conn, remoteSinkError := progress.GetRemoteSink(context, currentSession)
+		conn, remoteSinkError := progress.GetRemoteSink(context)
 		if remoteSinkError != nil {
 			context.Logger.Error("Error getting remote sink configuration: " + remoteSinkError.Error())
 			return remoteSinkError
 		}
 		templateStruct.NotificationARNs = []*string{conn.TopicArn}
-		creationError := createStack(templateStruct, currentSession)
+		_, creationError := context.CloudFormation.CreateStack(&templateStruct)
 		if creationError != nil {
 			context.Logger.Error("Error creating stack: " + creationError.Error())
 			return creationError
 		}
 		conn.MonitorStackQueue()
 	} else {
-		creationError := createStack(templateStruct, currentSession)
+		_, creationError := context.CloudFormation.CreateStack(&templateStruct)
 		if creationError != nil {
 			context.Logger.Error("Error creating stack: " + creationError.Error())
 			return creationError

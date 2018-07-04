@@ -2,9 +2,7 @@ package stack
 
 import (
 	"github.com/Appliscale/perun/context"
-	"github.com/Appliscale/perun/mysession"
 	"github.com/Appliscale/perun/progress"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 )
 
@@ -14,26 +12,26 @@ func UpdateStack(context *context.Context) (err error) {
 		return
 	}
 	templateStruct := updateStackInput(context, &template, &stackName)
-	currentSession := mysession.InitializeSession(context)
-	err = doUpdateStack(context, currentSession, templateStruct)
+	context.InitializeAwsAPI()
+	err = doUpdateStack(context, templateStruct)
 	return
 }
-func doUpdateStack(context *context.Context, currentSession *session.Session, updateStackInput cloudformation.UpdateStackInput) error {
+func doUpdateStack(context *context.Context, updateStackInput cloudformation.UpdateStackInput) error {
 	if *context.CliArguments.Progress {
-		conn, remoteSinkError := progress.GetRemoteSink(context, currentSession)
+		conn, remoteSinkError := progress.GetRemoteSink(context)
 		if remoteSinkError != nil {
 			context.Logger.Error("Error getting remote sink configuration: " + remoteSinkError.Error())
 			return remoteSinkError
 		}
 		updateStackInput.NotificationARNs = []*string{conn.TopicArn}
-		updateError := updateStack(updateStackInput, currentSession)
+		_, updateError := context.CloudFormation.UpdateStack(&updateStackInput)
 		if updateError != nil {
 			context.Logger.Error("Error updating stack: " + updateError.Error())
 			return updateError
 		}
 		conn.MonitorStackQueue()
 	} else {
-		updateError := updateStack(updateStackInput, currentSession)
+		_, updateError := context.CloudFormation.UpdateStack(&updateStackInput)
 		if updateError != nil {
 			context.Logger.Error("Error updating stack: " + updateError.Error())
 			return updateError
@@ -42,13 +40,7 @@ func doUpdateStack(context *context.Context, currentSession *session.Session, up
 	return nil
 }
 
-func updateStack(updateStackInput cloudformation.UpdateStackInput, session *session.Session) error {
-	api := cloudformation.New(session)
-	_, err := api.UpdateStack(&updateStackInput)
-	return err
-}
-
-// This function gets template and  name of stack. It creates "CreateStackInput" structure.
+// This function gets template and  name of stack. It creates "UpdateStackInput" structure.
 func updateStackInput(context *context.Context, template *string, stackName *string) cloudformation.UpdateStackInput {
 	params, err := getParameters(context)
 	if err != nil {
