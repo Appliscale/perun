@@ -35,7 +35,6 @@ import (
 	"github.com/Appliscale/perun/helpers"
 	"github.com/Appliscale/perun/intrinsicsolver"
 	"github.com/Appliscale/perun/logger"
-	// "github.com/Appliscale/perun/mysession"
 	"github.com/Appliscale/perun/offlinevalidator/template"
 	"github.com/Appliscale/perun/offlinevalidator/validators"
 	"github.com/Appliscale/perun/specification"
@@ -282,7 +281,10 @@ func processNestedTemplates(properties map[string]interface{}, ctx *context.Cont
 }
 
 func validateNestedTemplate(templateURL string, ctx *context.Context) error {
-	context.InitializeSession(ctx)
+	err := context.UpdateSessionToken(ctx.Config.DefaultProfile, ctx.Config.DefaultRegion, ctx.Config.DefaultDurationForMFA, ctx)
+	if err != nil {
+		return err
+	}
 
 	tempfile, err := ioutil.TempFile(ctx.Config.DefaultTemporaryFilesDirectory, "")
 	if err != nil {
