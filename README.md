@@ -1,5 +1,9 @@
 # Perun [![Build Status](https://travis-ci.org/Appliscale/perun.svg?branch=master)](https://travis-ci.org/Appliscale/perun) [![GoDoc](https://godoc.org/github.com/Appliscale/perun?status.svg)](https://godoc.org/github.com/Appliscale/perun)
 
+<p align="center">
+<img src="perun_logo.png" alt="Perun logo">
+</p>
+
 A swiss army knife for *AWS CloudFormation* templates - validation, conversion, generators and other various stuff.
 
 ## Goal
@@ -32,12 +36,13 @@ perun $ make config-install
 perun $ make all
 ```
 
-With first command a default configuration file (`defaults/main.yaml`) will be copied to your home directory under the `~/.config/perun/main.yaml` path. After second command application will be compiled as a `perun` binary inside `bin` directory in your `$GOPATH/perun` workspace.
+With first command a default configuration files (`defaults/main.yaml` and `defaults/specification_inconsistency.yaml`) will be copied to your home directory under the `~/.config/perun/` path. After second command application will be compiled as a `perun` binary inside `bin` directory in your `$GOPATH/perun` workspace.
 
 ## Working with Perun
 
 ### Commands
 
+#### Validation
 To validate your template with AWS API (*online validation*), just type:
 
 ```bash
@@ -50,6 +55,7 @@ To validate your template offline (*well*, almost offline :wink: - *AWS CloudFor
 ~ $ perun validate_offline <PATH TO YOUR TEMPLATE>
 ```
 
+#### Conversion
 To convert your template between JSON and YAML formats you have to type:
 
 ```bash
@@ -58,22 +64,101 @@ To convert your template between JSON and YAML formats you have to type:
            <PATH FOR A CONVERTED FILE, INCLUDING FILE NAME>
            <JSON or YAML>
 ```
+
+#### Configuration
 To create your own configuration file use `configure` mode:
 
 ```bash
 ~ $ perun configure
 ```
+
 Then type path and name of new configuration file.
 
+#### Stack Creation
 To create new stack you have to type:
 
-``~ $ perun create-stack <NAME OF THE STACK> <PATH TO YOUR TEMPLATE
-``
+```bash
+~ $ perun create-stack <NAME OF YOUR STACK>  <PATH TO YOUR TEMPLATE>
+```
 
 To destroy stack just type:
 
-``~ $ perun delete-stack <NAME OF THE STACK>
-``
+```bash
+~ $ perun delete-stack <NAME OF YOUR STACK>
+```
+
+You can use option ``--progress`` to show the stack creation/deletion progress in the console, but
+note, that this requires setting up a remote sink.
+
+##### Remote sink
+
+To setup remote sink type:
+
+```bash
+~ $ perun setup-remote-sink
+```
+
+This will create an sns topic and sqs queue with permissions for the sns topic to publish on the sqs
+queue. Using above services may produce some cost: 
+According to the AWS SQS and SNS pricing:
+
+- SNS: 
+  - notifications to the SQS queue are free 
+- SQS: 
+  - The first 1 million monthly requests are free. 
+  - After that: 0.40$ per million requests after Free Tier (Monthly)
+  - Typical stack creation uses around a hundred requests
+  
+To destroy remote sink just type:
+
+```bash
+~ $ perun destroy-remote-sink
+``` 
+
+#### Protecting Stack
+
+You can protect your stack by using Stack Policy file. It's JSON file where you describe which action is allowed or denied. This example allows to all Update Actions.
+
+```json
+{
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "Update:*",
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+To apply your Stack Policy file you have to type:
+
+```bash
+~ $ perun set-stack-policy <NAME OF YOUR STACK>  <PATH TO YOUR TEMPLATE>
+```
+
+or
+
+```bash 
+~ $ perun set-stack-policy --stack=<NAME OF YOUR STACK> --template=<PATH TO YOUR TEMPLATE>
+```
+
+Perun has some default flags:
+
+- ``--block`` - Block all Update actions in stack.
+
+- ``--unblock`` - Unblock all Update actions in stack.
+
+- ``--disable-stack-termination`` - Protect stack from being deleted.
+
+- ``--enable-stack-termination`` - Allow to destroy stack.
+
+You use flag instead of template.
+
+```bash
+~ $ perun set-stack-policy <NAME OF YOUR STACK> <FLAG>
+```
 
 ### Configuration file
 
@@ -117,6 +202,11 @@ aws_access_key_id = <YOUR ACCESS KEY>
 aws_secret_access_key = <YOUR SECRET ACCESS KEY>
 mfa_serial = <IDENTIFICATION NUMBER FOR MFA DEVICE>
 ```
+You do not need to use Perun for validation, you can just use it to obtain security credentials and use them in AWS CLI. To do this type:
+
+```bash
+~ $ perun mfa
+```
 
 ### Working with stacks
 
@@ -126,7 +216,7 @@ To create stack it uses your template. It can be JSON or YAML format.
 
 Example JSON template which describe S3 Bucket:
 
-```ini
+```json
 {
     "Resources" : {
         "HelloPerun" : {
@@ -139,6 +229,29 @@ Example JSON template which describe S3 Bucket:
 If you want to destroy stack just type its name.
 Before you create stack you should validate it with perun :wink:.
 
+### Capabilities
+
+If your template includes resources that can affect permissions in your AWS account, 
+you must explicitly acknowledge its capabilities by adding `--capabilities=CAPABILITY` flag.
+
+Valid values are `CAPABILITY_IAM` and `CAPABILITY_NAMED_IAM`.
+You can specify both of them by adding `--capabilities=CAPABILITY_IAM --capabilities=CAPABILITY_NAMED_IAM`.
+
+### Inconsistencies between official documentation and Resource Specification 
+
+We cannot trust entirely Resource Specification from AWS API, as there exist inconsistencies. Perun implements a mechanism that allows patching those exceptions in place via configuration.
+
+To specify inconsistencies edit `~/.config/perun/specification_inconsistency.yaml` file.
+
+Example configuration file:
+
+```yaml
+  SpecificationInconsistency:
+    AWS::CloudFront::Distribution.DistributionConfig:
+      DefaultCacheBehavior:
+        - Required 
+```
+
 ## License
 
 [Apache License 2.0](LICENSE)
@@ -148,12 +261,14 @@ Before you create stack you should validate it with perun :wink:.
 - [Piotr Figwer](https://github.com/pfigwer)
 - [Sylwia Gargula](https://github.com/SylwiaGargula)
 - [Wojciech Gawroński](https://github.com/afronski)
-- [Jakub Lamparski](https://github.com/jlampar)
+- [Mateusz Piwowarczyk](https://github.com/piwowarc)
 
 ## Contributors
 
+- [Jakub Lamparski](https://github.com/jlampar)
 - [Aleksander Mamla](https://github.com/amamla)
 - [Kacper Patro](https://github.com/morfeush22)
 - [Paweł Pikuła](https://github.com/ppikula)
 - [Michał Połcik](https://github.com/mwpolcik)
+- [Tomasz Raus](https://github.com/rusty-2)
 - [Maksymilian Wojczuk](https://github.com/maxiwoj)

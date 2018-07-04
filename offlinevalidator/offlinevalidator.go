@@ -20,14 +20,16 @@ package offlinevalidator
 
 import (
 	"encoding/json"
-	"errors"
 	"io/ioutil"
-	"path"
 	"reflect"
 	"strconv"
 	"strings"
 
+	"errors"
+
+	"github.com/Appliscale/perun/configuration"
 	"github.com/Appliscale/perun/context"
+	"github.com/Appliscale/perun/helpers"
 	"github.com/Appliscale/perun/intrinsicsolver"
 	"github.com/Appliscale/perun/logger"
 	"github.com/Appliscale/perun/offlinevalidator/template"
@@ -73,15 +75,12 @@ func Validate(context *context.Context) bool {
 	var perunTemplate template.Template
 	var goFormationTemplate cloudformation.Template
 
-	templateFileExtension := path.Ext(*context.CliArguments.TemplatePath)
-	if templateFileExtension == ".json" {
-		goFormationTemplate, err = parseJSON(rawTemplate, perunTemplate, context.Logger)
-	} else if templateFileExtension == ".yaml" || templateFileExtension == ".yml" {
-		goFormationTemplate, err = parseYAML(rawTemplate, perunTemplate, context.Logger)
-	} else {
-		err = errors.New("Invalid template file format.")
+	parser, err := helpers.GetParser(*context.CliArguments.TemplatePath)
+	if err != nil {
+		context.Logger.Error(err.Error())
+		return false
 	}
-
+	goFormationTemplate, err = parser(rawTemplate, perunTemplate, context.Logger)
 	if err != nil {
 		context.Logger.Error(err.Error())
 		return false
@@ -91,21 +90,61 @@ func Validate(context *context.Context) bool {
 	resources := obtainResources(deNilizedTemplate, perunTemplate, context.Logger)
 	deadResources := getNilResources(resources)
 	deadProperties := getNilProperties(resources)
+	if !hasAllowedValuesParametersValid(goFormationTemplate.Parameters, context.Logger) {
+		return false
+	}
 
-	valid = validateResources(resources, &specification, context.Logger, deadProperties, deadResources)
+	specInconsistency := context.InconsistencyConfig.SpecificationInconsistency
+
+	valid = validateResources(resources, &specification, context.Logger, deadProperties, deadResources, specInconsistency)
 	return valid
 }
 
-func validateResources(resources map[string]template.Resource, specification *specification.Specification, sink *logger.Logger, deadProp []string, deadRes []string) bool {
+// Looking for AllowedValues and checking what Type is it. If it finds Type other than String then it will return false.
+func hasAllowedValuesParametersValid(parameters template.Parameters, logger *logger.Logger) bool {
+	isType := false
+	isAllovedValues := false
+	for _, value := range parameters {
+		valueof := reflect.ValueOf(value)
+		isAllovedValues = false
+		isType = false
+
+		for _, key := range valueof.MapKeys() {
+
+			keyValue := valueof.MapIndex(key)
+			textType := "Type"
+			keyString := key.Interface().(string)
+			textValues := "AllowedValues"
+
+			if textType == keyString {
+				textString := "String"
+				keyValueString := keyValue.Interface().(string)
+				if textString != keyValueString {
+					isType = true
+				}
+			} else if textValues == keyString {
+				isAllovedValues = true
+			}
+
+			if isAllovedValues && isType {
+				logger.Error("AllowedValues supports only Type String")
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func validateResources(resources map[string]template.Resource, specification *specification.Specification, sink *logger.Logger, deadProp []string, deadRes []string, specInconsistency map[string]configuration.Property) bool {
 
 	for resourceName, resourceValue := range resources {
-		if deadResource := sliceContains(deadRes, resourceName); !deadResource {
+		if deadResource := helpers.SliceContains(deadRes, resourceName); !deadResource {
 			resourceValidation := sink.AddResourceForValidation(resourceName)
 
 			if resourceSpecification, ok := specification.ResourceTypes[resourceValue.Type]; ok {
 				for propertyName, propertyValue := range resourceSpecification.Properties {
-					if deadProperty := sliceContains(deadProp, propertyName); !deadProperty {
-						validateProperties(specification, resourceValue, propertyName, propertyValue, resourceValidation)
+					if deadProperty := helpers.SliceContains(deadProp, propertyName); !deadProperty {
+						validateProperties(specification, resourceValue, propertyName, propertyValue, resourceValidation, specInconsistency, sink)
 					}
 				}
 			} else {
@@ -125,19 +164,33 @@ func validateProperties(
 	resourceValue template.Resource,
 	propertyName string,
 	propertyValue specification.Property,
-	resourceValidation *logger.ResourceValidation) {
+	resourceValidation *logger.ResourceValidation,
+	specInconsistency map[string]configuration.Property,
+	logger *logger.Logger) {
 
+	warnAboutSpecificationInconsistencies(propertyName, specInconsistency[resourceValue.Type], logger)
 	if _, ok := resourceValue.Properties[propertyName]; !ok {
 		if propertyValue.Required {
 			resourceValidation.AddValidationError("Property " + propertyName + " is required")
 		}
 	} else if len(propertyValue.Type) > 0 {
 		if propertyValue.Type != "List" && propertyValue.Type != "Map" {
-			checkNestedProperties(specification, resourceValue.Properties, resourceValue.Type, propertyName, propertyValue.Type, resourceValidation)
+			checkNestedProperties(specification, resourceValue.Properties, resourceValue.Type, propertyName, propertyValue.Type, resourceValidation, specInconsistency, logger)
 		} else if propertyValue.Type == "List" {
-			checkListProperties(specification, resourceValue.Properties, resourceValue.Type, propertyName, propertyValue.ItemType, resourceValidation)
+			checkListProperties(specification, resourceValue.Properties, resourceValue.Type, propertyName, propertyValue.ItemType, resourceValidation, specInconsistency, logger)
 		} else if propertyValue.Type == "Map" {
 			checkMapProperties(resourceValue.Properties, propertyName, resourceValidation)
+		}
+	}
+}
+
+// check should be before validate, someone might add property because he thought it is required and here he would not get notified about inconsistency...
+func warnAboutSpecificationInconsistencies(subpropertyName string, specInconsistentProperty configuration.Property, logger *logger.Logger) {
+	if specInconsistentProperty[subpropertyName] != nil {
+		for _, inconsistentPropertyName := range specInconsistentProperty[subpropertyName] {
+			if inconsistentPropertyName == "Required" {
+				logger.Warning(subpropertyName + "->" + inconsistentPropertyName + " in documentation is not consistent with specification")
+			}
 		}
 	}
 }
@@ -146,7 +199,9 @@ func checkListProperties(
 	spec *specification.Specification,
 	resourceProperties map[string]interface{},
 	resourceValueType, propertyName, listItemType string,
-	resourceValidation *logger.ResourceValidation) {
+	resourceValidation *logger.ResourceValidation,
+	specInconsistency map[string]configuration.Property,
+	logger *logger.Logger) {
 
 	if listItemType == "" {
 		resourceSubproperties := toStringList(resourceProperties, propertyName)
@@ -154,17 +209,17 @@ func checkListProperties(
 			resourceValidation.AddValidationError(propertyName + " must be a List")
 		}
 	} else if propertySpec, hasSpec := spec.PropertyTypes[resourceValueType+"."+listItemType]; hasSpec {
-
 		resourceSubproperties := toMapList(resourceProperties, propertyName)
 		for subpropertyName, subpropertyValue := range propertySpec.Properties {
 			for _, listItem := range resourceSubproperties {
+				warnAboutSpecificationInconsistencies(subpropertyName, specInconsistency[resourceValueType+"."+listItemType], logger)
 				if _, isPresent := listItem[subpropertyName]; !isPresent {
 					if subpropertyValue.Required {
 						resourceValidation.AddValidationError("Property " + subpropertyName + " is required in " + listItemType)
 					}
 				} else if isPresent {
 					if subpropertyValue.IsSubproperty() {
-						checkNestedProperties(spec, listItem, resourceValueType, subpropertyName, subpropertyValue.Type, resourceValidation)
+						checkNestedProperties(spec, listItem, resourceValueType, subpropertyName, subpropertyValue.Type, resourceValidation, specInconsistency, logger)
 					} else if subpropertyValue.Type == "Map" {
 						checkMapProperties(listItem, propertyName, resourceValidation)
 					}
@@ -178,20 +233,23 @@ func checkNestedProperties(
 	spec *specification.Specification,
 	resourceProperties map[string]interface{},
 	resourceValueType, propertyName, propertyType string,
-	resourceValidation *logger.ResourceValidation) {
+	resourceValidation *logger.ResourceValidation,
+	specInconsistency map[string]configuration.Property,
+	logger *logger.Logger) {
 
 	if propertySpec, hasSpec := spec.PropertyTypes[resourceValueType+"."+propertyType]; hasSpec {
 		resourceSubproperties, _ := toMap(resourceProperties, propertyName)
 		for subpropertyName, subpropertyValue := range propertySpec.Properties {
+			warnAboutSpecificationInconsistencies(subpropertyName, specInconsistency[resourceValueType+"."+propertyName], logger)
 			if _, isPresent := resourceSubproperties[subpropertyName]; !isPresent {
 				if subpropertyValue.Required {
-					resourceValidation.AddValidationError("Property " + subpropertyName + " is required" + "in " + propertyName)
+					resourceValidation.AddValidationError("Property " + subpropertyName + " is required " + "in " + propertyName)
 				}
 			} else if isPresent {
 				if subpropertyValue.IsSubproperty() {
-					checkNestedProperties(spec, resourceSubproperties, resourceValueType, subpropertyName, subpropertyValue.Type, resourceValidation)
+					checkNestedProperties(spec, resourceSubproperties, resourceValueType, subpropertyName, subpropertyValue.Type, resourceValidation, specInconsistency, logger)
 				} else if subpropertyValue.Type == "List" {
-					checkListProperties(spec, resourceSubproperties, resourceValueType, subpropertyName, subpropertyValue.ItemType, resourceValidation)
+					checkListProperties(spec, resourceSubproperties, resourceValueType, subpropertyName, subpropertyValue.ItemType, resourceValidation, specInconsistency, logger)
 				} else if subpropertyValue.Type == "Map" {
 					checkMapProperties(resourceSubproperties, subpropertyName, resourceValidation)
 				}
@@ -211,19 +269,10 @@ func checkMapProperties(
 	}
 }
 
-func parseJSON(templateFile []byte, refTemplate template.Template, logger *logger.Logger) (template cloudformation.Template, err error) {
+func ParseJSON(templateFile []byte, refTemplate template.Template, logger *logger.Logger) (template cloudformation.Template, err error) {
 
 	err = json.Unmarshal(templateFile, &refTemplate)
 	if err != nil {
-		if syntaxError, isSyntaxError := err.(*json.SyntaxError); isSyntaxError {
-			syntaxOffset := int(syntaxError.Offset)
-			line, character := lineAndCharacter(string(templateFile), syntaxOffset)
-			logger.Error("Syntax error at line " + strconv.Itoa(line) + ", column " + strconv.Itoa(character))
-		} else if typeError, isTypeError := err.(*json.UnmarshalTypeError); isTypeError {
-			typeOffset := int(typeError.Offset)
-			line, character := lineAndCharacter(string(templateFile), typeOffset)
-			logger.Error("Type error at line " + strconv.Itoa(line) + ", column " + strconv.Itoa(character))
-		}
 		return template, err
 	}
 
@@ -237,7 +286,7 @@ func parseJSON(templateFile []byte, refTemplate template.Template, logger *logge
 	return returnTemplate, nil
 }
 
-func parseYAML(templateFile []byte, refTemplate template.Template, logger *logger.Logger) (template cloudformation.Template, err error) {
+func ParseYAML(templateFile []byte, refTemplate template.Template, logger *logger.Logger) (template cloudformation.Template, err error) {
 
 	err = yaml.Unmarshal(templateFile, &refTemplate)
 	if err != nil {
@@ -249,13 +298,7 @@ func parseYAML(templateFile []byte, refTemplate template.Template, logger *logge
 		logger.Error(preprocessingError.Error())
 	}
 	tempYAML, err := goformation.ParseYAML(preprocessed)
-	if err != nil {
-		logger.Error(err.Error())
-	}
-
-	returnTemplate := *tempYAML
-
-	return returnTemplate, nil
+	return *tempYAML, err
 }
 
 func obtainResources(goformationTemplate cloudformation.Template, perunTemplate template.Template, logger *logger.Logger) map[string]template.Resource {
@@ -266,48 +309,12 @@ func obtainResources(goformationTemplate cloudformation.Template, perunTemplate 
 
 	for propertyName, propertyContent := range perunResources {
 		if propertyContent.Properties == nil {
-			logger.Always("WARNING! " + propertyName + " <--- is nil.")
+			logger.Warning(propertyName + " <--- is nil.")
 		} else {
 			for element, elementValue := range propertyContent.Properties {
-				if elementValue == nil {
-					logger.Always("WARNING! " + propertyName + ": " + element + " <--- is nil.")
-				} else if elementMap, ok := elementValue.(map[string]interface{}); ok {
-					for key, value := range elementMap {
-						if value == nil {
-							logger.Always("WARNING! " + propertyName + ": " + element + ": " + key + " <--- is nil.")
-						} else if elementOfElement, ok := value.(map[string]interface{}); ok {
-							for subKey, subValue := range elementOfElement {
-								if subValue == nil {
-									logger.Always("WARNING! " + propertyName + ": " + element + ": " + key + ": " + subKey + " <--- is nil.")
-								}
-							}
-						} else if sliceOfElement, ok := value.([]interface{}); ok {
-							for indexKey, indexValue := range sliceOfElement {
-								if indexValue == nil {
-									logger.Always("WARNING! " + propertyName + ": " + element + ": " + key + "[" + strconv.Itoa(indexKey) + "] <--- is nil.")
-								}
-							}
-						}
-					}
-				} else if elementSlice, ok := elementValue.([]interface{}); ok {
-					for index, value := range elementSlice {
-						if value == nil {
-							logger.Always("WARNING! " + propertyName + ": " + element + "[" + strconv.Itoa(index) + "] <--- is nil.")
-						} else if elementOfElement, ok := value.(map[string]interface{}); ok {
-							for subKey, subValue := range elementOfElement {
-								if subValue == nil {
-									logger.Always("WARNING! " + propertyName + ": " + element + "[" + strconv.Itoa(index) + "]: " + subKey + " <--- is nil.")
-								}
-							}
-						} else if sliceOfElement, ok := value.([]interface{}); ok {
-							for indexKey, indexValue := range sliceOfElement {
-								if indexValue == nil {
-									logger.Always("WARNING! " + propertyName + ": " + element + "[" + strconv.Itoa(index) + "][" + strconv.Itoa(indexKey) + "] <--- is nil.")
-								}
-							}
-						}
-					}
-				}
+				initPath := []interface{}{element} // The path from the Property name to the <nil> element.
+				var discarded interface{}          // Container which stores the encountered nodes that aren't on the path.
+				checkWhereIsNil(element, elementValue, propertyName, logger, initPath, &discarded)
 			}
 		}
 	}
@@ -439,36 +446,45 @@ func getNilResources(resources map[string]template.Resource) []string {
 	return list
 }
 
-func sliceContains(slice []string, match string) bool {
-	for _, s := range slice {
-		if s == match {
-			return true
-		}
-	}
-	return false
-}
-
-func lineAndCharacter(input string, offset int) (line int, character int) {
-	lf := rune(0x0A)
-
-	if offset > len(input) || offset < 0 {
-		return 0, 0
-	}
-
-	line = 1
-
-	for i, b := range input {
-		if b == lf {
-			if i < offset {
-				line++
-				character = 0
+func checkWhereIsNil(n interface{}, v interface{}, baseLevel string, logger *logger.Logger, fullPath []interface{}, dsc *interface{}) {
+	if v == nil { // Value we encountered is nil - this is the end of investigation.
+		where := ""
+		for _, element := range fullPath {
+			if stringElement, ok := element.(string); ok {
+				if where != "" {
+					where += ": " + stringElement
+				} else {
+					where = stringElement
+				}
+			} else if intElement, ok := element.(int); ok {
+				where += "[" + strconv.Itoa(intElement) + "]"
 			}
-		} else {
-			character++
 		}
-		if i == offset {
-			break
+		logger.Warning(baseLevel + ": " + where + " <--- is nil.")
+	} else if mp, ok := v.(map[string]interface{}); ok { // Value we encountered is a map.
+		if helpers.IsPlainMap(mp) { // Check is it plain, non-nil map.
+			// It is - we shouldn't dive into.
+			*dsc = n // The name is stored in the `discarded` container as the name of the blind alley.
+		} else {
+			for kmp, vmp := range mp {
+				if helpers.IsNonStringFloatBool(vmp) {
+					fullPath = append(fullPath, kmp)
+					fullPath = helpers.Discard(fullPath, *dsc) // If the output path would be different, it seems that we've encountered some node which is not on the way to the <nil>. It will be discarded from the path. Otherwise the paths are the same and we hit the point.
+					checkWhereIsNil(kmp, vmp, baseLevel, logger, fullPath, dsc)
+				}
+			}
+		}
+	} else if slc, ok := v.([]interface{}); ok { // The same flow as above.
+		if helpers.IsPlainSlice(slc) {
+			*dsc = n
+		} else {
+			for islc, vslc := range slc {
+				if helpers.IsNonStringFloatBool(vslc) {
+					fullPath = append(fullPath, islc)
+					fullPath = helpers.Discard(fullPath, *dsc)
+					checkWhereIsNil(islc, vslc, baseLevel, logger, fullPath, dsc)
+				}
+			}
 		}
 	}
-	return line, character
 }

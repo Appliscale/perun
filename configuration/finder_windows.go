@@ -22,9 +22,9 @@ import "os"
 
 type myStat func(string) (os.FileInfo, error)
 
-func getUserConfigFile(existenceChecker myStat) (val string, ok bool) {
+func getUserConfigFile(existenceChecker myStat, fileName string) (val string, ok bool) {
 	const envVar = "LOCALAPPDATA"
-	const relativeUserConfigPath = "\\perun\\main.yaml"
+	relativeUserConfigPath := "\\perun\\" + fileName
 
 	return checkConfigExistence(envVar, relativeUserConfigPath, existenceChecker)
 }
