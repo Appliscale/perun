@@ -25,7 +25,6 @@ import (
 	"github.com/Appliscale/perun/configurator"
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/converter"
-	"github.com/Appliscale/perun/mysession"
 	"github.com/Appliscale/perun/offlinevalidator"
 	"github.com/Appliscale/perun/onlinevalidator"
 	"github.com/Appliscale/perun/parameters"
@@ -35,75 +34,82 @@ import (
 )
 
 func main() {
-	context, err := context.GetContext(cliparser.ParseCliArguments, configuration.GetConfiguration, configuration.ReadInconsistencyConfiguration)
+	ctx, err := context.GetContext(cliparser.ParseCliArguments, configuration.GetConfiguration, configuration.ReadInconsistencyConfiguration)
 	if err != nil {
 		os.Exit(1)
 	}
 
-	if *context.CliArguments.Mode == cliparser.ValidateMode {
-		utilities.CheckFlagAndExit(onlinevalidator.ValidateAndEstimateCosts(&context))
+	if *ctx.CliArguments.Mode == cliparser.ValidateMode {
+		utilities.CheckFlagAndExit(onlinevalidator.ValidateAndEstimateCosts(&ctx))
 
 	}
 
-	if *context.CliArguments.Mode == cliparser.ConvertMode {
-		utilities.CheckErrorCodeAndExit(converter.Convert(&context))
+	if *ctx.CliArguments.Mode == cliparser.ConvertMode {
+		utilities.CheckErrorCodeAndExit(converter.Convert(&ctx))
 
 	}
 
-	if *context.CliArguments.Mode == cliparser.OfflineValidateMode {
-		utilities.CheckFlagAndExit(offlinevalidator.Validate(&context))
+	if *ctx.CliArguments.Mode == cliparser.OfflineValidateMode {
+		utilities.CheckFlagAndExit(offlinevalidator.Validate(&ctx))
 
 	}
 
-	if *context.CliArguments.Mode == cliparser.ConfigureMode {
-		configurator.FileName(&context)
+	if *ctx.CliArguments.Mode == cliparser.ConfigureMode {
+		configurator.FileName(&ctx)
 		os.Exit(0)
 	}
 
-	if *context.CliArguments.Mode == cliparser.CreateStackMode {
-		utilities.CheckErrorCodeAndExit(stack.NewStack(&context))
+	if *ctx.CliArguments.Mode == cliparser.CreateStackMode {
+		utilities.CheckErrorCodeAndExit(stack.NewStack(&ctx))
 
 	}
 
-	if *context.CliArguments.Mode == cliparser.DestroyStackMode {
-		utilities.CheckErrorCodeAndExit(stack.DestroyStack(&context))
+	if *ctx.CliArguments.Mode == cliparser.DestroyStackMode {
+		utilities.CheckErrorCodeAndExit(stack.DestroyStack(&ctx))
 
 	}
 
-	if *context.CliArguments.Mode == cliparser.MfaMode {
-		err := mysession.UpdateSessionToken(context.Config.DefaultProfile, context.Config.DefaultRegion, context.Config.DefaultDurationForMFA, &context)
+	if *ctx.CliArguments.Mode == cliparser.MfaMode {
+		err := context.UpdateSessionToken(ctx.Config.DefaultProfile, ctx.Config.DefaultRegion, ctx.Config.DefaultDurationForMFA, &ctx)
 		if err == nil {
 			os.Exit(0)
 		} else {
-			context.Logger.Error(err.Error())
+			ctx.Logger.Error(err.Error())
 			os.Exit(1)
 		}
 	}
 
-	if *context.CliArguments.Mode == cliparser.UpdateStackMode {
-		utilities.CheckErrorCodeAndExit(stack.UpdateStack(&context))
+	if *ctx.CliArguments.Mode == cliparser.CreateChangeSetMode {
+		err := stack.NewChangeSet(&ctx)
+		if err != nil {
+			ctx.Logger.Error(err.Error())
+		}
 	}
 
-	if *context.CliArguments.Mode == cliparser.SetupSinkMode {
-		progress.ConfigureRemoteSink(&context)
+	if *ctx.CliArguments.Mode == cliparser.UpdateStackMode {
+		utilities.CheckErrorCodeAndExit(stack.UpdateStack(&ctx))
+	}
+
+	if *ctx.CliArguments.Mode == cliparser.SetupSinkMode {
+		progress.ConfigureRemoteSink(&ctx)
 		os.Exit(0)
 	}
 
-	if *context.CliArguments.Mode == cliparser.DestroySinkMode {
-		progress.DestroyRemoteSink(&context)
+	if *ctx.CliArguments.Mode == cliparser.DestroySinkMode {
+		progress.DestroyRemoteSink(&ctx)
 		os.Exit(0)
 	}
 
-	if *context.CliArguments.Mode == cliparser.CreateParametersMode {
-		parameters.ConfigureParameters(&context)
+	if *ctx.CliArguments.Mode == cliparser.CreateParametersMode {
+		parameters.ConfigureParameters(&ctx)
 		os.Exit(0)
 	}
 
-	if *context.CliArguments.Mode == cliparser.SetStackPolicyMode {
-		if *context.CliArguments.DisableStackTermination || *context.CliArguments.EnableStackTermination {
-			utilities.CheckErrorCodeAndExit(stack.SetTerminationProtection(&context))
+	if *ctx.CliArguments.Mode == cliparser.SetStackPolicyMode {
+		if *ctx.CliArguments.DisableStackTermination || *ctx.CliArguments.EnableStackTermination {
+			utilities.CheckErrorCodeAndExit(stack.SetTerminationProtection(&ctx))
 		} else {
-			utilities.CheckErrorCodeAndExit(stack.ApplyStackPolicy(&context))
+			utilities.CheckErrorCodeAndExit(stack.ApplyStackPolicy(&ctx))
 		}
 	}
 }

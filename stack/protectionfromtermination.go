@@ -3,7 +3,6 @@ package stack
 import (
 	"errors"
 	"github.com/Appliscale/perun/context"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 )
 
@@ -15,14 +14,6 @@ func createUpdateTerminationProtectionInput(stackName string, isProtectionEnable
 	}
 
 	return templateStruct
-}
-
-// Using struct from function above to set termination protection.
-func createUpdateTerminationProtection(templateStruct cloudformation.UpdateTerminationProtectionInput, session *session.Session) (apiError error) {
-	api := cloudformation.New(session)
-	_, apiError = api.UpdateTerminationProtection(&templateStruct)
-
-	return apiError
 }
 
 // Checking flag and settting protection.
@@ -44,15 +35,11 @@ func SetTerminationProtection(context *context.Context) error {
 		return stackTerminationError
 	}
 	templateStruct := createUpdateTerminationProtectionInput(*stackName, isProtectionEnable)
-	currentSession, sessionError := prepareSession(context)
-	if sessionError == nil {
-		apiError := createUpdateTerminationProtection(templateStruct, currentSession)
-		if apiError != nil {
-			context.Logger.Error("Error setting stack termination protection: " + apiError.Error())
-			return apiError
-		}
-	} else {
-		return sessionError
+	context.InitializeAwsAPI()
+	_, apiError := context.CloudFormation.UpdateTerminationProtection(&templateStruct)
+	if apiError != nil {
+		context.Logger.Error("Error setting stack termination protection: " + apiError.Error())
+		return apiError
 	}
 	return nil
 }

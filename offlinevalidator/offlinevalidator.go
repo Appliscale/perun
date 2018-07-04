@@ -35,7 +35,7 @@ import (
 	"github.com/Appliscale/perun/helpers"
 	"github.com/Appliscale/perun/intrinsicsolver"
 	"github.com/Appliscale/perun/logger"
-	"github.com/Appliscale/perun/mysession"
+	// "github.com/Appliscale/perun/mysession"
 	"github.com/Appliscale/perun/offlinevalidator/template"
 	"github.com/Appliscale/perun/offlinevalidator/validators"
 	"github.com/Appliscale/perun/specification"
@@ -62,8 +62,8 @@ func printResult(templateName string, valid *bool, logger *logger.Logger) {
 }
 
 // Validate CloudFormation template.
-func Validate(context *context.Context) bool {
-	return validateTemplateFile(*context.CliArguments.TemplatePath, *context.CliArguments.TemplatePath, context)
+func Validate(ctx *context.Context) bool {
+	return validateTemplateFile(*ctx.CliArguments.TemplatePath, *ctx.CliArguments.TemplatePath, ctx)
 }
 
 func validateTemplateFile(templatePath string, templateName string, context *context.Context) bool {
@@ -146,12 +146,12 @@ func hasAllowedValuesParametersValid(parameters template.Parameters, logger *log
 	return true
 }
 
-func validateResources(resources map[string]template.Resource, specification *specification.Specification, deadProp []string, deadRes []string, specInconsistency map[string]configuration.Property, context *context.Context) bool {
-	sink := context.Logger
+func validateResources(resources map[string]template.Resource, specification *specification.Specification, deadProp []string, deadRes []string, specInconsistency map[string]configuration.Property, ctx *context.Context) bool {
+	sink := ctx.Logger
 	for resourceName, resourceValue := range resources {
 		if deadResource := helpers.SliceContains(deadRes, resourceName); !deadResource {
 			resourceValidation := sink.AddResourceForValidation(resourceName)
-			processNestedTemplates(resourceValue.Properties, context)
+			processNestedTemplates(resourceValue.Properties, ctx)
 			if resourceSpecification, ok := specification.ResourceTypes[resourceValue.Type]; ok {
 				for propertyName, propertyValue := range resourceSpecification.Properties {
 					if deadProperty := helpers.SliceContains(deadProp, propertyName); !deadProperty {
@@ -269,32 +269,32 @@ func checkNestedProperties(
 	}
 }
 
-func processNestedTemplates(properties map[string]interface{}, context *context.Context) {
+func processNestedTemplates(properties map[string]interface{}, ctx *context.Context) {
 	if rawTemplateURL, ok := properties["TemplateURL"]; ok {
 		if templateURL, ok := rawTemplateURL.(string); ok {
-			err := validateNestedTemplate(templateURL, context)
+			err := validateNestedTemplate(templateURL, ctx)
 			if err != nil {
-				context.Logger.Error(err.Error())
+				ctx.Logger.Error(err.Error())
 				os.Exit(1)
 			}
 		}
 	}
 }
 
-func validateNestedTemplate(templateURL string, context *context.Context) error {
-	mysession.InitializeSession(context)
+func validateNestedTemplate(templateURL string, ctx *context.Context) error {
+	context.InitializeSession(ctx)
 
-	tempfile, err := ioutil.TempFile(context.Config.DefaultTemporaryFilesDirectory, "")
+	tempfile, err := ioutil.TempFile(ctx.Config.DefaultTemporaryFilesDirectory, "")
 	if err != nil {
 		return err
 	}
 	defer os.Remove(tempfile.Name())
 
-	if err := downloadTemplateFromBucket(templateURL, tempfile, context); err != nil {
+	if err := downloadTemplateFromBucket(templateURL, tempfile, ctx); err != nil {
 		return err
 	}
 
-	validateTemplateFile(tempfile.Name(), templateURL, context)
+	validateTemplateFile(tempfile.Name(), templateURL, ctx)
 
 	if err = tempfile.Close(); err != nil {
 		return err
@@ -303,10 +303,10 @@ func validateNestedTemplate(templateURL string, context *context.Context) error 
 	return nil
 }
 
-func downloadTemplateFromBucket(templateURL string, file io.WriterAt, context *context.Context) error {
+func downloadTemplateFromBucket(templateURL string, file io.WriterAt, ctx *context.Context) error {
 	region, bucket, key := fetchBucketDataFromURL(templateURL)
 
-	session, err := mysession.CreateSession(context, context.Config.DefaultProfile, &region)
+	session, err := context.CreateSession(ctx, ctx.Config.DefaultProfile, &region)
 	if err != nil {
 		return err
 	}

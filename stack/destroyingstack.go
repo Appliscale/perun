@@ -9,29 +9,23 @@ import (
 // DestroyStack bases on "DeleteStackInput" structure and destroys stack. It uses "StackName" to choose which stack will be destroy. Before that it creates session.
 func DestroyStack(context *context.Context) error {
 	delStackInput := deleteStackInput(context)
-	currentSession, sessionError := prepareSession(context)
-	if sessionError == nil {
-		api := cloudformation.New(currentSession)
+	context.InitializeAwsAPI()
 
-		var err error = nil
-		if *context.CliArguments.Progress {
-			conn, err := progress.GetRemoteSink(context, currentSession)
-			if err != nil {
-				context.Logger.Error("Error getting remote sink configuration: " + err.Error())
-				return err
-			}
-			_, err = api.DeleteStack(&delStackInput)
-			conn.MonitorQueue()
-		} else {
-			_, err = api.DeleteStack(&delStackInput)
-		}
+	var err error = nil
+	if *context.CliArguments.Progress {
+		conn, err := progress.GetRemoteSink(context)
 		if err != nil {
-			context.Logger.Error(err.Error())
+			context.Logger.Error("Error getting remote sink configuration: " + err.Error())
 			return err
 		}
+		_, err = context.CloudFormation.DeleteStack(&delStackInput)
+		conn.MonitorStackQueue()
 	} else {
-		context.Logger.Error(sessionError.Error())
-		return sessionError
+		_, err = context.CloudFormation.DeleteStack(&delStackInput)
+	}
+	if err != nil {
+		context.Logger.Error(err.Error())
+		return err
 	}
 	return nil
 }
