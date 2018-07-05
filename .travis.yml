@@ -35,4 +35,4 @@ deploy:
 
 after_deploy:
   - 'chmod +x release.sh'
-  script: bash release.sh ${TRAVIS_TAG} ${TRAVIS_SECURE_TOKEN_NAME}
+  - './release.sh ${TRAVIS_TAG} ${TRAVIS_SECURE_TOKEN_NAME}'
