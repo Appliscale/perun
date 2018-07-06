@@ -12,10 +12,10 @@ func UpdateStack(context *context.Context) (err error) {
 		return
 	}
 	templateStruct := updateStackInput(context, &template, &stackName)
-	context.InitializeAwsAPI()
 	err = doUpdateStack(context, templateStruct)
 	return
 }
+
 func doUpdateStack(context *context.Context, updateStackInput cloudformation.UpdateStackInput) error {
 	if *context.CliArguments.Progress {
 		conn, remoteSinkError := progress.GetRemoteSink(context)

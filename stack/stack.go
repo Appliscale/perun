@@ -7,7 +7,6 @@ import (
 
 	"io/ioutil"
 
-	"github.com/Appliscale/perun/cliparser"
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/myuser"
 	"github.com/Appliscale/perun/parameters"
@@ -43,11 +42,7 @@ func getPath(context *context.Context) (path string, err error) {
 		return "", pathError
 	}
 
-	if *context.CliArguments.Mode == cliparser.CreateStackMode ||
-		*context.CliArguments.Mode == cliparser.CreateChangeSetMode ||
-		*context.CliArguments.Mode == cliparser.UpdateStackMode {
-		path = *context.CliArguments.TemplatePath
-	} else if *context.CliArguments.Mode == "set-stack-policy" {
+	if *context.CliArguments.Mode == "set-stack-policy" {
 		if *context.CliArguments.Unblock {
 			path = homePath + "/.config/perun/stack-policies/unblocked.json"
 		} else if *context.CliArguments.Block {
@@ -57,9 +52,9 @@ func getPath(context *context.Context) (path string, err error) {
 		} else {
 			return "", errors.New("Incorrect path")
 		}
-
+	} else if len(*context.CliArguments.TemplatePath) > 0 {
+		path = *context.CliArguments.TemplatePath
 	}
-
 	return
 }
 

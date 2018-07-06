@@ -40,8 +40,8 @@ func main() {
 	}
 
 	if *ctx.CliArguments.Mode == cliparser.ValidateMode {
+		ctx.InitializeAwsAPI()
 		utilities.CheckFlagAndExit(onlinevalidator.ValidateAndEstimateCosts(&ctx))
-
 	}
 
 	if *ctx.CliArguments.Mode == cliparser.ConvertMode {
@@ -60,11 +60,12 @@ func main() {
 	}
 
 	if *ctx.CliArguments.Mode == cliparser.CreateStackMode {
+		ctx.InitializeAwsAPI()
 		utilities.CheckErrorCodeAndExit(stack.NewStack(&ctx))
-
 	}
 
 	if *ctx.CliArguments.Mode == cliparser.DestroyStackMode {
+		ctx.InitializeAwsAPI()
 		utilities.CheckErrorCodeAndExit(stack.DestroyStack(&ctx))
 
 	}
@@ -80,6 +81,7 @@ func main() {
 	}
 
 	if *ctx.CliArguments.Mode == cliparser.CreateChangeSetMode {
+		ctx.InitializeAwsAPI()
 		err := stack.NewChangeSet(&ctx)
 		if err != nil {
 			ctx.Logger.Error(err.Error())
@@ -87,6 +89,7 @@ func main() {
 	}
 
 	if *ctx.CliArguments.Mode == cliparser.UpdateStackMode {
+		ctx.InitializeAwsAPI()
 		utilities.CheckErrorCodeAndExit(stack.UpdateStack(&ctx))
 	}
 
@@ -106,6 +109,7 @@ func main() {
 	}
 
 	if *ctx.CliArguments.Mode == cliparser.SetStackPolicyMode {
+		ctx.InitializeAwsAPI()
 		if *ctx.CliArguments.DisableStackTermination || *ctx.CliArguments.EnableStackTermination {
 			utilities.CheckErrorCodeAndExit(stack.SetTerminationProtection(&ctx))
 		} else {

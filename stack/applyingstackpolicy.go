@@ -14,8 +14,6 @@ func ApplyStackPolicy(context *context.Context) error {
 	}
 	templateStruct := createStackPolicyInput(&template, &stackName)
 
-	context.InitializeAwsAPI()
-
 	_, creationError := context.CloudFormation.SetStackPolicy(&templateStruct)
 	if creationError != nil {
 		context.Logger.Error("Error creating stack policy: " + creationError.Error())

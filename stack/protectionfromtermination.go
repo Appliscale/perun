@@ -35,7 +35,6 @@ func SetTerminationProtection(context *context.Context) error {
 		return stackTerminationError
 	}
 	templateStruct := createUpdateTerminationProtectionInput(*stackName, isProtectionEnable)
-	context.InitializeAwsAPI()
 	_, apiError := context.CloudFormation.UpdateTerminationProtection(&templateStruct)
 	if apiError != nil {
 		context.Logger.Error("Error setting stack termination protection: " + apiError.Error())
