@@ -74,6 +74,19 @@ To create your own configuration file use `configure` mode:
 
 Then type path and name of new configuration file.
 
+#### Stack Parameters
+Bored of writing JSON parameter files? Perun allows you to interactively create parameters file
+for given template. You can either pass the parameters as an argument to the perun or interactively.
+
+##### Command Line Parameter way:
+```bash
+~ $ perun create-parameters <PATH TO YOUR TEMPLATE> <OUTPUT PARAMETER FILE> --parameter=MyParameter1:<PARAMETER VALUE>
+```
+
+The greatest thing is that you can mix those in any way you want. Perun will validate the
+given parameters from command line. If everything is OK, it will just create the parameters file.
+If anything is missing or invalid, it will let you know and ask for it interactively.
+
 #### Stack Creation
 To create new stack you have to type:
 
@@ -99,21 +112,21 @@ To setup remote sink type:
 ```
 
 This will create an sns topic and sqs queue with permissions for the sns topic to publish on the sqs
-queue. Using above services may produce some cost: 
+queue. Using above services may produce some cost:
 According to the AWS SQS and SNS pricing:
 
-- SNS: 
-  - notifications to the SQS queue are free 
-- SQS: 
-  - The first 1 million monthly requests are free. 
+- SNS:
+  - notifications to the SQS queue are free
+- SQS:
+  - The first 1 million monthly requests are free.
   - After that: 0.40$ per million requests after Free Tier (Monthly)
   - Typical stack creation uses around a hundred requests
-  
+
 To destroy remote sink just type:
 
 ```bash
 ~ $ perun destroy-remote-sink
-``` 
+```
 
 #### Protecting Stack
 
@@ -140,7 +153,7 @@ To apply your Stack Policy file you have to type:
 
 or
 
-```bash 
+```bash
 ~ $ perun set-stack-policy --stack=<NAME OF YOUR STACK> --template=<PATH TO YOUR TEMPLATE>
 ```
 
@@ -231,13 +244,13 @@ Before you create stack you should validate it with perun :wink:.
 
 ### Capabilities
 
-If your template includes resources that can affect permissions in your AWS account, 
+If your template includes resources that can affect permissions in your AWS account,
 you must explicitly acknowledge its capabilities by adding `--capabilities=CAPABILITY` flag.
 
 Valid values are `CAPABILITY_IAM` and `CAPABILITY_NAMED_IAM`.
 You can specify both of them by adding `--capabilities=CAPABILITY_IAM --capabilities=CAPABILITY_NAMED_IAM`.
 
-### Inconsistencies between official documentation and Resource Specification 
+### Inconsistencies between official documentation and Resource Specification
 
 We cannot trust entirely Resource Specification from AWS API, as there exist inconsistencies. Perun implements a mechanism that allows patching those exceptions in place via configuration.
 
@@ -249,7 +262,7 @@ Example configuration file:
   SpecificationInconsistency:
     AWS::CloudFront::Distribution.DistributionConfig:
       DefaultCacheBehavior:
-        - Required 
+        - Required
 ```
 
 ## License
