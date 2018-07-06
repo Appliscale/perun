@@ -37,8 +37,6 @@ func NewChangeSet(context *context.Context) (err error) {
 		return
 	}
 
-	context.InitializeAwsAPI()
-
 	_, err = context.CloudFormation.CreateChangeSet(&templateStruct)
 
 	if err != nil {
@@ -61,8 +59,8 @@ func NewChangeSet(context *context.Context) (err error) {
 }
 
 func shouldExecuteChangeSet() bool {
+	println("Do You want to execute the change set? (Y/N) ")
 	for true {
-		println("Do You want to execute the change set? (Y/N) ")
 		var executeChangeSet string
 		fmt.Scanf("%s", &executeChangeSet)
 		if strings.ToLower(executeChangeSet) == "n" {

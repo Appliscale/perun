@@ -35,8 +35,6 @@ func NewStack(context *context.Context) error {
 		return templateError
 	}
 
-	context.InitializeAwsAPI()
-
 	if *context.CliArguments.Progress {
 		conn, remoteSinkError := progress.GetRemoteSink(context)
 		if remoteSinkError != nil {
