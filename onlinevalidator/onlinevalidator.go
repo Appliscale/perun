@@ -30,8 +30,6 @@ func ValidateAndEstimateCosts(context *context.Context) bool {
 	valid := false
 	defer printResult(&valid, context.Logger)
 
-	context.InitializeAwsAPI()
-
 	rawTemplate, err := ioutil.ReadFile(*context.CliArguments.TemplatePath)
 	if err != nil {
 		context.Logger.Error(err.Error())

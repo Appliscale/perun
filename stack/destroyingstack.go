@@ -9,7 +9,6 @@ import (
 // DestroyStack bases on "DeleteStackInput" structure and destroys stack. It uses "StackName" to choose which stack will be destroy. Before that it creates session.
 func DestroyStack(context *context.Context) error {
 	delStackInput := deleteStackInput(context)
-	context.InitializeAwsAPI()
 
 	var err error = nil
 	if *context.CliArguments.Progress {
