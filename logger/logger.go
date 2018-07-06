@@ -48,7 +48,7 @@ const (
 var verboseModes = [...]string{
 	"TRACE",
 	"DEBUG",
-	" INFO",
+	"INFO",
 	"ERROR",
 	"WARNING",
 }
@@ -134,8 +134,6 @@ func (logger *Logger) PrintValidationErrors() {
 				for _, err := range resourceValidation.Errors {
 					fmt.Println("        ", err)
 				}
-			} else {
-				fmt.Println(resourceValidation.ResourceName, " has no validation errors")
 			}
 		}
 	}

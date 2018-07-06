@@ -22,7 +22,7 @@ func InitializeSession(context *Context) *session.Session {
 		context.Logger.Error(tokenError.Error())
 		os.Exit(1)
 	}
-	currentSession, sessionError := createSession(context, context.Config.DefaultProfile, &context.Config.DefaultRegion)
+	currentSession, sessionError := CreateSession(context, context.Config.DefaultProfile, &context.Config.DefaultRegion)
 	if sessionError != nil {
 		context.Logger.Error(sessionError.Error())
 		os.Exit(1)
@@ -30,9 +30,8 @@ func InitializeSession(context *Context) *session.Session {
 	return currentSession
 }
 
-func createSession(context *Context, profile string, region *string) (*session.Session, error) {
-	context.Logger.Info("Profile: " + profile)
-	context.Logger.Info("Region: " + *region)
+func CreateSession(context *Context, profile string, region *string) (*session.Session, error) {
+	context.Logger.Info("Creating new session. Profile: " + profile + " Region: " + *region)
 
 	currentSession, sessionWithOptionError := session.NewSessionWithOptions(
 		session.Options{
