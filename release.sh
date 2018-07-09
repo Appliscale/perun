@@ -12,7 +12,7 @@ cd rpmbuild/SOURCES
 rm $perun.tar.gz
 wget $release
 wget $files/defaults/main.yaml
-wget $files/LICENSE'
+wget $files/LICENSE
 tar xvzf $perun.tar.gz
 rm $perun.tar.gz
 tar cvzf $perun.tar.gz $perun LICENSE main.yaml
