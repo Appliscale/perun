@@ -19,7 +19,7 @@ rm $perun.tar.gz
 tar cvzf $perun.tar.gz $perun LICENSE main.yaml
 rm LICENSE main.yaml $perun
 cd ..
-rpmbuild -ba /SPEC/$perun.spec
+rpmbuild -ba SPEC/$perun.spec
 git remote
 git config user.email $email
 git config user.name $user
@@ -34,8 +34,7 @@ rm $perun
 wget $release
 tar xvzf $perun.tar.gz
 rm $perun.tar.gz
-cd ~
-cd perun-dpkg
+cd ~/perun-dpkg
 dpkg-deb --build perun
 git remote
 git config user.email $email
