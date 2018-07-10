@@ -10,8 +10,10 @@ script:
   - make test
 
 after_script:
-  - 'chmod +x release.sh'
-  - './release.sh ${TRAVIS_TAG} ${TRAVIS_SECURE_TOKEN_NAME}'
+  - chmod +x release.sh
+  - echo ${TRAVIS_TAG}
+  - echo ${TRAVIS_SECURE_TOKEN_NAME}
+  - ./release.sh ${TRAVIS_TAG} ${TRAVIS_SECURE_TOKEN_NAME}
 
 before_deploy:
   - 'mkdir -p release'

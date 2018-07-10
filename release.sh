@@ -8,7 +8,8 @@ release="https://github.com/Appliscale/perun/releases/download/$1/$perun"
 files="https://raw.githubusercontent.com/Appliscale/perun/master"
 
 git clone https://github.com/Appliscale/rpmbuild.git
-cd rpmbuild/SOURCES
+sudo yum install @development-tools fedora-packager
+cd rpmbuild/SOURCES 
 rm $perun.tar.gz
 wget $release
 wget $files/defaults/main.yaml
@@ -28,7 +29,7 @@ git push $github/rpmbuild.git master
 
 cd ~
 git clone https://github.com/Appliscale/perun-dpkg.git
-cd perun-dpkg/usr/local/bin
+cd perun-dpkg/perun/usr/local/bin
 rm $perun
 wget $release
 tar xvzf $perun.tar.gz
