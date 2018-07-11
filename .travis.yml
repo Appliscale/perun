@@ -15,10 +15,6 @@ script:
   - make code-analysis
   - make test
 
-after_script:
-  - chmod +x release.sh
-  - ./release.sh 1.2.0 $Github
-
 before_deploy:
   - 'mkdir -p release'
   - 'GOOS=linux GOARCH=amd64 go build -o release/perun-linux-amd64'
@@ -42,3 +38,7 @@ deploy:
   skip_cleanup: true
   on:
     tags: true
+
+after_deploy:
+  - chmod +x release.sh
+  - ./release.sh $TRAVIS_TAG $Github

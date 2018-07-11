@@ -7,8 +7,8 @@ github="https://$2@github.com/Appliscale"
 release="https://github.com/Appliscale/perun/releases/download/$1/$perun.tar.gz"
 files="https://raw.githubusercontent.com/Appliscale/perun/master"
 
-sudo apt-get install rpm
 cd ~
+sudo apt-get install rpm
 git clone https://github.com/Appliscale/rpmbuild.git
 cd rpmbuild/SOURCES 
 rm $perun.tar.gz
