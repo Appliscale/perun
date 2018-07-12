@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"github.com/Appliscale/perun/configuration"
+	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/logger"
 	"github.com/Appliscale/perun/offlinevalidator/template"
 	"github.com/Appliscale/perun/specification"
@@ -34,6 +35,7 @@ var sink logger.Logger
 var deadProp = make([]string, 0)
 var deadRes = make([]string, 0)
 var specInconsistency map[string]configuration.Property
+var mockContext = context.Context{}
 
 func setup() {
 	var err error
@@ -52,62 +54,63 @@ func TestMain(m *testing.M) {
 }
 
 func TestValidResource(t *testing.T) {
-	sink = logger.Logger{}
+
+	mockContext.Logger = &logger.Logger{}
 	resources := make(map[string]template.Resource)
 	resources["ExampleResource"] = createResourceWithOneProperty("ExampleResourceType", "ExampleProperty", "Property value")
 
-	assert.True(t, validateResources(resources, &spec, &sink, deadProp, deadRes, specInconsistency), "This resource should be valid")
+	assert.True(t, validateResources(resources, &spec, deadProp, deadRes, specInconsistency, &mockContext), "This resource should be valid")
 }
 
 func TestInvalidResourceType(t *testing.T) {
-	sink = logger.Logger{}
+	mockContext.Logger = &logger.Logger{}
 	resources := make(map[string]template.Resource)
 	resources["ExampleResource"] = createResourceWithOneProperty("InvalidType", "ExampleProperty", "Property value")
 
-	assert.False(t, validateResources(resources, &spec, &sink, deadProp, deadRes, specInconsistency), "This resource should be invalid, it has invalid resource type")
+	assert.False(t, validateResources(resources, &spec, deadProp, deadRes, specInconsistency, &mockContext), "This resource should be invalid, it has invalid resource type")
 }
 
 func TestLackOfRequiredPropertyInResource(t *testing.T) {
-	sink = logger.Logger{}
+	mockContext.Logger = &logger.Logger{}
 	resources := make(map[string]template.Resource)
 	resources["ExampleResource"] = createResourceWithOneProperty("ExampleResourceType", "SomeProperty", "Property value")
 
-	assert.False(t, validateResources(resources, &spec, &sink, deadProp, deadRes, specInconsistency), "This resource should not be valid, it does not have required property")
+	assert.False(t, validateResources(resources, &spec, deadProp, deadRes, specInconsistency, &mockContext), "This resource should not be valid, it does not have required property")
 }
 func TestLackOfSubpropertyWithSpecification(t *testing.T) {
-	sink = logger.Logger{}
+	mockContext.Logger = &logger.Logger{}
 	resources := make(map[string]template.Resource)
 	properties := map[string]interface{}{
 		"Ec2KeyName": "SomeValue",
 	}
 	resources["cluster"] = createResourceWithNestedProperties("AWS::Nested3::Cluster", "SomeProperty", properties)
 
-	assert.False(t, validateResources(resources, &spec, &sink, deadProp, deadRes, specInconsistency), "This resource should not be valid, it does not have property with specification")
+	assert.False(t, validateResources(resources, &spec, deadProp, deadRes, specInconsistency, &mockContext), "This resource should not be valid, it does not have property with specification")
 }
 func TestValidPrimitiveTypeInProperty(t *testing.T) {
-	sink = logger.Logger{}
+	mockContext.Logger = &logger.Logger{}
 	resources := make(map[string]template.Resource)
 	properties := map[string]interface{}{
 		"Ec2KeyName": "SomeValue",
 	}
 	resources["cluster"] = createResourceWithNestedProperties("AWS::Nested3::Cluster", "Instances", properties)
 
-	assert.True(t, validateResources(resources, &spec, &sink, deadProp, deadRes, specInconsistency), "This resource should be valid")
+	assert.True(t, validateResources(resources, &spec, deadProp, deadRes, specInconsistency, &mockContext), "This resource should be valid")
 }
 
 func TestLackOfPrimitiveTypeInProperty(t *testing.T) {
-	sink = logger.Logger{}
+	mockContext.Logger = &logger.Logger{}
 	resources := make(map[string]template.Resource)
 	properties := map[string]interface{}{
 		"SomeProperty": "SomeValue",
 	}
 	resources["cluster"] = createResourceWithNestedProperties("AWS::Nested3::Cluster", "Instances", properties)
 
-	assert.False(t, validateResources(resources, &spec, &sink, deadProp, deadRes, specInconsistency), "This resource shouldn't be valid")
+	assert.False(t, validateResources(resources, &spec, deadProp, deadRes, specInconsistency, &mockContext), "This resource shouldn't be valid")
 }
 
 func TestLackOfPrimitiveTypeInPropertyNestedInProperty(t *testing.T) {
-	sink = logger.Logger{}
+	mockContext.Logger = &logger.Logger{}
 	resources := make(map[string]template.Resource)
 	properties := map[string]interface{}{
 		"CoreInstanceGroup": map[string]interface{}{
@@ -117,10 +120,10 @@ func TestLackOfPrimitiveTypeInPropertyNestedInProperty(t *testing.T) {
 	}
 	resources["cluster"] = createResourceWithNestedProperties("AWS::Nested1::Cluster", "Instances", properties)
 
-	assert.False(t, validateResources(resources, &spec, &sink, deadProp, deadRes, specInconsistency), "This resource shouldn't be valid, it lacks required property")
+	assert.False(t, validateResources(resources, &spec, deadProp, deadRes, specInconsistency, &mockContext), "This resource shouldn't be valid, it lacks required property")
 }
 func TestLackOfRequiredSubproperty(t *testing.T) {
-	sink = logger.Logger{}
+	mockContext.Logger = &logger.Logger{}
 	resources := make(map[string]template.Resource)
 	properties := map[string]interface{}{
 		"DummySubproperty": map[string]interface{}{
@@ -129,21 +132,21 @@ func TestLackOfRequiredSubproperty(t *testing.T) {
 	}
 	resources["cluster"] = createResourceWithNestedProperties("AWS::Nested1::Cluster", "Instances", properties)
 
-	assert.False(t, validateResources(resources, &spec, &sink, deadProp, deadRes, specInconsistency), "This resource shouldn't be valid, required subproperty is missing")
+	assert.False(t, validateResources(resources, &spec, deadProp, deadRes, specInconsistency, &mockContext), "This resource shouldn't be valid, required subproperty is missing")
 }
 func TestLackOfRequiredPrimitiveTypeInNonrequiredSubproperty(t *testing.T) {
-	sink = logger.Logger{}
+	mockContext.Logger = &logger.Logger{}
 	resources := make(map[string]template.Resource)
 	properties := map[string]interface{}{
 		"ETag": "SomeEtagValue",
 	}
 	resources["ApiGatewayResource"] = createResourceWithNestedProperties("AWS::Nested2::RestApi", "BodyS3Location", properties)
 
-	assert.False(t, validateResources(resources, &spec, &sink, deadProp, deadRes, specInconsistency), "This resource shouldn't be valid, required primitive property in nonrequired subproperty is missing")
+	assert.False(t, validateResources(resources, &spec, deadProp, deadRes, specInconsistency, &mockContext), "This resource shouldn't be valid, required primitive property in nonrequired subproperty is missing")
 }
 
 func TestLackOfRequiredPropertyInNonRequiredProperty(t *testing.T) {
-	sink = logger.Logger{}
+	mockContext.Logger = &logger.Logger{}
 
 	resources := make(map[string]template.Resource)
 	properties := map[string]interface{}{
@@ -153,11 +156,11 @@ func TestLackOfRequiredPropertyInNonRequiredProperty(t *testing.T) {
 	}
 	resources["ExampleResource"] = createResourceWithNestedProperties("AWS::Nested4::Method", "Definition", properties)
 
-	assert.True(t, validateResources(resources, &spec, &sink, deadProp, deadRes, specInconsistency), "This resource should be valid")
+	assert.True(t, validateResources(resources, &spec, deadProp, deadRes, specInconsistency, &mockContext), "This resource should be valid")
 }
 
 func TestLackOfRequiredNestedPrimitivePropertyInListItem(t *testing.T) {
-	sink = logger.Logger{}
+	mockContext.Logger = &logger.Logger{}
 	resources := make(map[string]template.Resource)
 	properties := []interface{}{
 		0: map[string]interface{}{
@@ -173,11 +176,11 @@ func TestLackOfRequiredNestedPrimitivePropertyInListItem(t *testing.T) {
 	resource.Properties["BootstrapActions"] = properties
 	resources["ExampleResource"] = resource
 
-	assert.False(t, validateResources(resources, &spec, &sink, deadProp, deadRes, specInconsistency), "This resource should not be valid, List is empty")
+	assert.False(t, validateResources(resources, &spec, deadProp, deadRes, specInconsistency, &mockContext), "This resource should not be valid, List is empty")
 }
 
 func TestLackOfRequiredListItemSubpropertyInList(t *testing.T) {
-	sink = logger.Logger{}
+	mockContext.Logger = &logger.Logger{}
 	resources := make(map[string]template.Resource)
 	properties := map[string]interface{}{
 		"RoutingRules": []interface{}{
@@ -190,11 +193,11 @@ func TestLackOfRequiredListItemSubpropertyInList(t *testing.T) {
 	}
 	resources["ExampleResource"] = createResourceWithNestedProperties("AWS::List2::Bucket", "WebsiteConfiguration", properties)
 
-	assert.False(t, validateResources(resources, &spec, &sink, deadProp, deadRes, specInconsistency), "This resource should not be valid, It must contain RedirectRule property")
+	assert.False(t, validateResources(resources, &spec, deadProp, deadRes, specInconsistency, &mockContext), "This resource should not be valid, It must contain RedirectRule property")
 }
 
 func TestLackOfRequiredPrimitiveTypeListItemInList(t *testing.T) {
-	sink = logger.Logger{}
+	mockContext.Logger = &logger.Logger{}
 	resources := make(map[string]template.Resource)
 	properties := map[string]interface{}{
 		"RoutingRules": []interface{}{
@@ -214,11 +217,11 @@ func TestLackOfRequiredPrimitiveTypeListItemInList(t *testing.T) {
 	}
 	resources["ExampleResource"] = createResourceWithNestedProperties("AWS::List2::Bucket", "WebsiteConfiguration", properties)
 
-	assert.False(t, validateResources(resources, &spec, &sink, deadProp, deadRes, specInconsistency), "This resource should not be valid, RedirectRule must contain HostName and HttpRedirectCode")
+	assert.False(t, validateResources(resources, &spec, deadProp, deadRes, specInconsistency, &mockContext), "This resource should not be valid, RedirectRule must contain HostName and HttpRedirectCode")
 }
 
 func TestValidRequiredPrimitiveTypeListItemInList(t *testing.T) {
-	sink = logger.Logger{}
+	mockContext.Logger = &logger.Logger{}
 	resources := make(map[string]template.Resource)
 	properties := map[string]interface{}{
 		"RoutingRules": []interface{}{
@@ -232,11 +235,11 @@ func TestValidRequiredPrimitiveTypeListItemInList(t *testing.T) {
 	}
 	resources["ExampleResource"] = createResourceWithNestedProperties("AWS::List2::Bucket", "WebsiteConfiguration", properties)
 
-	assert.True(t, validateResources(resources, &spec, &sink, deadProp, deadRes, specInconsistency), "This resource should be valid")
+	assert.True(t, validateResources(resources, &spec, deadProp, deadRes, specInconsistency, &mockContext), "This resource should be valid")
 }
 
 func TestLackOfNonRequiredNestedListItemProperty(t *testing.T) {
-	sink = logger.Logger{}
+	mockContext.Logger = &logger.Logger{}
 
 	resources := make(map[string]template.Resource)
 	properties := map[string]interface{}{
@@ -250,22 +253,22 @@ func TestLackOfNonRequiredNestedListItemProperty(t *testing.T) {
 	}
 	resources["ExampleResource"] = createResourceWithNestedProperties("AWS::List3::Bucket", "LifecycleConfiguration", properties)
 
-	assert.True(t, validateResources(resources, &spec, &sink, deadProp, deadRes, specInconsistency), "This resource should be valid")
+	assert.True(t, validateResources(resources, &spec, deadProp, deadRes, specInconsistency, &mockContext), "This resource should be valid")
 }
 
 func TestInvalidList(t *testing.T) {
-	sink = logger.Logger{}
+	mockContext.Logger = &logger.Logger{}
 
 	resources := make(map[string]template.Resource)
 	properties := "DummyValue"
 
 	resources["ExampleResource"] = createResourceWithOneProperty("AWS::List4::DBSubnetGroup", "SubnetIds", properties)
 
-	assert.False(t, validateResources(resources, &spec, &sink, deadProp, deadRes, specInconsistency), "This resource should be valid")
+	assert.False(t, validateResources(resources, &spec, deadProp, deadRes, specInconsistency, &mockContext), "This resource should be valid")
 }
 
 func TestValidList(t *testing.T) {
-	sink = logger.Logger{}
+	mockContext.Logger = &logger.Logger{}
 
 	resources := make(map[string]template.Resource)
 
@@ -277,11 +280,11 @@ func TestValidList(t *testing.T) {
 	}
 	resources["ExampleResource"] = resource
 
-	assert.True(t, validateResources(resources, &spec, &sink, deadProp, deadRes, specInconsistency), "This resource should be valid")
+	assert.True(t, validateResources(resources, &spec, deadProp, deadRes, specInconsistency, &mockContext), "This resource should be valid")
 }
 
 func TestValidIfMapInNestedPropertyIsMap(t *testing.T) {
-	sink = logger.Logger{}
+	mockContext.Logger = &logger.Logger{}
 
 	resources := make(map[string]template.Resource)
 	properties := map[string]interface{}{
@@ -291,11 +294,11 @@ func TestValidIfMapInNestedPropertyIsMap(t *testing.T) {
 	}
 	resources["ExampleResource"] = createResourceWithNestedProperties("AWS::Map2::Thing", "AttributePayload", properties)
 
-	assert.True(t, validateResources(resources, &spec, &sink, deadProp, deadRes, specInconsistency), "This resource should be valid")
+	assert.True(t, validateResources(resources, &spec, deadProp, deadRes, specInconsistency, &mockContext), "This resource should be valid")
 }
 
 func TestInvalidNestedNonMapProperty(t *testing.T) {
-	sink = logger.Logger{}
+	mockContext.Logger = &logger.Logger{}
 
 	resources := make(map[string]template.Resource)
 	properties := map[string]interface{}{
@@ -303,11 +306,11 @@ func TestInvalidNestedNonMapProperty(t *testing.T) {
 	}
 	resources["ExampleResource"] = createResourceWithNestedProperties("AWS::Map2::Thing", "AttributePayload", properties)
 
-	assert.False(t, validateResources(resources, &spec, &sink, deadProp, deadRes, specInconsistency), "This resource shouldn't be valid - Attributes should be a Map")
+	assert.False(t, validateResources(resources, &spec, deadProp, deadRes, specInconsistency, &mockContext), "This resource shouldn't be valid - Attributes should be a Map")
 }
 
 func TestValidMapProperty(t *testing.T) {
-	sink = logger.Logger{}
+	mockContext.Logger = &logger.Logger{}
 
 	resources := make(map[string]template.Resource)
 	resource := template.Resource{}
@@ -321,11 +324,11 @@ func TestValidMapProperty(t *testing.T) {
 	resource.Properties["Family"] = "mysql5.6"
 	resources["ExampleResource"] = resource
 
-	assert.True(t, validateResources(resources, &spec, &sink, deadProp, deadRes, specInconsistency), "This resource should be valid")
+	assert.True(t, validateResources(resources, &spec, deadProp, deadRes, specInconsistency, &mockContext), "This resource should be valid")
 }
 
 func TestInvalidMapProperty(t *testing.T) {
-	sink = logger.Logger{}
+	mockContext.Logger = &logger.Logger{}
 
 	resources := make(map[string]template.Resource)
 	resource := template.Resource{}
@@ -335,7 +338,7 @@ func TestInvalidMapProperty(t *testing.T) {
 	resource.Properties["Family"] = "mysql5.6"
 	resources["ExampleResource"] = resource
 
-	assert.False(t, validateResources(resources, &spec, &sink, deadProp, deadRes, specInconsistency), "This resource should be valid")
+	assert.False(t, validateResources(resources, &spec, deadProp, deadRes, specInconsistency, &mockContext), "This resource should be valid")
 }
 
 func TestHasAllowedValuesParametersValid(t *testing.T) {

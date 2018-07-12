@@ -3,7 +3,6 @@ package stack
 import (
 	"fmt"
 	"github.com/Appliscale/perun/context"
-	"github.com/Appliscale/perun/mysession"
 	"github.com/Appliscale/perun/progress"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/olekukonko/tablewriter"
@@ -38,18 +37,14 @@ func NewChangeSet(context *context.Context) (err error) {
 		return
 	}
 
-	currentSession := mysession.InitializeSession(context)
-
-	api := cloudformation.New(currentSession)
-
-	_, err = api.CreateChangeSet(&templateStruct)
+	_, err = context.CloudFormation.CreateChangeSet(&templateStruct)
 
 	if err != nil {
 		context.Logger.Error(err.Error())
 		return
 	}
 
-	describeChangeSet(context, api)
+	describeChangeSet(context)
 
 	if shouldExecuteChangeSet() {
 		templateStruct := cloudformation.UpdateStackInput{
@@ -57,15 +52,15 @@ func NewChangeSet(context *context.Context) (err error) {
 			TemplateBody: &template,
 			StackName:    &stackName,
 		}
-		doUpdateStack(context, currentSession, templateStruct)
+		doUpdateStack(context, templateStruct)
 	}
 
 	return
 }
 
 func shouldExecuteChangeSet() bool {
+	println("Do You want to execute the change set? (Y/N) ")
 	for true {
-		println("Do You want to execute the change set? (Y/N) ")
 		var executeChangeSet string
 		fmt.Scanf("%s", &executeChangeSet)
 		if strings.ToLower(executeChangeSet) == "n" {
@@ -77,20 +72,20 @@ func shouldExecuteChangeSet() bool {
 	return false
 }
 
-func describeChangeSet(context *context.Context, api *cloudformation.CloudFormation) (err error) {
+func describeChangeSet(context *context.Context) (err error) {
 	context.Logger.Info("Waiting for change set creation...")
 	describeChangeSetInput := cloudformation.DescribeChangeSetInput{
 		ChangeSetName: context.CliArguments.ChangeSet,
 		StackName:     context.CliArguments.Stack,
 	}
 
-	err = api.WaitUntilChangeSetCreateComplete(&describeChangeSetInput)
+	err = context.CloudFormation.WaitUntilChangeSetCreateComplete(&describeChangeSetInput)
 	if err != nil {
 		context.Logger.Error(err.Error())
 		return
 	}
 
-	describeChangeSetOutput, err := api.DescribeChangeSet(&describeChangeSetInput)
+	describeChangeSetOutput, err := context.CloudFormation.DescribeChangeSet(&describeChangeSetInput)
 	if err != nil {
 		context.Logger.Error(err.Error())
 		return

@@ -1,11 +1,12 @@
 package configurator
 
 import (
+	"os"
+	"strconv"
+
 	"github.com/Appliscale/perun/configuration"
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/myuser"
-	"os"
-	"strconv"
 )
 
 var resourceSpecificationURL = map[string]string{
@@ -34,8 +35,8 @@ func FileName(context *context.Context) {
 	context.Logger.Always("Configure file could be in \n  " + homePath + "\n  /etc/perun")
 	var yourPath string
 	var yourName string
-	context.Logger.GetInput("Your path ", &yourPath)
-	context.Logger.GetInput("Filename ", &yourName)
+	context.Logger.GetInput("Your path", &yourPath)
+	context.Logger.GetInput("Filename", &yourName)
 	findFile(yourPath+"/"+yourName, context)
 }
 
@@ -87,6 +88,12 @@ func setProfile(context *context.Context) (profile string, err bool) {
 	return
 }
 
+func setTemporaryFilesDirectory(context *context.Context) (path string) {
+	context.Logger.GetInput("Directory for temporary files", &path)
+	context.Logger.Always("Your temporary files directory is: " + path)
+	return path
+}
+
 func createConfig(context *context.Context) configuration.Configuration {
 	myRegion, err := setRegions(context)
 	for !err {
@@ -98,15 +105,18 @@ func createConfig(context *context.Context) configuration.Configuration {
 		context.Logger.Always("Try again, invalid profile")
 		myProfile, err1 = setProfile(context)
 	}
+	myTemporaryFilesDirectory := setTemporaryFilesDirectory(context)
 	myResourceSpecificationURL := resourceSpecificationURL
 
 	myConfig := configuration.Configuration{
-		DefaultProfile:        myProfile,
-		DefaultRegion:         myRegion,
-		SpecificationURL:      myResourceSpecificationURL,
-		DefaultDecisionForMFA: false,
-		DefaultDurationForMFA: 3600,
-		DefaultVerbosity:      "INFO"}
+		DefaultProfile:                 myProfile,
+		DefaultRegion:                  myRegion,
+		SpecificationURL:               myResourceSpecificationURL,
+		DefaultDecisionForMFA:          false,
+		DefaultDurationForMFA:          3600,
+		DefaultVerbosity:               "INFO",
+		DefaultTemporaryFilesDirectory: myTemporaryFilesDirectory,
+	}
 
 	return myConfig
 }

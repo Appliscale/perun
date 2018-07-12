@@ -8,8 +8,6 @@ import (
 	"time"
 
 	"github.com/Appliscale/perun/context"
-	"github.com/Appliscale/perun/mysession"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/olekukonko/tablewriter"
@@ -17,7 +15,6 @@ import (
 
 type Connection struct {
 	context *context.Context
-	session *session.Session
 
 	SqsClient          *sqs.SQS
 	sqsQueueOutput     *sqs.CreateQueueOutput
@@ -93,8 +90,8 @@ func DestroyRemoteSink(context *context.Context) (conn Connection, err error) {
 }
 
 // Get configuration of created AWS Resources
-func GetRemoteSink(context *context.Context, session *session.Session) (conn Connection, err error) {
-	conn = initMessageService(context, session)
+func GetRemoteSink(context *context.Context) (conn Connection, err error) {
+	conn = initMessageService(context)
 	snsTopicExists, sqsQueueExists, err := conn.verifyRemoteSinkConfigured()
 	if !(snsTopicExists && sqsQueueExists) {
 		err = errors.New("remote sink has not been configured, run 'perun setup-remote-sink' first. If You done it already, wait for aws sink configuration")
@@ -104,31 +101,18 @@ func GetRemoteSink(context *context.Context, session *session.Session) (conn Con
 }
 
 func initRemoteConnection(context *context.Context) Connection {
-	currentSession := initSession(context)
-	return initMessageService(context, currentSession)
+	context.InitializeAwsAPI()
+	return initMessageService(context)
 
 }
-func initMessageService(context *context.Context, currentSession *session.Session) (conn Connection) {
+func initMessageService(context *context.Context) (conn Connection) {
 	currentUser, userError := user.Current()
 	if userError != nil {
 		context.Logger.Error("error reading currentUser")
 	}
 	sinkName += currentUser.Username + "-" + currentUser.Uid
-	conn.session = currentSession
 	conn.context = context
 	return
-}
-
-func initSession(context *context.Context) *session.Session {
-	tokenError := mysession.UpdateSessionToken(context.Config.DefaultProfile, context.Config.DefaultRegion, context.Config.DefaultDurationForMFA, context)
-	if tokenError != nil {
-		context.Logger.Error(tokenError.Error())
-	}
-	currentSession, createSessionError := mysession.CreateSession(context, context.Config.DefaultProfile, &context.Config.DefaultRegion)
-	if createSessionError != nil {
-		context.Logger.Error(createSessionError.Error())
-	}
-	return currentSession
 }
 
 func (conn *Connection) verifyRemoteSinkConfigured() (snsTopicExists bool, sqsQueueExists bool, err error) {
@@ -234,7 +218,7 @@ func initStackTableWriter() (*ParseWriter, *tablewriter.Table) {
 
 func (conn *Connection) setUpSNSNotification() (err error) {
 	//CREATE SNS TOPIC
-	conn.snsClient = sns.New(conn.session)
+	conn.snsClient = sns.New(conn.context.CurrentSession)
 	topicInput := sns.CreateTopicInput{
 		Name: &sinkName,
 	}
@@ -256,7 +240,7 @@ func (conn *Connection) setUpSNSNotification() (err error) {
 	return
 }
 func (conn *Connection) setUpSQSQueue() (err error) {
-	conn.SqsClient = sqs.New(conn.session)
+	conn.SqsClient = sqs.New(conn.context.CurrentSession)
 
 	sixtySec := "60"
 	sqsInput := sqs.CreateQueueInput{
@@ -340,7 +324,7 @@ func (conn *Connection) createJsonPolicy() (jsonStringPolicy string, err error) 
 	return
 }
 func (conn *Connection) getSnsTopicAttributes() (topicExists bool, err error) {
-	conn.snsClient = sns.New(conn.session)
+	conn.snsClient = sns.New(conn.context.CurrentSession)
 
 	topicExists = false
 	listTopicsInput := sns.ListTopicsInput{}
@@ -358,7 +342,7 @@ func (conn *Connection) getSnsTopicAttributes() (topicExists bool, err error) {
 	return
 }
 func (conn *Connection) getSqsQueueAttributes() (queueExists bool, err error) {
-	conn.SqsClient = sqs.New(conn.session)
+	conn.SqsClient = sqs.New(conn.context.CurrentSession)
 
 	queueExists = false
 	listQueuesInput := sqs.ListQueuesInput{

@@ -207,14 +207,6 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		cliArguments.Parameters = createParametersParams
 		cliArguments.PrettyPrint = createParametersPrettyPrint
 
-		// create Parameters
-	case createParameters.FullCommand():
-		cliArguments.Mode = &CreateParametersMode
-		cliArguments.TemplatePath = createParametersTemplate
-		cliArguments.OutputFilePath = createParametersParamsOutputFile
-		cliArguments.Parameters = createParametersParams
-		cliArguments.PrettyPrint = createParametersPrettyPrint
-
 		// set stack policy
 	case setStackPolicy.FullCommand():
 		cliArguments.Mode = &SetStackPolicyMode

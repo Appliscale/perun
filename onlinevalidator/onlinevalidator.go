@@ -21,8 +21,6 @@ package onlinevalidator
 import (
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/logger"
-	"github.com/Appliscale/perun/mysession"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"io/ioutil"
 )
@@ -32,20 +30,6 @@ func ValidateAndEstimateCosts(context *context.Context) bool {
 	valid := false
 	defer printResult(&valid, context.Logger)
 
-	if context.Config.DefaultDecisionForMFA {
-		err := mysession.UpdateSessionToken(context.Config.DefaultProfile, context.Config.DefaultRegion, context.Config.DefaultDurationForMFA, context)
-		if err != nil {
-			context.Logger.Error(err.Error())
-			return false
-		}
-	}
-
-	session, err := mysession.CreateSession(context, context.Config.DefaultProfile, &context.Config.DefaultRegion)
-	if err != nil {
-		context.Logger.Error(err.Error())
-		return false
-	}
-
 	rawTemplate, err := ioutil.ReadFile(*context.CliArguments.TemplatePath)
 	if err != nil {
 		context.Logger.Error(err.Error())
@@ -53,43 +37,41 @@ func ValidateAndEstimateCosts(context *context.Context) bool {
 	}
 
 	template := string(rawTemplate)
-	valid, err = isTemplateValid(session, &template)
+	valid, err = isTemplateValid(context, &template)
 	if err != nil {
 		context.Logger.Error(err.Error())
 		return false
 	}
 
-	estimateCosts(session, &template, context.Logger)
+	estimateCosts(context, &template)
 
 	return valid
 }
 
-func isTemplateValid(session *session.Session, template *string) (bool, error) {
-	api := cloudformation.New(session)
+func isTemplateValid(context *context.Context, template *string) (bool, error) {
 	templateStruct := cloudformation.ValidateTemplateInput{
 		TemplateBody: template,
 	}
-	_, error := api.ValidateTemplate(&templateStruct)
-	if error != nil {
-		return false, error
+	_, err := context.CloudFormation.ValidateTemplate(&templateStruct)
+	if err != nil {
+		return false, err
 	}
 
 	return true, nil
 }
 
-func estimateCosts(session *session.Session, template *string, logger *logger.Logger) {
-	api := cloudformation.New(session)
+func estimateCosts(context *context.Context, template *string) {
 	templateCostInput := cloudformation.EstimateTemplateCostInput{
 		TemplateBody: template,
 	}
-	output, err := api.EstimateTemplateCost(&templateCostInput)
+	output, err := context.CloudFormation.EstimateTemplateCost(&templateCostInput)
 
 	if err != nil {
-		logger.Error(err.Error())
+		context.Logger.Error(err.Error())
 		return
 	}
 
-	logger.Info("Costs estimation: " + *output.Url)
+	context.Logger.Info("Costs estimation: " + *output.Url)
 }
 
 func printResult(valid *bool, logger *logger.Logger) {
