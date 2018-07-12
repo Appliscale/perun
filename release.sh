@@ -25,7 +25,7 @@ git remote
 git config user.email $email
 git config user.name $user
 git add .
-git commit -m "[AUTO] Update RPM by Travis CI"
+git commit -m "[AUTO] Update RPM by Travis CI. Perun $1"
 git push $github/rpmbuild.git master
 
 cd ~
@@ -41,5 +41,5 @@ git remote
 git config user.email $email
 git config user.name $user
 git add .
-git commit -m "[AUTO] Update DPKG by Travis CI"
+git commit -m "[AUTO] Update DPKG by Travis CI. Perun $1"
 git push $github/perun-dpkg.git master
