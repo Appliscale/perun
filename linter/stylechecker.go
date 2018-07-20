@@ -4,13 +4,13 @@ import (
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/helpers"
 	"github.com/Appliscale/perun/offlinevalidator/template"
+	"github.com/awslabs/goformation/cloudformation"
 	"io/ioutil"
 	"os"
 	"path"
 	"regexp"
-	"strings"
 	"strconv"
-	"github.com/awslabs/goformation/cloudformation"
+	"strings"
 )
 
 type Parameter struct {
@@ -24,7 +24,7 @@ func CheckStyle(ctx *context.Context) (err error) {
 
 	err, lintConf := GetLinterConfiguration(ctx)
 
-if err != nil {
+	if err != nil {
 		os.Exit(1)
 	}
 

@@ -40,6 +40,10 @@ func main() {
 		os.Exit(1)
 	}
 
+	if ctx.CliArguments.Lint != nil && *ctx.CliArguments.Lint {
+		linter.CheckStyle(&ctx)
+	}
+
 	if *ctx.CliArguments.Mode == cliparser.ValidateMode {
 		ctx.InitializeAwsAPI()
 		utilities.CheckFlagAndExit(onlinevalidator.ValidateAndEstimateCosts(&ctx))
