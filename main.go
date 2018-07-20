@@ -25,6 +25,7 @@ import (
 	"github.com/Appliscale/perun/configurator"
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/converter"
+	"github.com/Appliscale/perun/linter"
 	"github.com/Appliscale/perun/offlinevalidator"
 	"github.com/Appliscale/perun/onlinevalidator"
 	"github.com/Appliscale/perun/parameters"
@@ -56,6 +57,11 @@ func main() {
 
 	if *ctx.CliArguments.Mode == cliparser.ConfigureMode {
 		configurator.FileName(&ctx)
+		os.Exit(0)
+	}
+
+	if *ctx.CliArguments.Mode == cliparser.LintMode {
+		linter.CheckStyle(&ctx)
 		os.Exit(0)
 	}
 

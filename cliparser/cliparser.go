@@ -40,6 +40,7 @@ var DestroySinkMode = "destroy-remote-sink"
 var CreateParametersMode = "create-parameters"
 var SetStackPolicyMode = "set-stack-policy"
 var CreateChangeSetMode = "create-change-set"
+var LintMode = "lint"
 
 var ChangeSetDefaultName string
 
@@ -70,6 +71,7 @@ type CliArguments struct {
 	DisableStackTermination *bool
 	EnableStackTermination  *bool
 	ChangeSet               *string
+	LinterConfiguration     *string
 }
 
 // Get and validate CLI arguments. Returns error if validation fails.
@@ -98,6 +100,10 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		convertTemplate    = convert.Arg("template", "A path to the template file.").Required().String()
 		convertOutputFile  = convert.Arg("output", "A path where converted file will be saved.").Required().String()
 		convertPrettyPrint = convert.Flag("pretty-print", "Pretty printing JSON").Bool()
+
+		lint              = app.Command(LintMode, "Additional validation and template style checks")
+		lintTemplate      = lint.Arg("template", "A path to the template file.").Required().String()
+		lintConfiguration = lint.Flag("configuration", "A path to the configuration file").String()
 
 		configure = app.Command(ConfigureMode, "Create your own configuration mode")
 
@@ -171,6 +177,11 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		// configure
 	case configure.FullCommand():
 		cliArguments.Mode = &ConfigureMode
+
+	case lint.FullCommand():
+		cliArguments.Mode = &LintMode
+		cliArguments.TemplatePath = lintTemplate
+		cliArguments.LinterConfiguration = lintConfiguration
 
 		// create Stack
 	case createStack.FullCommand():
