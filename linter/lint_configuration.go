@@ -26,8 +26,7 @@ type Check struct {
 	Value    interface{} `yaml:"value"`
 }
 type NamingConventions struct {
-	LogicalNames  string `yaml:"logicalNames"`
-	ExternalNames string `yaml:"externalNames"`
+	LogicalNames string `yaml:"logicalNames"`
 }
 type RequiredFields struct {
 	TemplateDescription   bool `yaml:"templateDescription"`

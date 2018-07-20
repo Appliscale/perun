@@ -1,29 +1,28 @@
 yaml:
-  allowedQuotes: # every type of quotes does other thing, no point in forcing this
+  allowedQuotes:
     double: true
     single: true
     noquotes: true
-  allowedLists: # is there any reason to limit this?
+  allowedLists:
     inline: true
     dash: true
   continuationIndent: # checked only when indent is required
     required: true
     value: 4
 
-json: # all of those seem more like text editor's checks
+json:
   spaces:
     after: [':']
     before: []
 
 global:
-# Editor specific stuff, maybe use external linter for this
   lineLength:
     required: true
     value: 100
   indent:
     required: true
     value: 2
-  blankLinesAllowed: false
+  blankLinesAllowed: true
 
 #    AWS Specific
   requiredFields:
@@ -31,5 +30,4 @@ global:
     parametersDescription: true
 
   namingConventions:
-    logicalNames: "nvd-.+" #regex
-    externalNames: ".*" #regex ---- loads of tedious work
+    logicalNames: ".+" #regex
