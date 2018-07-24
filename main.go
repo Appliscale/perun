@@ -41,7 +41,10 @@ func main() {
 	}
 
 	if ctx.CliArguments.Lint != nil && *ctx.CliArguments.Lint {
-		linter.CheckStyle(&ctx)
+		err = linter.CheckStyle(&ctx)
+		if err != nil {
+			os.Exit(1)
+		}
 	}
 
 	if *ctx.CliArguments.Mode == cliparser.ValidateMode {
@@ -65,7 +68,10 @@ func main() {
 	}
 
 	if *ctx.CliArguments.Mode == cliparser.LintMode {
-		linter.CheckStyle(&ctx)
+		err = linter.CheckStyle(&ctx)
+		if err != nil {
+			os.Exit(1)
+		}
 		os.Exit(0)
 	}
 

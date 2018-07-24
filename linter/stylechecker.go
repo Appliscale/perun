@@ -6,7 +6,6 @@ import (
 	"github.com/Appliscale/perun/offlinevalidator/template"
 	"github.com/awslabs/goformation/cloudformation"
 	"io/ioutil"
-	"os"
 	"path"
 	"regexp"
 	"strconv"
@@ -23,10 +22,10 @@ type Parameter struct {
 func CheckStyle(ctx *context.Context) (err error) {
 
 	err, lintConf := GetLinterConfiguration(ctx)
-
 	if err != nil {
-		os.Exit(1)
+		return
 	}
+
 
 	templateExtension := path.Ext(*ctx.CliArguments.TemplatePath)
 	templateBytes, err := ioutil.ReadFile(*ctx.CliArguments.TemplatePath)
@@ -93,9 +92,8 @@ func checkAWSCFSpecificStuff(ctx *context.Context, rawTemplate string, lintConf 
 		}
 	}
 
-	logicalNameRegex := regexp.MustCompile(lintConf.Global.NamingConventions.LogicalNames)
 	for resourceName := range goFormationTemplate.Resources {
-		if !logicalNameRegex.MatchString(resourceName) {
+		if lintConf.CheckLogicalName(resourceName) {
 			ctx.Logger.Warning("Resource '" + resourceName + "' does not meat the given logical Name regex")
 		}
 	}

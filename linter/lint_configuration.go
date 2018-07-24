@@ -6,6 +6,7 @@ import (
 	"github.com/Appliscale/perun/context"
 	"github.com/ghodss/yaml"
 	"path"
+	"regexp"
 )
 
 type LinterConfiguration struct {
@@ -56,12 +57,9 @@ type AllowedLists struct {
 	Dash   bool `yaml:"dash"`
 }
 
-//func (this YamlLinterConfiguration) CheckLogicalName(name string) bool {
-//	return regexp.MustCompile(this.logicalNameRegex).MatchString(name)
-//}
-//func (this YamlLinterConfiguration) CheckExternalName(name string) bool {
-//	return regexp.MustCompile(this.externalNameRegex).MatchString(name)
-//}
+func (this LinterConfiguration) CheckLogicalName(name string) bool {
+	return regexp.MustCompile(this.Global.NamingConventions.LogicalNames).MatchString(name)
+}
 
 func GetLinterConfiguration(ctx *context.Context) (err error, lintConf LinterConfiguration) {
 
