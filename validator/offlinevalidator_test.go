@@ -23,8 +23,8 @@ import (
 	"github.com/Appliscale/perun/configuration"
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/logger"
-	"github.com/Appliscale/perun/validator/template"
 	"github.com/Appliscale/perun/specification"
+	"github.com/Appliscale/perun/validator/template"
 	"github.com/stretchr/testify/assert"
 )
 

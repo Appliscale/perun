@@ -91,7 +91,7 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		configurationPath = app.Flag("config", "A path to the configuration file").Short('c').String()
 		showProgress      = app.Flag("progress", "Show progress of stack creation. Option available only after setting up a remote sink").Bool()
 
-		validate                  = app.Command(ValidateMode, "Online template Validation")
+		validate                  = app.Command(ValidateMode, "Template Validation")
 		validateTemplate          = validate.Arg("template", "A path to the template file.").Required().String()
 		validateLint              = validate.Flag("lint", "Enable template linting").Bool()
 		validateLintConfiguration = validate.Flag("lint-configuration", "A path to the configuration file").String()

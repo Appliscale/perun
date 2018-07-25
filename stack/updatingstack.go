@@ -2,9 +2,9 @@ package stack
 
 import (
 	"github.com/Appliscale/perun/context"
+	"github.com/Appliscale/perun/parameters"
 	"github.com/Appliscale/perun/progress"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
-	"github.com/Appliscale/perun/parameters"
 )
 
 func UpdateStack(context *context.Context) (err error) {

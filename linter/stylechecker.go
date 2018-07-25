@@ -26,7 +26,6 @@ func CheckStyle(ctx *context.Context) (err error) {
 		return
 	}
 
-
 	templateExtension := path.Ext(*ctx.CliArguments.TemplatePath)
 	templateBytes, err := ioutil.ReadFile(*ctx.CliArguments.TemplatePath)
 	if err != nil {
@@ -156,7 +155,7 @@ func checkYamlIndentation(ctx *context.Context, lintConf LinterConfiguration, li
 		}
 
 		if last_spaces < curr_spaces {
-			if last_spaces + indent != curr_spaces ||
+			if last_spaces+indent != curr_spaces ||
 				wrongYAMLContinuationIndent(lintConf, lines, line, last_spaces, curr_spaces) {
 				ctx.Logger.Error("line " + strconv.Itoa(line) + ": indentation error")
 			}
@@ -167,7 +166,7 @@ func checkYamlIndentation(ctx *context.Context, lintConf LinterConfiguration, li
 
 func wrongYAMLContinuationIndent(lintConf LinterConfiguration, lines []string, line int, last_spaces int, curr_spaces int) bool {
 	return lintConf.Yaml.ContinuationIndent.Required && !strings.Contains(lines[line], ": ") && !strings.Contains(lines[line], "- ") &&
-		!strings.HasSuffix(lines[line], ":") && last_spaces + int(lintConf.Yaml.ContinuationIndent.Value.(float64)) != curr_spaces
+		!strings.HasSuffix(lines[line], ":") && last_spaces+int(lintConf.Yaml.ContinuationIndent.Value.(float64)) != curr_spaces
 }
 
 func checkJsonIndentation(ctx *context.Context, lintConf LinterConfiguration, lines []string) {

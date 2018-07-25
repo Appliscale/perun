@@ -37,7 +37,7 @@ func TestTooBigDurationForMFA(t *testing.T) {
 }
 
 func TestValidArgs(t *testing.T) {
-	assert.Nil(t, parseCliArguments([]string{"cmd", "validate_offline", "some_path"}))
+	assert.Nil(t, parseCliArguments([]string{"cmd", "validate", "some_path"}))
 }
 
 func parseCliArguments(args []string) error {

@@ -34,9 +34,9 @@ import (
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/helpers"
 	"github.com/Appliscale/perun/logger"
+	"github.com/Appliscale/perun/specification"
 	"github.com/Appliscale/perun/validator/template"
 	"github.com/Appliscale/perun/validator/validators"
-	"github.com/Appliscale/perun/specification"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
@@ -79,7 +79,6 @@ func validateTemplateFile(templatePath string, templateName string, context *con
 		context.Logger.Error(err.Error())
 		return false
 	}
-
 
 	var perunTemplate template.Template
 	var goFormationTemplate cloudformation.Template

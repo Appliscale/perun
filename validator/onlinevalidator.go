@@ -20,8 +20,8 @@ package validator
 
 import (
 	"github.com/Appliscale/perun/context"
-	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/Appliscale/perun/parameters"
+	"github.com/aws/aws-sdk-go/service/cloudformation"
 )
 
 func awsValidate(ctx *context.Context, templateBody *string) bool {

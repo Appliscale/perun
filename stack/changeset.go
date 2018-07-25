@@ -3,11 +3,11 @@ package stack
 import (
 	"fmt"
 	"github.com/Appliscale/perun/context"
+	"github.com/Appliscale/perun/parameters"
 	"github.com/Appliscale/perun/progress"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/olekukonko/tablewriter"
 	"strings"
-	"github.com/Appliscale/perun/parameters"
 )
 
 func createChangeSetInput(template *string, stackName *string, params []*cloudformation.Parameter, context *context.Context) (cloudformation.CreateChangeSetInput, error) {
