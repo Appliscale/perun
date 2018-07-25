@@ -8,7 +8,7 @@ import (
 
 	"github.com/Appliscale/perun/intrinsicsolver"
 	"github.com/Appliscale/perun/logger"
-	"github.com/Appliscale/perun/offlinevalidator/template"
+	"github.com/Appliscale/perun/validator/template"
 	"github.com/awslabs/goformation"
 	"github.com/awslabs/goformation/cloudformation"
 	"github.com/ghodss/yaml"

@@ -18,7 +18,7 @@ package parsers
 
 import (
 	"github.com/Appliscale/jsonparser"
-	"github.com/Appliscale/perun/offlinevalidator/template"
+	"github.com/Appliscale/perun/validator/template"
 	"strconv"
 )
 

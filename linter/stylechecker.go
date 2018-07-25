@@ -3,7 +3,7 @@ package linter
 import (
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/helpers"
-	"github.com/Appliscale/perun/offlinevalidator/template"
+	"github.com/Appliscale/perun/validator/template"
 	"github.com/awslabs/goformation/cloudformation"
 	"io/ioutil"
 	"path"
@@ -94,7 +94,7 @@ func checkAWSCFSpecificStuff(ctx *context.Context, rawTemplate string, lintConf 
 
 	for resourceName := range goFormationTemplate.Resources {
 		if lintConf.CheckLogicalName(resourceName) {
-			ctx.Logger.Warning("Resource '" + resourceName + "' does not meat the given logical Name regex")
+			ctx.Logger.Warning("Resource '" + resourceName + "' does not meet the given logical Name regex")
 		}
 	}
 }
@@ -145,6 +145,9 @@ func checkYamlIndentation(ctx *context.Context, lintConf LinterConfiguration, li
 	indent := int(lintConf.Global.Indent.Value.(float64))
 	last_spaces := 0
 	for line := range lines {
+		if strings.HasPrefix(strings.TrimSpace(lines[line]), "#") {
+			continue
+		}
 		curr_spaces := countLeadingSpace(lines[line])
 		if lintConf.Global.Indent.Required {
 			if curr_spaces%indent != 0 {

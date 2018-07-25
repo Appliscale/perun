@@ -18,7 +18,7 @@ package validators
 
 import (
 	"github.com/Appliscale/perun/logger"
-	"github.com/Appliscale/perun/offlinevalidator/template"
+	"github.com/Appliscale/perun/validator/template"
 	"github.com/asaskevich/govalidator"
 	"github.com/mitchellh/mapstructure"
 )

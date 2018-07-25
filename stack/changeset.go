@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/olekukonko/tablewriter"
 	"strings"
+	"github.com/Appliscale/perun/parameters"
 )
 
 func createChangeSetInput(template *string, stackName *string, params []*cloudformation.Parameter, context *context.Context) (cloudformation.CreateChangeSetInput, error) {
@@ -26,7 +27,7 @@ func NewChangeSet(context *context.Context) (err error) {
 		return
 	}
 
-	params, err := getParameters(context)
+	params, err := parameters.ResolveParameters(context)
 	if err != nil {
 		context.Logger.Error(err.Error())
 		return

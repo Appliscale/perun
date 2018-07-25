@@ -4,6 +4,7 @@ import (
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/progress"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
+	"github.com/Appliscale/perun/parameters"
 )
 
 func UpdateStack(context *context.Context) (err error) {
@@ -42,7 +43,7 @@ func doUpdateStack(context *context.Context, updateStackInput cloudformation.Upd
 
 // This function gets template and  name of stack. It creates "UpdateStackInput" structure.
 func updateStackInput(context *context.Context, template *string, stackName *string) cloudformation.UpdateStackInput {
-	params, err := getParameters(context)
+	params, err := parameters.ResolveParameters(context)
 	if err != nil {
 		context.Logger.Error(err.Error())
 		return cloudformation.UpdateStackInput{}

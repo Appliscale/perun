@@ -14,9 +14,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package offlinevalidator provides tools for offline CloudFormation template
+// Package validator provides tools for offline CloudFormation template
 // validation.
-package offlinevalidator
+package validator
 
 import (
 	"encoding/json"
@@ -33,17 +33,15 @@ import (
 	"github.com/Appliscale/perun/configuration"
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/helpers"
-	"github.com/Appliscale/perun/intrinsicsolver"
 	"github.com/Appliscale/perun/logger"
-	"github.com/Appliscale/perun/offlinevalidator/template"
-	"github.com/Appliscale/perun/offlinevalidator/validators"
+	"github.com/Appliscale/perun/validator/template"
+	"github.com/Appliscale/perun/validator/validators"
 	"github.com/Appliscale/perun/specification"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/awslabs/goformation"
 	"github.com/awslabs/goformation/cloudformation"
-	"github.com/ghodss/yaml"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -60,8 +58,8 @@ func printResult(templateName string, valid *bool, logger *logger.Logger) {
 	}
 }
 
-// Validate CloudFormation template.
-func Validate(ctx *context.Context) bool {
+// ValidateAndEstimateCost CloudFormation template.
+func ValidateAndEstimateCost(ctx *context.Context) bool {
 	return validateTemplateFile(*ctx.CliArguments.TemplatePath, *ctx.CliArguments.TemplatePath, ctx)
 }
 
@@ -69,7 +67,7 @@ func validateTemplateFile(templatePath string, templateName string, context *con
 	valid := false
 	defer printResult(templateName, &valid, context.Logger)
 
-	specification, err := specification.GetSpecification(context)
+	resourceSpecification, err := specification.GetSpecification(context)
 
 	if err != nil {
 		context.Logger.Error(err.Error())
@@ -81,6 +79,7 @@ func validateTemplateFile(templatePath string, templateName string, context *con
 		context.Logger.Error(err.Error())
 		return false
 	}
+
 
 	var perunTemplate template.Template
 	var goFormationTemplate cloudformation.Template
@@ -106,7 +105,14 @@ func validateTemplateFile(templatePath string, templateName string, context *con
 
 	specInconsistency := context.InconsistencyConfig.SpecificationInconsistency
 
-	valid = validateResources(resources, &specification, deadProperties, deadResources, specInconsistency, context)
+	templateBody := string(rawTemplate)
+	valid = validateResources(resources, &resourceSpecification, deadProperties, deadResources, specInconsistency, context)
+	valid = valid && awsValidate(context, &templateBody)
+
+	if *context.CliArguments.EstimateCost {
+		estimateCosts(context, &templateBody)
+	}
+
 	return valid
 }
 
@@ -345,38 +351,6 @@ func checkMapProperties(
 	if err != nil {
 		resourceValidation.AddValidationError(err.Error())
 	}
-}
-
-func ParseJSON(templateFile []byte, refTemplate template.Template, logger *logger.Logger) (template cloudformation.Template, err error) {
-
-	err = json.Unmarshal(templateFile, &refTemplate)
-	if err != nil {
-		return template, err
-	}
-
-	tempJSON, err := goformation.ParseJSON(templateFile)
-	if err != nil {
-		logger.Error(err.Error())
-	}
-
-	returnTemplate := *tempJSON
-
-	return returnTemplate, nil
-}
-
-func ParseYAML(templateFile []byte, refTemplate template.Template, logger *logger.Logger) (template cloudformation.Template, err error) {
-
-	err = yaml.Unmarshal(templateFile, &refTemplate)
-	if err != nil {
-		return template, err
-	}
-
-	preprocessed, preprocessingError := intrinsicsolver.FixFunctions(templateFile, logger, "multiline", "elongate", "correctlong")
-	if preprocessingError != nil {
-		logger.Error(preprocessingError.Error())
-	}
-	tempYAML, err := goformation.ParseYAML(preprocessed)
-	return *tempYAML, err
 }
 
 func obtainResources(goformationTemplate cloudformation.Template, perunTemplate template.Template, logger *logger.Logger) map[string]template.Resource {

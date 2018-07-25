@@ -16,35 +16,20 @@
 
 // Package onlinevalidator provides tools for online CloudFormation template
 // validation using AWS API.
-package onlinevalidator
+package validator
 
 import (
 	"github.com/Appliscale/perun/context"
-	"github.com/Appliscale/perun/logger"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
-	"io/ioutil"
+	"github.com/Appliscale/perun/parameters"
 )
 
-// Validate template and get URL for cost estimation.
-func ValidateAndEstimateCosts(context *context.Context) bool {
-	valid := false
-	defer printResult(&valid, context.Logger)
-
-	rawTemplate, err := ioutil.ReadFile(*context.CliArguments.TemplatePath)
+func awsValidate(ctx *context.Context, templateBody *string) bool {
+	valid, err := isTemplateValid(ctx, templateBody)
 	if err != nil {
-		context.Logger.Error(err.Error())
+		ctx.Logger.Error(err.Error())
 		return false
 	}
-
-	template := string(rawTemplate)
-	valid, err = isTemplateValid(context, &template)
-	if err != nil {
-		context.Logger.Error(err.Error())
-		return false
-	}
-
-	estimateCosts(context, &template)
-
 	return valid
 }
 
@@ -56,13 +41,18 @@ func isTemplateValid(context *context.Context, template *string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-
 	return true, nil
 }
 
-func estimateCosts(context *context.Context, template *string) {
+func estimateCosts(context *context.Context, template *string) (err error) {
+	templateParameters, err := parameters.ResolveParameters(context)
+	if err != nil {
+		context.Logger.Error(err.Error())
+		return
+	}
 	templateCostInput := cloudformation.EstimateTemplateCostInput{
 		TemplateBody: template,
+		Parameters:   templateParameters,
 	}
 	output, err := context.CloudFormation.EstimateTemplateCost(&templateCostInput)
 
@@ -70,14 +60,6 @@ func estimateCosts(context *context.Context, template *string) {
 		context.Logger.Error(err.Error())
 		return
 	}
-
 	context.Logger.Info("Costs estimation: " + *output.Url)
-}
-
-func printResult(valid *bool, logger *logger.Logger) {
-	if !*valid {
-		logger.Error("Template is invalid!")
-	} else {
-		logger.Info("Template is valid!")
-	}
+	return
 }

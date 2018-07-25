@@ -30,7 +30,7 @@ import (
 
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/helpers"
-	"github.com/Appliscale/perun/offlinevalidator/template"
+	"github.com/Appliscale/perun/validator/template"
 	cloudformation2 "github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/awslabs/goformation/cloudformation"
 )
@@ -103,6 +103,26 @@ func ParseParameterToAwsCompatible(params []*Parameter) (parameters []*cloudform
 			&cloudformation2.Parameter{
 				ParameterValue: &params[paramnum].ParameterValue,
 				ParameterKey:   &params[paramnum].ParameterKey})
+	}
+	return
+}
+
+// Get the parameters - if parameters file provided - from file, else - interactively from user
+func ResolveParameters(context *context.Context) (params []*cloudformation2.Parameter, err error) {
+	if *context.CliArguments.ParametersFile == "" {
+		params, err = GetAwsParameters(context)
+	} else {
+		var parametersData []byte
+		var readParameters []*Parameter
+		parametersData, err = ioutil.ReadFile(*context.CliArguments.ParametersFile)
+		if err != nil {
+			return
+		}
+		err = json.Unmarshal(parametersData, &readParameters)
+		if err != nil {
+			return
+		}
+		params = ParseParameterToAwsCompatible(readParameters)
 	}
 	return
 }
