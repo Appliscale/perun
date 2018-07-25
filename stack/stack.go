@@ -1,7 +1,6 @@
 package stack
 
 import (
-	"encoding/json"
 	"errors"
 	"path"
 
@@ -9,8 +8,6 @@ import (
 
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/myuser"
-	"github.com/Appliscale/perun/parameters"
-	"github.com/aws/aws-sdk-go/service/cloudformation"
 )
 
 // This function reads "StackName" from Stack in CliArguments and file from TemplatePath in CliArguments. It converts these to type string.
@@ -54,26 +51,6 @@ func getPath(context *context.Context) (path string, err error) {
 		}
 	} else if len(*context.CliArguments.TemplatePath) > 0 {
 		path = *context.CliArguments.TemplatePath
-	}
-	return
-}
-
-// Get the parameters - if parameters file provided - from file, else - interactively from user
-func getParameters(context *context.Context) (params []*cloudformation.Parameter, err error) {
-	if *context.CliArguments.ParametersFile == "" {
-		params, err = parameters.GetAwsParameters(context)
-	} else {
-		var parametersData []byte
-		var readParameters []*parameters.Parameter
-		parametersData, err = ioutil.ReadFile(*context.CliArguments.ParametersFile)
-		if err != nil {
-			return
-		}
-		err = json.Unmarshal(parametersData, &readParameters)
-		if err != nil {
-			return
-		}
-		params = parameters.ParseParameterToAwsCompatible(readParameters)
 	}
 	return
 }

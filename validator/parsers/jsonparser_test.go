@@ -18,7 +18,7 @@ package parsers
 
 import (
 	"fmt"
-	template "github.com/Appliscale/perun/offlinevalidator/template"
+	template "github.com/Appliscale/perun/validator/template"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"

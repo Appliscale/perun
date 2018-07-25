@@ -29,7 +29,6 @@ import (
 
 var ValidateMode = "validate"
 var ConvertMode = "convert"
-var OfflineValidateMode = "validate_offline"
 var ConfigureMode = "configure"
 var CreateStackMode = "create-stack"
 var DestroyStackMode = "delete-stack"
@@ -73,6 +72,7 @@ type CliArguments struct {
 	ChangeSet               *string
 	Lint                    *bool
 	LinterConfiguration     *string
+	EstimateCost            *bool
 }
 
 // Get and validate CLI arguments. Returns error if validation fails.
@@ -91,15 +91,13 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		configurationPath = app.Flag("config", "A path to the configuration file").Short('c').String()
 		showProgress      = app.Flag("progress", "Show progress of stack creation. Option available only after setting up a remote sink").Bool()
 
-		onlineValidate                  = app.Command(ValidateMode, "Online template Validation")
-		onlineValidateTemplate          = onlineValidate.Arg("template", "A path to the template file.").Required().String()
-		onlineValidateLint              = onlineValidate.Flag("lint", "Enable template linting").Bool()
-		onlineValidateLintConfiguration = onlineValidate.Flag("lint-configuration", "A path to the configuration file").String()
-
-		offlineValidate                  = app.Command(OfflineValidateMode, "Offline Template Validation")
-		offlineValidateTemplate          = offlineValidate.Arg("template", "A path to the template file.").Required().String()
-		offlineValidateLint              = offlineValidate.Flag("lint", "Enable template linting").Bool()
-		offlineValidateLintConfiguration = offlineValidate.Flag("lint-configuration", "A path to the configuration file").String()
+		validate                  = app.Command(ValidateMode, "Template Validation")
+		validateTemplate          = validate.Arg("template", "A path to the template file.").Required().String()
+		validateLint              = validate.Flag("lint", "Enable template linting").Bool()
+		validateLintConfiguration = validate.Flag("lint-configuration", "A path to the configuration file").String()
+		validateEstimateCost      = validate.Flag("estimate-cost", "Enable cost estimation during validation").Bool()
+		validateParams            = validate.Flag("parameter", "list of parameters").StringMap()
+		validateParametersFile    = validate.Flag("parameters-file", "filename with parameters").String()
 
 		convert                  = app.Command(ConvertMode, "Convertion between JSON and YAML of template files")
 		convertTemplate          = convert.Arg("template", "A path to the template file.").Required().String()
@@ -171,18 +169,14 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 	switch kingpin.MustParse(app.Parse(args[1:])) {
 
 	//online validate
-	case onlineValidate.FullCommand():
+	case validate.FullCommand():
 		cliArguments.Mode = &ValidateMode
-		cliArguments.TemplatePath = onlineValidateTemplate
-		cliArguments.Lint = onlineValidateLint
-		cliArguments.LinterConfiguration = onlineValidateLintConfiguration
-
-		// offline validation
-	case offlineValidate.FullCommand():
-		cliArguments.Mode = &OfflineValidateMode
-		cliArguments.TemplatePath = offlineValidateTemplate
-		cliArguments.Lint = offlineValidateLint
-		cliArguments.LinterConfiguration = offlineValidateLintConfiguration
+		cliArguments.TemplatePath = validateTemplate
+		cliArguments.Lint = validateLint
+		cliArguments.LinterConfiguration = validateLintConfiguration
+		cliArguments.EstimateCost = validateEstimateCost
+		cliArguments.Parameters = validateParams
+		cliArguments.ParametersFile = validateParametersFile
 
 		// convert
 	case convert.FullCommand():

@@ -3,7 +3,7 @@ package linter
 import (
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/helpers"
-	"github.com/Appliscale/perun/offlinevalidator/template"
+	"github.com/Appliscale/perun/validator/template"
 	"github.com/awslabs/goformation/cloudformation"
 	"io/ioutil"
 	"path"
@@ -25,7 +25,6 @@ func CheckStyle(ctx *context.Context) (err error) {
 	if err != nil {
 		return
 	}
-
 
 	templateExtension := path.Ext(*ctx.CliArguments.TemplatePath)
 	templateBytes, err := ioutil.ReadFile(*ctx.CliArguments.TemplatePath)
@@ -94,7 +93,7 @@ func checkAWSCFSpecificStuff(ctx *context.Context, rawTemplate string, lintConf 
 
 	for resourceName := range goFormationTemplate.Resources {
 		if lintConf.CheckLogicalName(resourceName) {
-			ctx.Logger.Warning("Resource '" + resourceName + "' does not meat the given logical Name regex")
+			ctx.Logger.Warning("Resource '" + resourceName + "' does not meet the given logical Name regex")
 		}
 	}
 }
@@ -145,6 +144,9 @@ func checkYamlIndentation(ctx *context.Context, lintConf LinterConfiguration, li
 	indent := int(lintConf.Global.Indent.Value.(float64))
 	last_spaces := 0
 	for line := range lines {
+		if strings.HasPrefix(strings.TrimSpace(lines[line]), "#") {
+			continue
+		}
 		curr_spaces := countLeadingSpace(lines[line])
 		if lintConf.Global.Indent.Required {
 			if curr_spaces%indent != 0 {
@@ -153,7 +155,7 @@ func checkYamlIndentation(ctx *context.Context, lintConf LinterConfiguration, li
 		}
 
 		if last_spaces < curr_spaces {
-			if last_spaces + indent != curr_spaces ||
+			if last_spaces+indent != curr_spaces ||
 				wrongYAMLContinuationIndent(lintConf, lines, line, last_spaces, curr_spaces) {
 				ctx.Logger.Error("line " + strconv.Itoa(line) + ": indentation error")
 			}
@@ -164,7 +166,7 @@ func checkYamlIndentation(ctx *context.Context, lintConf LinterConfiguration, li
 
 func wrongYAMLContinuationIndent(lintConf LinterConfiguration, lines []string, line int, last_spaces int, curr_spaces int) bool {
 	return lintConf.Yaml.ContinuationIndent.Required && !strings.Contains(lines[line], ": ") && !strings.Contains(lines[line], "- ") &&
-		!strings.HasSuffix(lines[line], ":") && last_spaces + int(lintConf.Yaml.ContinuationIndent.Value.(float64)) != curr_spaces
+		!strings.HasSuffix(lines[line], ":") && last_spaces+int(lintConf.Yaml.ContinuationIndent.Value.(float64)) != curr_spaces
 }
 
 func checkJsonIndentation(ctx *context.Context, lintConf LinterConfiguration, lines []string) {

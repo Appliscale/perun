@@ -21,7 +21,7 @@ import (
 	"testing"
 
 	"github.com/Appliscale/perun/logger"
-	"github.com/Appliscale/perun/offlinevalidator/template"
+	"github.com/Appliscale/perun/validator/template"
 	"github.com/stretchr/testify/assert"
 )
 

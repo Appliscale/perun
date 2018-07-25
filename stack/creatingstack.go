@@ -2,13 +2,14 @@ package stack
 
 import (
 	"github.com/Appliscale/perun/context"
+	"github.com/Appliscale/perun/parameters"
 	"github.com/Appliscale/perun/progress"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 )
 
 // This function gets template and  name of stack. It creates "CreateStackInput" structure.
 func createStackInput(template *string, stackName *string, context *context.Context) (cloudformation.CreateStackInput, error) {
-	params, err := getParameters(context)
+	params, err := parameters.ResolveParameters(context)
 	if err != nil {
 		context.Logger.Error(err.Error())
 		return cloudformation.CreateStackInput{}, err

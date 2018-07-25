@@ -3,6 +3,7 @@ package stack
 import (
 	"fmt"
 	"github.com/Appliscale/perun/context"
+	"github.com/Appliscale/perun/parameters"
 	"github.com/Appliscale/perun/progress"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/olekukonko/tablewriter"
@@ -26,7 +27,7 @@ func NewChangeSet(context *context.Context) (err error) {
 		return
 	}
 
-	params, err := getParameters(context)
+	params, err := parameters.ResolveParameters(context)
 	if err != nil {
 		context.Logger.Error(err.Error())
 		return

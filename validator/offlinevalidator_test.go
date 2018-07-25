@@ -14,7 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package offlinevalidator
+package validator
 
 import (
 	"os"
@@ -23,8 +23,8 @@ import (
 	"github.com/Appliscale/perun/configuration"
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/logger"
-	"github.com/Appliscale/perun/offlinevalidator/template"
 	"github.com/Appliscale/perun/specification"
+	"github.com/Appliscale/perun/validator/template"
 	"github.com/stretchr/testify/assert"
 )
 

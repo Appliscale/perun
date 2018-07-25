@@ -26,12 +26,11 @@ import (
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/converter"
 	"github.com/Appliscale/perun/linter"
-	"github.com/Appliscale/perun/offlinevalidator"
-	"github.com/Appliscale/perun/onlinevalidator"
 	"github.com/Appliscale/perun/parameters"
 	"github.com/Appliscale/perun/progress"
 	"github.com/Appliscale/perun/stack"
 	"github.com/Appliscale/perun/utilities"
+	"github.com/Appliscale/perun/validator"
 )
 
 func main() {
@@ -49,17 +48,11 @@ func main() {
 
 	if *ctx.CliArguments.Mode == cliparser.ValidateMode {
 		ctx.InitializeAwsAPI()
-		utilities.CheckFlagAndExit(onlinevalidator.ValidateAndEstimateCosts(&ctx))
+		utilities.CheckFlagAndExit(validator.ValidateAndEstimateCost(&ctx))
 	}
 
 	if *ctx.CliArguments.Mode == cliparser.ConvertMode {
 		utilities.CheckErrorCodeAndExit(converter.Convert(&ctx))
-
-	}
-
-	if *ctx.CliArguments.Mode == cliparser.OfflineValidateMode {
-		utilities.CheckFlagAndExit(offlinevalidator.Validate(&ctx))
-
 	}
 
 	if *ctx.CliArguments.Mode == cliparser.ConfigureMode {
