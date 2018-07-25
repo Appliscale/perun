@@ -40,6 +40,7 @@ var DestroySinkMode = "destroy-remote-sink"
 var CreateParametersMode = "create-parameters"
 var SetStackPolicyMode = "set-stack-policy"
 var CreateChangeSetMode = "create-change-set"
+var LintMode = "lint"
 
 var ChangeSetDefaultName string
 
@@ -70,6 +71,8 @@ type CliArguments struct {
 	DisableStackTermination *bool
 	EnableStackTermination  *bool
 	ChangeSet               *string
+	Lint                    *bool
+	LinterConfiguration     *string
 }
 
 // Get and validate CLI arguments. Returns error if validation fails.
@@ -88,42 +91,58 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		configurationPath = app.Flag("config", "A path to the configuration file").Short('c').String()
 		showProgress      = app.Flag("progress", "Show progress of stack creation. Option available only after setting up a remote sink").Bool()
 
-		onlineValidate         = app.Command(ValidateMode, "Online template Validation")
-		onlineValidateTemplate = onlineValidate.Arg("template", "A path to the template file.").Required().String()
+		onlineValidate                  = app.Command(ValidateMode, "Online template Validation")
+		onlineValidateTemplate          = onlineValidate.Arg("template", "A path to the template file.").Required().String()
+		onlineValidateLint              = onlineValidate.Flag("lint", "Enable template linting").Bool()
+		onlineValidateLintConfiguration = onlineValidate.Flag("lint-configuration", "A path to the configuration file").String()
 
-		offlineValidate         = app.Command(OfflineValidateMode, "Offline Template Validation")
-		offlineValidateTemplate = offlineValidate.Arg("template", "A path to the template file.").Required().String()
+		offlineValidate                  = app.Command(OfflineValidateMode, "Offline Template Validation")
+		offlineValidateTemplate          = offlineValidate.Arg("template", "A path to the template file.").Required().String()
+		offlineValidateLint              = offlineValidate.Flag("lint", "Enable template linting").Bool()
+		offlineValidateLintConfiguration = offlineValidate.Flag("lint-configuration", "A path to the configuration file").String()
 
-		convert            = app.Command(ConvertMode, "Convertion between JSON and YAML of template files")
-		convertTemplate    = convert.Arg("template", "A path to the template file.").Required().String()
-		convertOutputFile  = convert.Arg("output", "A path where converted file will be saved.").Required().String()
-		convertPrettyPrint = convert.Flag("pretty-print", "Pretty printing JSON").Bool()
+		convert                  = app.Command(ConvertMode, "Convertion between JSON and YAML of template files")
+		convertTemplate          = convert.Arg("template", "A path to the template file.").Required().String()
+		convertOutputFile        = convert.Arg("output", "A path where converted file will be saved.").Required().String()
+		convertPrettyPrint       = convert.Flag("pretty-print", "Pretty printing JSON").Bool()
+		convertLint              = convert.Flag("lint", "Enable template linting").Bool()
+		convertLintConfiguration = convert.Flag("lint-configuration", "A path to the configuration file").String()
+
+		lint              = app.Command(LintMode, "Additional validation and template style checks")
+		lintTemplate      = lint.Arg("template", "A path to the template file.").Required().String()
+		lintConfiguration = lint.Flag("lint-configuration", "A path to the configuration file").String()
 
 		configure = app.Command(ConfigureMode, "Create your own configuration mode")
 
-		createStack               = app.Command(CreateStackMode, "Creates a stack on aws")
-		createStackName           = createStack.Arg("stack", "An AWS stack name.").Required().String()
-		createStackTemplate       = createStack.Arg("template", "A path to the template file.").Required().String()
-		createStackCapabilities   = createStack.Flag("capabilities", "Capabilities: CAPABILITY_IAM | CAPABILITY_NAMED_IAM").Enums("CAPABILITY_IAM", "CAPABILITY_NAMED_IAM")
-		createStackParams         = createStack.Flag("parameter", "list of parameters").StringMap()
-		createStackParametersFile = createStack.Flag("parameters-file", "filename with parameters").String()
+		createStack                  = app.Command(CreateStackMode, "Creates a stack on aws")
+		createStackName              = createStack.Arg("stack", "An AWS stack name.").Required().String()
+		createStackTemplate          = createStack.Arg("template", "A path to the template file.").Required().String()
+		createStackCapabilities      = createStack.Flag("capabilities", "Capabilities: CAPABILITY_IAM | CAPABILITY_NAMED_IAM").Enums("CAPABILITY_IAM", "CAPABILITY_NAMED_IAM")
+		createStackParams            = createStack.Flag("parameter", "list of parameters").StringMap()
+		createStackParametersFile    = createStack.Flag("parameters-file", "filename with parameters").String()
+		createStackLint              = createStack.Flag("lint", "Enable template linting").Bool()
+		createStackLintConfiguration = createStack.Flag("lint-configuration", "A path to the configuration file").String()
 
-		createChangeSet               = app.Command(CreateChangeSetMode, "Creates a changeSet on aws")
-		changeSetStackName            = createChangeSet.Arg("stack", "An AWS stack name").Required().String()
-		changeSetTemplate             = createChangeSet.Arg("template", "A path to the template file").Required().String()
-		createChangeSetName           = createChangeSet.Arg("changeSet", "An AWS Change Set name").String()
-		createChangeSetParams         = createChangeSet.Flag("parameter", "list of parameters").StringMap()
-		createChangeSetParametersFile = createChangeSet.Flag("parameters-file", "filename with parameters").String()
+		createChangeSet                  = app.Command(CreateChangeSetMode, "Creates a changeSet on aws")
+		changeSetStackName               = createChangeSet.Arg("stack", "An AWS stack name").Required().String()
+		changeSetTemplate                = createChangeSet.Arg("template", "A path to the template file").Required().String()
+		createChangeSetName              = createChangeSet.Arg("changeSet", "An AWS Change Set name").String()
+		createChangeSetParams            = createChangeSet.Flag("parameter", "list of parameters").StringMap()
+		createChangeSetParametersFile    = createChangeSet.Flag("parameters-file", "filename with parameters").String()
+		createChangeSetLint              = createChangeSet.Flag("lint", "Enable template linting").Bool()
+		createChangeSetLintConfiguration = createChangeSet.Flag("lint-configuration", "A path to the configuration file").String()
 
 		deleteStack     = app.Command(DestroyStackMode, "Deletes a stack on aws")
 		deleteStackName = deleteStack.Arg("stack", "An AWS stack name.").Required().String()
 
-		updateStack               = app.Command(UpdateStackMode, "Updates a stack on aws")
-		updateStackName           = updateStack.Arg("stack", "An AWS stack name").Required().String()
-		updateStackTemplate       = updateStack.Arg("template", "A path to the template file.").Required().String()
-		updateStackCapabilities   = updateStack.Flag("capabilities", "Capabilities: CAPABILITY_IAM | CAPABILITY_NAMED_IAM").Enums("CAPABILITY_IAM", "CAPABILITY_NAMED_IAM")
-		updateStackParams         = updateStack.Flag("parameter", "list of parameters").StringMap()
-		updateStackParametersFile = updateStack.Flag("parameters-file", "filename with parameters").String()
+		updateStack                  = app.Command(UpdateStackMode, "Updates a stack on aws")
+		updateStackName              = updateStack.Arg("stack", "An AWS stack name").Required().String()
+		updateStackTemplate          = updateStack.Arg("template", "A path to the template file.").Required().String()
+		updateStackCapabilities      = updateStack.Flag("capabilities", "Capabilities: CAPABILITY_IAM | CAPABILITY_NAMED_IAM").Enums("CAPABILITY_IAM", "CAPABILITY_NAMED_IAM")
+		updateStackParams            = updateStack.Flag("parameter", "list of parameters").StringMap()
+		updateStackParametersFile    = updateStack.Flag("parameters-file", "filename with parameters").String()
+		updateStackLint              = updateStack.Flag("lint", "Enable template linting").Bool()
+		updateStackLintConfiguration = updateStack.Flag("lint-configuration", "A path to the configuration file").String()
 
 		mfaCommand = app.Command(MfaMode, "Create temporary secure credentials with MFA.")
 
@@ -155,11 +174,15 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 	case onlineValidate.FullCommand():
 		cliArguments.Mode = &ValidateMode
 		cliArguments.TemplatePath = onlineValidateTemplate
+		cliArguments.Lint = onlineValidateLint
+		cliArguments.LinterConfiguration = onlineValidateLintConfiguration
 
 		// offline validation
 	case offlineValidate.FullCommand():
 		cliArguments.Mode = &OfflineValidateMode
 		cliArguments.TemplatePath = offlineValidateTemplate
+		cliArguments.Lint = offlineValidateLint
+		cliArguments.LinterConfiguration = offlineValidateLintConfiguration
 
 		// convert
 	case convert.FullCommand():
@@ -167,10 +190,17 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		cliArguments.TemplatePath = convertTemplate
 		cliArguments.OutputFilePath = convertOutputFile
 		cliArguments.PrettyPrint = convertPrettyPrint
+		cliArguments.Lint = convertLint
+		cliArguments.LinterConfiguration = convertLintConfiguration
 
 		// configure
 	case configure.FullCommand():
 		cliArguments.Mode = &ConfigureMode
+
+	case lint.FullCommand():
+		cliArguments.Mode = &LintMode
+		cliArguments.TemplatePath = lintTemplate
+		cliArguments.LinterConfiguration = lintConfiguration
 
 		// create Stack
 	case createStack.FullCommand():
@@ -180,6 +210,8 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		cliArguments.Capabilities = createStackCapabilities
 		cliArguments.Parameters = createStackParams
 		cliArguments.ParametersFile = createStackParametersFile
+		cliArguments.Lint = createStackLint
+		cliArguments.LinterConfiguration = createStackLintConfiguration
 
 		// delete Stack
 	case deleteStack.FullCommand():
@@ -198,6 +230,8 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		cliArguments.Capabilities = updateStackCapabilities
 		cliArguments.ParametersFile = updateStackParametersFile
 		cliArguments.Parameters = updateStackParams
+		cliArguments.Lint = updateStackLint
+		cliArguments.LinterConfiguration = updateStackLintConfiguration
 
 		// create Parameters
 	case createParameters.FullCommand():
@@ -229,6 +263,8 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		cliArguments.Stack = changeSetStackName
 		cliArguments.Parameters = createChangeSetParams
 		cliArguments.ParametersFile = createChangeSetParametersFile
+		cliArguments.Lint = createChangeSetLint
+		cliArguments.LinterConfiguration = createChangeSetLintConfiguration
 
 		// set up remote sink
 	case setupSink.FullCommand():

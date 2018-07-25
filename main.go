@@ -25,6 +25,7 @@ import (
 	"github.com/Appliscale/perun/configurator"
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/converter"
+	"github.com/Appliscale/perun/linter"
 	"github.com/Appliscale/perun/offlinevalidator"
 	"github.com/Appliscale/perun/onlinevalidator"
 	"github.com/Appliscale/perun/parameters"
@@ -37,6 +38,13 @@ func main() {
 	ctx, err := context.GetContext(cliparser.ParseCliArguments, configuration.GetConfiguration, configuration.ReadInconsistencyConfiguration)
 	if err != nil {
 		os.Exit(1)
+	}
+
+	if ctx.CliArguments.Lint != nil && *ctx.CliArguments.Lint {
+		err = linter.CheckStyle(&ctx)
+		if err != nil {
+			os.Exit(1)
+		}
 	}
 
 	if *ctx.CliArguments.Mode == cliparser.ValidateMode {
@@ -56,6 +64,14 @@ func main() {
 
 	if *ctx.CliArguments.Mode == cliparser.ConfigureMode {
 		configurator.FileName(&ctx)
+		os.Exit(0)
+	}
+
+	if *ctx.CliArguments.Mode == cliparser.LintMode {
+		err = linter.CheckStyle(&ctx)
+		if err != nil {
+			os.Exit(1)
+		}
 		os.Exit(0)
 	}
 
