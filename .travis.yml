@@ -1,5 +1,7 @@
 language: go
 
+sudo: required
+
 go:
   - 1.9.x
 
@@ -32,3 +34,7 @@ deploy:
   skip_cleanup: true
   on:
     tags: true
+
+after_deploy:
+  - chmod +x release.sh
+  - ./release.sh $TRAVIS_TAG $TRAVIS_SECURE_TOKEN_NAME
