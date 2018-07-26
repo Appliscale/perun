@@ -1,20 +1,27 @@
-version: 0.9.{build}
+version: "{build}"
 
-platform: x64
+platform:
+  - x64
+  - x86
 
-clone_folder: c:\gopath\src\github.com\Appliscale\cftool
+clone_folder: c:\gopath\src\github.com\Appliscale\perun
 
 environment:
   GOPATH: c:\gopath
 
 install:
-  - echo %APPDATA%
-  - echo %PROGRAMFILES%
+  - echo %LOCALAPPDATA%
   - echo %PATH%
   - echo %GOPATH%
-  - set PATH=%GOPATH%\bin;c:\go\bin;%PATH%
-  - go version
-  - go env
+  - go get golang.org/dl/go1.11beta2
+  - set GOROOT=C:\Users\appveyor\sdk\go1.11beta2
+  - set PATH=%GOPATH%\bin;%GOROOT%\bin;%PATH%
+  - go1.11beta2 download
+  - go1.11beta2 version
+  - go1.11beta2 env
+  - go1.11beta2 get github.com/golang/mock/gomock
+  - go1.11beta2 install github.com/golang/mock/mockgen
 
+# https://github.com/golang/go/issues/18468
 build_script:
-  - ps: .\build.ps1
+  - ps: .\build.ps1 -go go1.11beta2

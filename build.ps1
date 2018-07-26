@@ -1,33 +1,42 @@
-param([switch]$SKIP_TESTS, [switch]$SKIP_ANALYZE)
+param([string]$go)
 
-$ConfigDir = "$env:APPDATA\.config\cftool"
+function Invoke-AndFailOnError {
+    param([string]$cmd)
+
+    Invoke-Expression $cmd
+    if ($LastExitCode -ne 0) {
+        Exit $LastExitCode
+    }
+}
+
+$ErrorActionPreference = "Stop"
+
+$ConfigDir = "$env:LOCALAPPDATA\.config\perun"
+$PoliciesDir = "$env:LOCALAPPDATA\.config\perun\stack-policies"
 
 $ConfigDirExists = Test-Path $ConfigDir
 if ($ConfigDirExists -eq $False) {
     New-Item -ItemType directory -Path $ConfigDir >$null 2>&1
 }
-Copy-Item config.yaml "$ConfigDir\config.yaml"
 
-Write-Host "$ConfigDir\config.yaml:"
-Get-Content "$ConfigDir\config.yaml"
-
-go get -t -d .\...
-if ($? -ne $True) {
-    Exit 1
+$PoliciesDirExists = Test-Path $PoliciesDir
+if ($PoliciesDirExists -eq $False) {
+    New-Item -ItemType directory -Path $PoliciesDir >$null 2>&1
 }
 
-if ($SKIP_TESTS -eq $False) {
-    Invoke-Expression "go test github.com/Appliscale/cftool/... -cover"
-    if ($? -ne $True) {
-        Exit 1
-    }
-}
+Copy-Item defaults\main.yaml "$ConfigDir\main.yaml"
+Copy-Item defaults\style.yaml "$ConfigDir\style.yaml"
+Copy-Item defaults\specification_inconsistency.yaml "$ConfigDir\specification_inconsistency.yaml"
+Copy-Item defaults\blocked.json "$PoliciesDir\blocked.json"
+Copy-Item defaults\unblocked.json "$PoliciesDir\unblocked.json"
 
-if ($SKIP_ANALYZE -eq $False) {
-    go tool vet .\
-}
+Invoke-AndFailOnError "$go get -t .\..."
+Invoke-AndFailOnError "$go install .\..."
+Invoke-AndFailOnError "$go build ."
+Invoke-AndFailOnError "$go fmt .\..."
+Invoke-AndFailOnError "$go vet .\..."
 
-Invoke-Expression "go install github.com/Appliscale/cftool"
-if ($? -ne $True) {
-    Exit 1
-}
+$Mockgen = "$env:GOPATH\bin\mockgen"
+Invoke-AndFailOnError "$Mockgen -source '.\awsapi\cloudformation.go' -destination '.\stack\mocks\mock_aws_api.go' -package mocks CloudFormationAPI"
+
+Invoke-AndFailOnError "$go test -cover -failfast .\..."
