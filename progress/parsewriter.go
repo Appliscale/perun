@@ -1,6 +1,7 @@
 package progress
 
 import (
+	"fmt"
 	"github.com/fatih/color"
 	"strings"
 )
@@ -79,7 +80,7 @@ func NewParseWriter() (pw *ParseWriter) {
 
 func (pw *ParseWriter) Write(p []byte) (n int, err error) {
 	var newString = pw.colorStatuses(string(p))
-	print(newString)
+	fmt.Print(newString)
 	pw.linesPrinted += strings.Count(newString, "\n") - strings.Count(newString, "\033[A")
 	return len(p), nil
 }
@@ -94,7 +95,7 @@ func (pw *ParseWriter) colorStatuses(s string) string {
 
 func (pw *ParseWriter) returnWritten() {
 	for i := 0; i < pw.linesPrinted; i++ {
-		print("\033[A")
+		fmt.Print("\033[A")
 	}
 	pw.linesPrinted = 0
 	return

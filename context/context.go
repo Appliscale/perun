@@ -20,9 +20,12 @@ package context
 import (
 	"os"
 
+	"github.com/Appliscale/perun/awsapi"
 	"github.com/Appliscale/perun/cliparser"
 	"github.com/Appliscale/perun/configuration"
 	"github.com/Appliscale/perun/logger"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/cloudformation"
 )
 
 type Context struct {
@@ -30,6 +33,8 @@ type Context struct {
 	Logger              *logger.Logger
 	Config              configuration.Configuration
 	InconsistencyConfig configuration.InconsistencyConfiguration
+	CloudFormation      awsapi.CloudFormationAPI
+	CurrentSession      *session.Session
 }
 
 type cliArgumentsParser func(args []string) (cliparser.CliArguments, error)
@@ -38,37 +43,42 @@ type inconsistenciesReader func(*logger.Logger) configuration.InconsistencyConfi
 
 // Create CLI context.
 func GetContext(cliArgParser cliArgumentsParser, confReader configurationReader, inconsistReader inconsistenciesReader) (context Context, err error) {
-	logger := logger.CreateDefaultLogger()
+	myLogger := logger.CreateDefaultLogger()
 
 	cliArguments, err := cliArgParser(os.Args)
 	if err != nil {
-		logger.Error(err.Error())
+		myLogger.Error(err.Error())
 		return
 	}
 
 	if cliArguments.Quiet != nil {
-		logger.Quiet = *cliArguments.Quiet
+		myLogger.Quiet = *cliArguments.Quiet
 	}
 
 	if cliArguments.Yes != nil {
-		logger.Yes = *cliArguments.Yes
+		myLogger.Yes = *cliArguments.Yes
 	}
 
-	config, err := confReader(cliArguments, &logger)
+	config, err := confReader(cliArguments, &myLogger)
 	if err != nil {
-		logger.Error(err.Error())
+		myLogger.Error(err.Error())
 		return
 	}
 
-	logger.SetVerbosity(config.DefaultVerbosity)
+	myLogger.SetVerbosity(config.DefaultVerbosity)
 
-	iconsistenciesConfig := inconsistReader(&logger)
+	iconsistenciesConfig := inconsistReader(&myLogger)
 
 	context = Context{
 		CliArguments:        cliArguments,
-		Logger:              &logger,
+		Logger:              &myLogger,
 		Config:              config,
 		InconsistencyConfig: iconsistenciesConfig,
 	}
 	return
+}
+
+func (context *Context) InitializeAwsAPI() {
+	context.CurrentSession = InitializeSession(context)
+	context.CloudFormation = awsapi.NewAWSCloudFormation(cloudformation.New(context.CurrentSession))
 }
