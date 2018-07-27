@@ -43,17 +43,13 @@ With first command a default configuration files (`defaults/main.yaml` and `defa
 ### Commands
 
 #### Validation
-To validate your template with AWS API (*online validation*), just type:
+To validate your template, just type:
 
 ```bash
 ~ $ perun validate <PATH TO YOUR TEMPLATE>
 ```
-
-To validate your template offline (*well*, almost offline :wink: - *AWS CloudFormation Resource Specification* still needs to be downloaded for a fresh installation) use `validate_offline` mode:
-
-```bash
-~ $ perun validate_offline <PATH TO YOUR TEMPLATE>
-```
+Your template will be then validated using both our validation mechanism and AWS API
+(*online validation*). For our valida
 
 #### Conversion
 To convert your template between JSON and YAML formats you have to type:
