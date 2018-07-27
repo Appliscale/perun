@@ -49,7 +49,7 @@ To validate your template, just type:
 ~ $ perun validate <PATH TO YOUR TEMPLATE>
 ```
 Your template will be then validated using both our validation mechanism and AWS API
-(*online validation*). For our valida
+(*online validation*).
 
 #### Conversion
 To convert your template between JSON and YAML formats you have to type:
