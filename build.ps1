@@ -39,4 +39,4 @@ Invoke-AndFailOnError "$go vet .\..."
 $Mockgen = "$env:GOPATH\bin\mockgen"
 Invoke-AndFailOnError "$Mockgen -source '.\awsapi\cloudformation.go' -destination '.\stack\mocks\mock_aws_api.go' -package mocks CloudFormationAPI"
 
-Invoke-AndFailOnError "$go test -cover -failfast .\..."
+Invoke-AndFailOnError "$go test -cover .\..."
