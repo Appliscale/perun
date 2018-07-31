@@ -19,12 +19,11 @@ package configuration
 
 import (
 	"errors"
-	"io/ioutil"
-	"os"
-
 	"github.com/Appliscale/perun/cliparser"
 	"github.com/Appliscale/perun/logger"
 	"github.com/ghodss/yaml"
+	"io/ioutil"
+	"os"
 )
 
 // Perun configuration.

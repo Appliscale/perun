@@ -41,6 +41,7 @@ var CreateParametersMode = "create-parameters"
 var SetStackPolicyMode = "set-stack-policy"
 var CreateChangeSetMode = "create-change-set"
 var LintMode = "lint"
+var DiffMode = "diff"
 
 var ChangeSetDefaultName string
 
@@ -158,11 +159,15 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 
 		setStackPolicy                  = app.Command(SetStackPolicyMode, "Set stack policy using JSON file.")
 		setStackPolicyName              = setStackPolicy.Arg("stack", "An AWS stack name.").Required().String()
-		setStackPolicyTemplate          = setStackPolicy.Arg("template", "A path to the template file.").Required().String()
+		setStackPolicyTemplate          = setStackPolicy.Arg("template", "A path to the template file.").String()
 		setDefaultBlockingStackPolicy   = setStackPolicy.Flag("block", "Blocking all actions.").Bool()
 		setDefaultUnblockingStackPolicy = setStackPolicy.Flag("unblock", "Unblocking all actions.").Bool()
 		setDisableStackTermination      = setStackPolicy.Flag("disable-stack-termination", "Allow to delete a stack.").Bool()
 		setEnableStackTermination       = setStackPolicy.Flag("enable-stack-termination", "Protecting a stack from being deleted.").Bool()
+
+		diff          = app.Command(DiffMode, "Looking for differences between template and current state.")
+		diffStackName = diff.Arg("stack", "An AWS stack name.").Required().String()
+		diffTemplate  = diff.Arg("template ", "A path to the template file.").Required().String()
 	)
 
 	app.HelpFlag.Short('h')
@@ -265,6 +270,12 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		cliArguments.ParametersFile = createChangeSetParametersFile
 		cliArguments.Lint = createChangeSetLint
 		cliArguments.LinterConfiguration = createChangeSetLintConfiguration
+
+		// differences
+	case diff.FullCommand():
+		cliArguments.Mode = &DiffMode
+		cliArguments.TemplatePath = diffTemplate
+		cliArguments.Stack = diffStackName
 
 		// set up remote sink
 	case setupSink.FullCommand():

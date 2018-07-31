@@ -132,4 +132,9 @@ func main() {
 			utilities.CheckErrorCodeAndExit(stack.ApplyStackPolicy(&ctx))
 		}
 	}
+
+	if *ctx.CliArguments.Mode == cliparser.DiffMode {
+		stack.Diff(&ctx)
+		os.Exit(0)
+	}
 }
