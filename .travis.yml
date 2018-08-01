@@ -15,12 +15,8 @@ before_deploy:
   - 'mkdir -p release'
   - 'GOOS=linux GOARCH=amd64 go build -o release/perun-linux-amd64'
   - 'GOOS=darwin GOARCH=amd64 go build -o release/perun-darwin-amd64'
-  - 'GOOS=windows GOARCH=amd64 go build -o release/perun-windows-amd64.exe'
-  - 'GOOS=windows GOARCH=386 go build -o release/perun-windows-386.exe'
   - 'tar -C release -czf release/perun-linux-amd64.tar.gz perun-linux-amd64'
   - 'tar -C release -czf release/perun-darwin-amd64.tar.gz perun-darwin-amd64'
-  - 'tar -C release -czf release/perun-windows-amd64.tar.gz perun-windows-amd64.exe'
-  - 'tar -C release -czf release/perun-windows-386.tar.gz perun-windows-386.exe'
 
 deploy:
   provider: releases
@@ -29,8 +25,6 @@ deploy:
   file:
     - release/perun-linux-amd64.tar.gz
     - release/perun-darwin-amd64.tar.gz
-    - release/perun-windows-amd64.tar.gz
-    - release/perun-windows-386.tar.gz
   skip_cleanup: true
   on:
     tags: true
