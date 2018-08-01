@@ -4,7 +4,7 @@
 <img src="perun_logo.png" alt="Perun logo">
 </p>
 
-A swiss army knife for *AWS CloudFormation* templates - validation, conversion, generators and other various stuff.
+A command-line validation tool for *AWS Cloud Formation* that allows to conquer the cloud faster!
 
 ## Goal
 
@@ -50,16 +50,6 @@ To validate your template, just type:
 ```
 Your template will be then validated using both our validation mechanism and AWS API
 (*online validation*).
-
-#### Conversion
-To convert your template between JSON and YAML formats you have to type:
-
-```bash
-~ $ perun convert
-           <PATH TO YOUR INCOMING TEMPLATE>
-           <PATH FOR A CONVERTED FILE, INCLUDING FILE NAME>
-           <JSON or YAML>
-```
 
 #### Configuration
 To create your own configuration file use `configure` mode:
