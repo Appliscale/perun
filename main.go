@@ -14,7 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// A tool for CloudFormation template validation and conversion.
+// A tool for CloudFormation template validation.
 package main
 
 import (
@@ -24,7 +24,6 @@ import (
 	"github.com/Appliscale/perun/configuration"
 	"github.com/Appliscale/perun/configurator"
 	"github.com/Appliscale/perun/context"
-	"github.com/Appliscale/perun/converter"
 	"github.com/Appliscale/perun/linter"
 	"github.com/Appliscale/perun/parameters"
 	"github.com/Appliscale/perun/progress"
@@ -49,10 +48,6 @@ func main() {
 	if *ctx.CliArguments.Mode == cliparser.ValidateMode {
 		ctx.InitializeAwsAPI()
 		utilities.CheckFlagAndExit(validator.ValidateAndEstimateCost(&ctx))
-	}
-
-	if *ctx.CliArguments.Mode == cliparser.ConvertMode {
-		utilities.CheckErrorCodeAndExit(converter.Convert(&ctx))
 	}
 
 	if *ctx.CliArguments.Mode == cliparser.ConfigureMode {

@@ -28,7 +28,6 @@ import (
 )
 
 var ValidateMode = "validate"
-var ConvertMode = "convert"
 var ConfigureMode = "configure"
 var CreateStackMode = "create-stack"
 var DestroyStackMode = "delete-stack"
@@ -78,7 +77,7 @@ type CliArguments struct {
 // Get and validate CLI arguments. Returns error if validation fails.
 func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 	var (
-		app = kingpin.New("Perun", "Swiss army knife for AWS CloudFormation templates - validation, conversion, generators and other various stuff.")
+		app = kingpin.New("Perun", "A command-line validation tool for AWS Cloud Formation that allows to conquer the cloud faster!")
 
 		quiet             = app.Flag("quiet", "No console output, just return code.").Short('q').Bool()
 		yes               = app.Flag("yes", "Always say yes.").Short('y').Bool()
@@ -98,13 +97,6 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		validateEstimateCost      = validate.Flag("estimate-cost", "Enable cost estimation during validation").Bool()
 		validateParams            = validate.Flag("parameter", "list of parameters").StringMap()
 		validateParametersFile    = validate.Flag("parameters-file", "filename with parameters").String()
-
-		convert                  = app.Command(ConvertMode, "Convertion between JSON and YAML of template files")
-		convertTemplate          = convert.Arg("template", "A path to the template file.").Required().String()
-		convertOutputFile        = convert.Arg("output", "A path where converted file will be saved.").Required().String()
-		convertPrettyPrint       = convert.Flag("pretty-print", "Pretty printing JSON").Bool()
-		convertLint              = convert.Flag("lint", "Enable template linting").Bool()
-		convertLintConfiguration = convert.Flag("lint-configuration", "A path to the configuration file").String()
 
 		lint              = app.Command(LintMode, "Additional validation and template style checks")
 		lintTemplate      = lint.Arg("template", "A path to the template file.").Required().String()
@@ -177,15 +169,6 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		cliArguments.EstimateCost = validateEstimateCost
 		cliArguments.Parameters = validateParams
 		cliArguments.ParametersFile = validateParametersFile
-
-		// convert
-	case convert.FullCommand():
-		cliArguments.Mode = &ConvertMode
-		cliArguments.TemplatePath = convertTemplate
-		cliArguments.OutputFilePath = convertOutputFile
-		cliArguments.PrettyPrint = convertPrettyPrint
-		cliArguments.Lint = convertLint
-		cliArguments.LinterConfiguration = convertLintConfiguration
 
 		// configure
 	case configure.FullCommand():
