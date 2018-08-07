@@ -72,7 +72,7 @@ type CliArguments struct {
 	Lint                    *bool
 	LinterConfiguration     *string
 	EstimateCost            *bool
-	NoValidation            *bool
+	SkipValidation          *bool
 }
 
 // Get and validate CLI arguments. Returns error if validation fails.
@@ -271,7 +271,7 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 	cliArguments.Sandbox = sandbox
 	cliArguments.ConfigurationPath = configurationPath
 	cliArguments.Progress = showProgress
-	cliArguments.NoValidation = noValidate
+	cliArguments.SkipValidation = noValidate
 
 	if *cliArguments.DurationForMFA < 0 {
 		err = errors.New("You should specify value for duration of MFA token greater than zero")
