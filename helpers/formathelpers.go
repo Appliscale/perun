@@ -65,7 +65,6 @@ func ParseYAML(templateFile []byte, refTemplate template.Template, logger *logge
 			err = errors.New("Deletion Policy in resource: " + resource + " has to be a string literal, cannot be parametrized")
 		}
 	}
-
 	preprocessed, preprocessingError := intrinsicsolver.FixFunctions(templateFile, logger, "multiline", "elongate", "correctlong")
 	if preprocessingError != nil {
 		logger.Error(preprocessingError.Error())
@@ -73,7 +72,7 @@ func ParseYAML(templateFile []byte, refTemplate template.Template, logger *logge
 
 	tempYAML, parseError := goformation.ParseYAML(preprocessed)
 	if parseError != nil {
-		logger.Error(parseError.Error())
+		return *cloudformation.NewTemplate(), parseError
 	}
 
 	returnTemplate := *tempYAML
