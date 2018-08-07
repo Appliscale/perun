@@ -72,6 +72,7 @@ type CliArguments struct {
 	Lint                    *bool
 	LinterConfiguration     *string
 	EstimateCost            *bool
+	SkipValidation          *bool
 }
 
 // Get and validate CLI arguments. Returns error if validation fails.
@@ -89,6 +90,7 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		sandbox           = app.Flag("sandbox", "Do not use configuration files hierarchy.").Bool()
 		configurationPath = app.Flag("config", "A path to the configuration file").Short('c').String()
 		showProgress      = app.Flag("progress", "Show progress of stack creation. Option available only after setting up a remote sink").Bool()
+		noValidate        = app.Flag("no-validate", "Disable validation before stack creation/update or creating Change Set.").Bool()
 
 		validate                  = app.Command(ValidateMode, "Template Validation")
 		validateTemplate          = validate.Arg("template", "A path to the template file.").Required().String()
@@ -112,6 +114,7 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		createStackParametersFile    = createStack.Flag("parameters-file", "filename with parameters").String()
 		createStackLint              = createStack.Flag("lint", "Enable template linting").Bool()
 		createStackLintConfiguration = createStack.Flag("lint-configuration", "A path to the configuration file").String()
+		createStackEstimateCost      = createStack.Flag("estimate-cost", "Enable cost estimation during validation").Bool()
 
 		createChangeSet                  = app.Command(CreateChangeSetMode, "Creates a changeSet on aws")
 		changeSetStackName               = createChangeSet.Arg("stack", "An AWS stack name").Required().String()
@@ -121,6 +124,7 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		createChangeSetParametersFile    = createChangeSet.Flag("parameters-file", "filename with parameters").String()
 		createChangeSetLint              = createChangeSet.Flag("lint", "Enable template linting").Bool()
 		createChangeSetLintConfiguration = createChangeSet.Flag("lint-configuration", "A path to the configuration file").String()
+		createChangeSetEstimateCost      = createChangeSet.Flag("estimate-cost", "Enable cost estimation during validation").Bool()
 
 		deleteStack     = app.Command(DestroyStackMode, "Deletes a stack on aws")
 		deleteStackName = deleteStack.Arg("stack", "An AWS stack name.").Required().String()
@@ -133,6 +137,7 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		updateStackParametersFile    = updateStack.Flag("parameters-file", "filename with parameters").String()
 		updateStackLint              = updateStack.Flag("lint", "Enable template linting").Bool()
 		updateStackLintConfiguration = updateStack.Flag("lint-configuration", "A path to the configuration file").String()
+		updateStackEstimateCost      = updateStack.Flag("estimate-cost", "Enable cost estimation during validation").Bool()
 
 		mfaCommand = app.Command(MfaMode, "Create temporary secure credentials with MFA.")
 
@@ -189,6 +194,7 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		cliArguments.ParametersFile = createStackParametersFile
 		cliArguments.Lint = createStackLint
 		cliArguments.LinterConfiguration = createStackLintConfiguration
+		cliArguments.EstimateCost = createStackEstimateCost
 
 		// delete Stack
 	case deleteStack.FullCommand():
@@ -209,6 +215,7 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		cliArguments.Parameters = updateStackParams
 		cliArguments.Lint = updateStackLint
 		cliArguments.LinterConfiguration = updateStackLintConfiguration
+		cliArguments.EstimateCost = updateStackEstimateCost
 
 		// create Parameters
 	case createParameters.FullCommand():
@@ -242,6 +249,7 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		cliArguments.ParametersFile = createChangeSetParametersFile
 		cliArguments.Lint = createChangeSetLint
 		cliArguments.LinterConfiguration = createChangeSetLintConfiguration
+		cliArguments.EstimateCost = createChangeSetEstimateCost
 
 		// set up remote sink
 	case setupSink.FullCommand():
@@ -263,6 +271,7 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 	cliArguments.Sandbox = sandbox
 	cliArguments.ConfigurationPath = configurationPath
 	cliArguments.Progress = showProgress
+	cliArguments.SkipValidation = noValidate
 
 	if *cliArguments.DurationForMFA < 0 {
 		err = errors.New("You should specify value for duration of MFA token greater than zero")

@@ -55,7 +55,6 @@ func NewChangeSet(context *context.Context) (err error) {
 		}
 		doUpdateStack(context, templateStruct)
 	}
-
 	return
 }
 

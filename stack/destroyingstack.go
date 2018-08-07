@@ -26,6 +26,7 @@ func DestroyStack(context *context.Context) error {
 		context.Logger.Error(err.Error())
 		return err
 	}
+	context.Logger.Info("Stack deletion request successful")
 	return nil
 }
 
