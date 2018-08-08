@@ -30,7 +30,7 @@ func TestCreateConfig(t *testing.T) {
 	myconfig := configuration.Configuration{
 		DefaultProfile:        "profile",
 		DefaultRegion:         "region",
-		SpecificationURL:      resourceSpecificationURL,
+		SpecificationURL:      ResourceSpecificationURL,
 		DefaultDecisionForMFA: false,
 		DefaultDurationForMFA: 3600,
 		DefaultVerbosity:      "INFO"}

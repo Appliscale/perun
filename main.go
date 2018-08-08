@@ -18,6 +18,7 @@
 package main
 
 import (
+	"github.com/Appliscale/perun/checkingrequiredfiles"
 	"os"
 
 	"github.com/Appliscale/perun/cliparser"
@@ -34,10 +35,10 @@ import (
 
 func main() {
 	ctx, err := context.GetContext(cliparser.ParseCliArguments, configuration.GetConfiguration, configuration.ReadInconsistencyConfiguration)
+	checkingrequiredfiles.CheckingRequiredFiles(&ctx)
 	if err != nil {
 		os.Exit(1)
 	}
-
 	if ctx.CliArguments.Lint != nil && *ctx.CliArguments.Lint {
 		err = linter.CheckStyle(&ctx)
 		if err != nil {

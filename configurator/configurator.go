@@ -1,15 +1,14 @@
 package configurator
 
 import (
-	"os"
-	"strconv"
-
 	"github.com/Appliscale/perun/configuration"
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/myuser"
+	"os"
+	"strconv"
 )
 
-var resourceSpecificationURL = map[string]string{
+var ResourceSpecificationURL = map[string]string{
 	"us-east-2":      "https://dnwj8swjjbsbt.cloudfront.net",
 	"us-east-1":      "https://d1uauaxba7bl26.cloudfront.net",
 	"us-west-1":      "https://d68hl49wbnanq.cloudfront.net",
@@ -26,30 +25,44 @@ var resourceSpecificationURL = map[string]string{
 	"sa-east-1":      "https://d3c9jyj3w509b0.cloudfront.net",
 }
 
-func FileName(context *context.Context) {
+func FileName(ctx *context.Context) {
 	homePath, pathError := myuser.GetUserHomeDir()
 	if pathError != nil {
-		context.Logger.Error(pathError.Error())
+		ctx.Logger.Error(pathError.Error())
 	}
 	homePath += "/.config/perun"
-	context.Logger.Always("Configure file could be in \n  " + homePath + "\n  /etc/perun")
+	ctx.Logger.Always("Configure file could be in \n  " + homePath + "\n  /etc/perun")
 	var yourPath string
 	var yourName string
-	context.Logger.GetInput("Your path", &yourPath)
-	context.Logger.GetInput("Filename", &yourName)
-	findFile(yourPath+"/"+yourName, context)
+	ctx.Logger.GetInput("Your path", &yourPath)
+	ctx.Logger.GetInput("Filename", &yourName)
+	profile := findFile(yourPath+"/"+yourName, ctx)
+	var answer string
+	ctx.Logger.GetInput("Do you want to create .aws/credentials for this profile? Y/N", &answer)
+	if answer == "Y" || answer == "y" {
+		GetKeysFromUser(ctx, profile)
+	}
 }
 
-func findFile(path string, context *context.Context) {
+func findFile(path string, context *context.Context) string {
 	context.Logger.Always("File will be created in " + path)
 	_, err := os.Stat(path)
 	if os.IsNotExist(err) {
 		showRegions(context)
 		con := createConfig(context)
-		configuration.SaveToFile(con, path, *context.Logger)
+		configuration.SaveToFile(con, path, context.Logger)
+		return con.DefaultProfile
 	} else {
-		context.Logger.Always("File already exists in this path")
+		var answer string
+		context.Logger.GetInput("File already exists in this path. Do you want to overwrite this file? Y/N", &answer)
+		if answer == "Y" || answer == "y" {
+			showRegions(context)
+			con := createConfig(context)
+			configuration.SaveToFile(con, path, context.Logger)
+			return con.DefaultProfile
+		}
 	}
+	return ""
 }
 
 func showRegions(context *context.Context) {
@@ -106,13 +119,13 @@ func createConfig(context *context.Context) configuration.Configuration {
 		myProfile, err1 = setProfile(context)
 	}
 	myTemporaryFilesDirectory := setTemporaryFilesDirectory(context)
-	myResourceSpecificationURL := resourceSpecificationURL
+	myResourceSpecificationURL := ResourceSpecificationURL
 
 	myConfig := configuration.Configuration{
 		DefaultProfile:                 myProfile,
 		DefaultRegion:                  myRegion,
 		SpecificationURL:               myResourceSpecificationURL,
-		DefaultDecisionForMFA:          false,
+		DefaultDecisionForMFA:          true,
 		DefaultDurationForMFA:          3600,
 		DefaultVerbosity:               "INFO",
 		DefaultTemporaryFilesDirectory: myTemporaryFilesDirectory,
@@ -139,4 +152,43 @@ func makeArrayRegions() [14]string {
 	regions[13] = "sa-east-1"
 
 	return regions
+}
+func GetKeysFromUser(ctx *context.Context, profile string) {
+	ctx.Logger.Always("You haven't got .aws/credentials file. Type keys and run perun again.")
+	var awsAccessKeyID string
+	var awsSecretAccessKey string
+	var mfaSerial string
+
+	ctx.Logger.GetInput("awsAccessKeyID", &awsAccessKeyID)
+	ctx.Logger.GetInput("awsSecretAccessKey", &awsSecretAccessKey)
+	ctx.Logger.GetInput("mfaSerial", &mfaSerial)
+
+	homePath, pathError := myuser.GetUserHomeDir()
+	if pathError != nil {
+		ctx.Logger.Error(pathError.Error())
+	}
+	path := homePath + "/.aws/credentials"
+	line := "[" + profile + "-long-term" + "]\n"
+	appendStringToFile(path, line)
+	line = "aws_access_key_id" + " = " + awsAccessKeyID + "\n"
+	appendStringToFile(path, line)
+	line = "aws_secret_access_key" + " = " + awsSecretAccessKey + "\n"
+	appendStringToFile(path, line)
+	line = "mfa_serial" + " = " + mfaSerial + "\n"
+	appendStringToFile(path, line)
+
+}
+
+func appendStringToFile(path, text string) error {
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	_, err = f.WriteString(text)
+	if err != nil {
+		return err
+	}
+	return nil
 }
