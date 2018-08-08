@@ -2,11 +2,11 @@ package context
 
 import (
 	"errors"
+	"github.com/Appliscale/perun/cliparser"
 	"os"
 	"os/user"
 	"time"
 
-	"github.com/Appliscale/perun/cliparser"
 	"github.com/Appliscale/perun/utilities"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
