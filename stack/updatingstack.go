@@ -38,6 +38,7 @@ func doUpdateStack(context *context.Context, updateStackInput cloudformation.Upd
 			return updateError
 		}
 	}
+	context.Logger.Info("Stack update request successful")
 	return nil
 }
 

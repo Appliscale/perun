@@ -66,7 +66,9 @@ func main() {
 
 	if *ctx.CliArguments.Mode == cliparser.CreateStackMode {
 		ctx.InitializeAwsAPI()
-		utilities.CheckErrorCodeAndExit(stack.NewStack(&ctx))
+		if *ctx.CliArguments.SkipValidation || validator.ValidateAndEstimateCost(&ctx) {
+			utilities.CheckErrorCodeAndExit(stack.NewStack(&ctx))
+		}
 	}
 
 	if *ctx.CliArguments.Mode == cliparser.DestroyStackMode {
@@ -87,15 +89,20 @@ func main() {
 
 	if *ctx.CliArguments.Mode == cliparser.CreateChangeSetMode {
 		ctx.InitializeAwsAPI()
-		err := stack.NewChangeSet(&ctx)
-		if err != nil {
-			ctx.Logger.Error(err.Error())
+		if *ctx.CliArguments.SkipValidation || validator.ValidateAndEstimateCost(&ctx) {
+			err := stack.NewChangeSet(&ctx)
+			if err != nil {
+				ctx.Logger.Error(err.Error())
+			}
 		}
 	}
 
 	if *ctx.CliArguments.Mode == cliparser.UpdateStackMode {
 		ctx.InitializeAwsAPI()
-		utilities.CheckErrorCodeAndExit(stack.UpdateStack(&ctx))
+		if *ctx.CliArguments.SkipValidation || validator.ValidateAndEstimateCost(&ctx) {
+			utilities.CheckErrorCodeAndExit(stack.UpdateStack(&ctx))
+		}
+
 	}
 
 	if *ctx.CliArguments.Mode == cliparser.SetupSinkMode {
