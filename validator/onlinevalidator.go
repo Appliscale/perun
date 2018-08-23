@@ -22,6 +22,7 @@ import (
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/parameters"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
+	"strings"
 )
 
 func awsValidate(ctx *context.Context, templateBody *string) bool {
@@ -39,6 +40,10 @@ func isTemplateValid(context *context.Context, template *string) (bool, error) {
 	}
 	_, err := context.CloudFormation.ValidateTemplate(&templateStruct)
 	if err != nil {
+		if strings.Contains(err.Error(), "ExpiredToken:") {
+			context.Logger.Error(err.Error())
+			return true, nil
+		}
 		return false, err
 	}
 	return true, nil
