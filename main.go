@@ -63,10 +63,13 @@ func main() {
 		os.Exit(0)
 	}
 
+	validationUnsuccessfullMsg := "To skip the validation part use the --no-validate flag"
 	if *ctx.CliArguments.Mode == cliparser.CreateStackMode {
 		ctx.InitializeAwsAPI()
 		if *ctx.CliArguments.SkipValidation || validator.ValidateAndEstimateCost(&ctx) {
 			utilities.CheckErrorCodeAndExit(stack.NewStack(&ctx))
+		} else {
+			ctx.Logger.Info(validationUnsuccessfullMsg)
 		}
 	}
 
@@ -93,6 +96,8 @@ func main() {
 			if err != nil {
 				ctx.Logger.Error(err.Error())
 			}
+		} else {
+			ctx.Logger.Info(validationUnsuccessfullMsg)
 		}
 	}
 
@@ -100,6 +105,8 @@ func main() {
 		ctx.InitializeAwsAPI()
 		if *ctx.CliArguments.SkipValidation || validator.ValidateAndEstimateCost(&ctx) {
 			utilities.CheckErrorCodeAndExit(stack.UpdateStack(&ctx))
+		} else {
+			ctx.Logger.Info(validationUnsuccessfullMsg)
 		}
 
 	}
