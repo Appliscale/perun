@@ -1,11 +1,13 @@
 package configurator
 
 import (
+	"github.com/Appliscale/perun/cliparser"
 	"github.com/Appliscale/perun/configuration"
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/myuser"
 	"os"
 	"strconv"
+	"strings"
 )
 
 var ResourceSpecificationURL = map[string]string{
@@ -25,7 +27,8 @@ var ResourceSpecificationURL = map[string]string{
 	"sa-east-1":      "https://d3c9jyj3w509b0.cloudfront.net",
 }
 
-func FileName(ctx *context.Context) {
+// Creating main.yaml and .aws/credentials in configure mode.
+func CreateRequiredFilesInConfigureMode(ctx *context.Context) {
 	homePath, pathError := myuser.GetUserHomeDir()
 	if pathError != nil {
 		ctx.Logger.Error(pathError.Error())
@@ -36,35 +39,34 @@ func FileName(ctx *context.Context) {
 	var yourName string
 	ctx.Logger.GetInput("Your path", &yourPath)
 	ctx.Logger.GetInput("Filename", &yourName)
-	profile := findFile(yourPath+"/"+yourName, ctx)
+	myProfile, myRegion := GetRegionAndProfile(ctx)
+	createConfigurationFile(yourPath+"/"+yourName, ctx, myProfile, myRegion)
+	*ctx, _ = context.GetContext(cliparser.ParseCliArguments, configuration.GetConfiguration, configuration.ReadInconsistencyConfiguration)
 	var answer string
 	ctx.Logger.GetInput("Do you want to create .aws/credentials for this profile? Y/N", &answer)
-	if answer == "Y" || answer == "y" {
-		GetKeysFromUser(ctx, profile)
+	if strings.ToUpper(answer) == "Y" {
+		CreateAWSCredentialsFile(ctx, myProfile)
 	}
 }
 
-func findFile(path string, context *context.Context) string {
+// Creating main.yaml in user's path.
+func createConfigurationFile(path string, context *context.Context, myProfile string, myRegion string) {
 	context.Logger.Always("File will be created in " + path)
 	_, err := os.Stat(path)
 	if os.IsNotExist(err) {
-		showRegions(context)
-		con := createConfig(context)
+		con := CreateMainYaml(context, myProfile, myRegion)
 		configuration.SaveToFile(con, path, context.Logger)
-		return con.DefaultProfile
 	} else {
 		var answer string
 		context.Logger.GetInput("File already exists in this path. Do you want to overwrite this file? Y/N", &answer)
-		if answer == "Y" || answer == "y" {
-			showRegions(context)
-			con := createConfig(context)
+		if strings.ToUpper(answer) == "Y" {
+			con := CreateMainYaml(context, myProfile, myRegion)
 			configuration.SaveToFile(con, path, context.Logger)
-			return con.DefaultProfile
 		}
 	}
-	return ""
 }
 
+//List of all available regions.
 func showRegions(context *context.Context) {
 	regions := makeArrayRegions()
 	context.Logger.Always("Regions:")
@@ -74,6 +76,7 @@ func showRegions(context *context.Context) {
 	}
 }
 
+// Choosing one region.
 func setRegions(context *context.Context) (region string, err bool) {
 	var numberRegion int
 	context.Logger.GetInput("Choose region", &numberRegion)
@@ -89,6 +92,7 @@ func setRegions(context *context.Context) (region string, err bool) {
 	return
 }
 
+// Choosing one profile.
 func setProfile(context *context.Context) (profile string, err bool) {
 	context.Logger.GetInput("Input name of profile", &profile)
 	if profile != "" {
@@ -101,23 +105,31 @@ func setProfile(context *context.Context) (profile string, err bool) {
 	return
 }
 
+// Get region and profile from user.
+func GetRegionAndProfile(ctx *context.Context) (string, string) {
+	profile, err := setProfile(ctx)
+	for !err {
+		ctx.Logger.Always("Try again, invalid profile")
+		profile, err = setProfile(ctx)
+	}
+	showRegions(ctx)
+	region, err1 := setRegions(ctx)
+	for !err1 {
+		ctx.Logger.Always("Try again, invalid region")
+		region, err = setRegions(ctx)
+	}
+	return profile, region
+}
+
+// Setting directory for temporary files.
 func setTemporaryFilesDirectory(context *context.Context) (path string) {
 	context.Logger.GetInput("Directory for temporary files", &path)
 	context.Logger.Always("Your temporary files directory is: " + path)
 	return path
 }
 
-func createConfig(context *context.Context) configuration.Configuration {
-	myRegion, err := setRegions(context)
-	for !err {
-		context.Logger.Always("Try again, invalid region")
-		myRegion, err = setRegions(context)
-	}
-	myProfile, err1 := setProfile(context)
-	for !err1 {
-		context.Logger.Always("Try again, invalid profile")
-		myProfile, err1 = setProfile(context)
-	}
+// Creating main.yaml
+func CreateMainYaml(context *context.Context, myProfile string, myRegion string) configuration.Configuration {
 	myTemporaryFilesDirectory := setTemporaryFilesDirectory(context)
 	myResourceSpecificationURL := ResourceSpecificationURL
 
@@ -125,7 +137,7 @@ func createConfig(context *context.Context) configuration.Configuration {
 		DefaultProfile:                 myProfile,
 		DefaultRegion:                  myRegion,
 		SpecificationURL:               myResourceSpecificationURL,
-		DefaultDecisionForMFA:          true,
+		DefaultDecisionForMFA:          false,
 		DefaultDurationForMFA:          3600,
 		DefaultVerbosity:               "INFO",
 		DefaultTemporaryFilesDirectory: myTemporaryFilesDirectory,
@@ -134,49 +146,71 @@ func createConfig(context *context.Context) configuration.Configuration {
 	return myConfig
 }
 
-func makeArrayRegions() [14]string {
-	var regions [14]string
-	regions[0] = "us-east-1"
-	regions[1] = "us-east-2"
-	regions[2] = "us-west-1"
-	regions[3] = "us-west-2"
-	regions[4] = "ca-central-1"
-	regions[5] = "ca-central-1"
-	regions[6] = "eu-west-1"
-	regions[7] = "eu-west-2"
-	regions[8] = "ap-northeast-1"
-	regions[9] = "ap-northeast-2"
-	regions[10] = "ap-southeast-1"
-	regions[11] = "ap-southeast-2"
-	regions[12] = "ap-south-1"
-	regions[13] = "sa-east-1"
-
+// Array of regions.
+func makeArrayRegions() []string {
+	var regions = []string{
+		"us-east-1",
+		"us-east-2",
+		"us-west-1",
+		"us-west-2",
+		"ca-central-1",
+		"ca-central-1",
+		"eu-west-1",
+		"eu-west-2",
+		"ap-northeast-1",
+		"ap-northeast-2",
+		"ap-southeast-1",
+		"ap-southeast-2",
+		"ap-south-1",
+		"sa-east-1",
+	}
 	return regions
 }
-func GetKeysFromUser(ctx *context.Context, profile string) {
-	ctx.Logger.Always("You haven't got .aws/credentials file. Type keys and run perun again.")
-	var awsAccessKeyID string
-	var awsSecretAccessKey string
-	var mfaSerial string
 
-	ctx.Logger.GetInput("awsAccessKeyID", &awsAccessKeyID)
-	ctx.Logger.GetInput("awsSecretAccessKey", &awsSecretAccessKey)
-	ctx.Logger.GetInput("mfaSerial", &mfaSerial)
+// Creating .aws/credentials file.
+func CreateAWSCredentialsFile(ctx *context.Context, profile string) {
+	if profile != "" {
+		ctx.Logger.Always("You haven't got .aws/credentials file for profile " + profile)
+		var awsAccessKeyID string
+		var awsSecretAccessKey string
+		var mfaSerial string
+
+		ctx.Logger.GetInput("awsAccessKeyID", &awsAccessKeyID)
+		ctx.Logger.GetInput("awsSecretAccessKey", &awsSecretAccessKey)
+		ctx.Logger.GetInput("mfaSerial", &mfaSerial)
+
+		homePath, pathError := myuser.GetUserHomeDir()
+		if pathError != nil {
+			ctx.Logger.Error(pathError.Error())
+		}
+		path := homePath + "/.aws/credentials"
+		line := "[" + profile + "-long-term" + "]\n"
+		appendStringToFile(path, line)
+		line = "aws_access_key_id" + " = " + awsAccessKeyID + "\n"
+		appendStringToFile(path, line)
+		line = "aws_secret_access_key" + " = " + awsSecretAccessKey + "\n"
+		appendStringToFile(path, line)
+		line = "mfa_serial" + " = " + mfaSerial + "\n"
+		appendStringToFile(path, line)
+	}
+}
+
+// Creating .aws/config file.
+func CreateAWSConfigFile(ctx *context.Context, profile string, region string) {
+	var output string
+	ctx.Logger.GetInput("Output", &output)
 
 	homePath, pathError := myuser.GetUserHomeDir()
 	if pathError != nil {
 		ctx.Logger.Error(pathError.Error())
 	}
-	path := homePath + "/.aws/credentials"
-	line := "[" + profile + "-long-term" + "]\n"
+	path := homePath + "/.aws/config"
+	line := "[" + profile + "]\n"
 	appendStringToFile(path, line)
-	line = "aws_access_key_id" + " = " + awsAccessKeyID + "\n"
+	line = "region" + " = " + region + "\n"
 	appendStringToFile(path, line)
-	line = "aws_secret_access_key" + " = " + awsSecretAccessKey + "\n"
+	line = "output" + " = " + output + "\n"
 	appendStringToFile(path, line)
-	line = "mfa_serial" + " = " + mfaSerial + "\n"
-	appendStringToFile(path, line)
-
 }
 
 func appendStringToFile(path, text string) error {
