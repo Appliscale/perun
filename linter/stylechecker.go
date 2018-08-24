@@ -147,7 +147,7 @@ func checkYamlIndentation(ctx *context.Context, lintConf LinterConfiguration, li
 		if strings.HasPrefix(strings.TrimSpace(lines[line]), "#") {
 			continue
 		}
-		curr_spaces := countLeadingSpace(lines[line])
+		curr_spaces := helpers.CountLeadingSpaces(lines[line])
 		if lintConf.Global.Indent.Required {
 			if curr_spaces%indent != 0 {
 				ctx.Logger.Error("line " + strconv.Itoa(line) + ": indentation error")
@@ -190,23 +190,11 @@ func checkJsonIndentation(ctx *context.Context, lintConf LinterConfiguration, li
 			if !found {
 				indentation = -indentation
 			}
-			curr_spaces := countLeadingSpace(lines[line])
+			curr_spaces := helpers.CountLeadingSpaces(lines[line])
 			if curr_spaces-last_spaces != indentation {
 				ctx.Logger.Error("line " + strconv.Itoa(line) + ": indentation error")
 			}
 			last_spaces = curr_spaces
 		}
 	}
-}
-
-func countLeadingSpace(line string) int {
-	i := 0
-	for _, runeValue := range line {
-		if runeValue == ' ' {
-			i++
-		} else {
-			break
-		}
-	}
-	return i
 }
