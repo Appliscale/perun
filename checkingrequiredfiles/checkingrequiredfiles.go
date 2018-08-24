@@ -2,18 +2,18 @@ package checkingrequiredfiles
 
 import (
 	"bufio"
-	"fmt"
 	"github.com/Appliscale/perun/cliparser"
+	"github.com/Appliscale/perun/logger"
 	"github.com/Appliscale/perun/configuration"
 	"github.com/Appliscale/perun/configurator"
 	"github.com/Appliscale/perun/context"
-	"github.com/Appliscale/perun/logger"
 	"github.com/Appliscale/perun/myuser"
 	"github.com/go-ini/ini"
 	"io"
 	"net/http"
 	"os"
 	"strings"
+
 )
 
 //CheckingRequiredFiles looks for required and default files and if doesn't find will create these.
@@ -54,7 +54,7 @@ func CheckingRequiredFiles(ctx *context.Context) {
 				myLogger.GetInput("Default profile exists, do you want to use it *Y* or create your own *N*?", &answer)
 
 				if strings.ToUpper(answer) == "Y" {
-					region = findRegionForProfile(profile, homePath+"/.aws/config")
+					region = findRegionForProfile(profile, homePath+"/.aws/config",myLogger)
 					con := configurator.CreateMainYaml(ctx, profile, region)
 					configuration.SaveToFile(con, homePath+"/.config/perun/main.yaml", &myLogger)
 					*ctx, _ = context.GetContext(cliparser.ParseCliArguments, configuration.GetConfiguration, configuration.ReadInconsistencyConfiguration)
@@ -75,7 +75,7 @@ func CheckingRequiredFiles(ctx *context.Context) {
 					myLogger.GetInput("I cannnot find this profile, try again", &profile)
 					isUserProfile = findProfile(profilesInConfig, profile)
 				}
-				region = findRegionForProfile(profile, homePath+"/.aws/config")
+				region = findRegionForProfile(profile, homePath+"/.aws/config",myLogger)
 				con := configurator.CreateMainYaml(ctx, profile, region)
 				configuration.SaveToFile(con, homePath+"/.config/perun/main.yaml", &myLogger)
 				*ctx, _ = context.GetContext(cliparser.ParseCliArguments, configuration.GetConfiguration, configuration.ReadInconsistencyConfiguration)
@@ -117,7 +117,7 @@ func CheckingRequiredFiles(ctx *context.Context) {
 		}
 
 		if credentialsExists {
-			isProfileInPresent := isProfileInCredentials(profile, homePath+"/.aws/credentials")
+			isProfileInPresent := isProfileInCredentials(profile, homePath+"/.aws/credentials",myLogger)
 
 			if !isProfileInPresent {
 				configurator.CreateAWSCredentialsFile(ctx, profile)
@@ -131,7 +131,7 @@ func CheckingRequiredFiles(ctx *context.Context) {
 				myLogger.Always("Profile from main.yaml: " + ctx.Config.DefaultProfile)
 				configurator.CreateAWSCredentialsFile(ctx, ctx.Config.DefaultProfile)
 			} else {
-				isProfileInPresent := isProfileInCredentials(ctx.Config.DefaultProfile, homePath+"/.aws/credentials")
+				isProfileInPresent := isProfileInCredentials(ctx.Config.DefaultProfile, homePath+"/.aws/credentials",myLogger)
 				if !isProfileInPresent {
 					myLogger.Always("Profile from main.yaml: " + ctx.Config.DefaultProfile)
 					configurator.CreateAWSCredentialsFile(ctx, ctx.Config.DefaultProfile)
@@ -239,10 +239,10 @@ func getProfilesFromFile(path string, mylogger logger.Logger) []string {
 }
 
 // Looking for user's profile in credentials or config.
-func isProfileInCredentials(profile string, path string) bool {
+func isProfileInCredentials(profile string, path string, mylogger logger.Logger) bool {
 	credentials, credentialsError := os.Open(path)
 	if credentialsError != nil {
-		fmt.Println(credentialsError.Error())
+		mylogger.Error(credentialsError.Error())
 	}
 	defer credentials.Close()
 	scanner := bufio.NewScanner(credentials)
@@ -266,14 +266,14 @@ func findProfile(profiles []string, myProfile string) bool {
 }
 
 // Looking for region for profile.
-func findRegionForProfile(profile string, path string) string {
+func findRegionForProfile(profile string, path string, mylogger logger.Logger) string {
 	configuration, loadError := ini.Load(path)
 	if loadError != nil {
-		fmt.Println(loadError.Error())
+		mylogger.Error(loadError.Error())
 	}
 	section, sectionError := configuration.GetSection(profile)
 	if sectionError != nil {
-		fmt.Println(sectionError.Error())
+		mylogger.Error(sectionError.Error())
 		return ""
 	}
 	region := section.Key("region").Value()
@@ -301,6 +301,7 @@ func findNewProfileInCredentials(credentials []string, config []string) []string
 }
 
 // Downloadind other files.
+
 func downloadDefaultFile() error {
 	urls := make(map[string]string)
 	urls["blocked.json"] = "https://s3.amazonaws.com/perun-default-file/blocked.json"
@@ -344,3 +345,4 @@ func downloadDefaultFile() error {
 	}
 	return nil
 }
+
