@@ -170,12 +170,12 @@ func checkParameterValid(parameterName string, parameterArgument map[string]inte
 
 	if parameterArgument["AllowedPattern"] != nil {
 		allowedPattern := parameterArgument["AllowedPattern"].(string)
-		matches, err := regexp.Match(allowedPattern, []byte(parameterValue))
+		matches, err := regexp.Match(fmt.Sprintf("^%s$", allowedPattern), []byte(parameterValue))
 		if err != nil {
 			return false, err
 		}
 		if !matches {
-			context.Logger.Error("Value '" + parameterValue + "' does not match the required pattern for Parameter " + parameterName)
+			context.Logger.Error("Value '" + parameterValue + "' does not match the required pattern: " + allowedPattern + " for Parameter " + parameterName)
 			return false, nil
 		}
 	}
