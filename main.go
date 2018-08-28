@@ -36,7 +36,7 @@ import (
 func main() {
 	ctx, err := context.GetContext(cliparser.ParseCliArguments, configuration.GetConfiguration, configuration.ReadInconsistencyConfiguration)
 	checkingrequiredfiles.CheckingRequiredFiles(&ctx)
-	
+
 	if ctx.CliArguments.Lint != nil && *ctx.CliArguments.Lint {
 		err = linter.CheckStyle(&ctx)
 		if err != nil {

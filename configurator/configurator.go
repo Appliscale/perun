@@ -27,7 +27,6 @@ var ResourceSpecificationURL = map[string]string{
 	"sa-east-1":      "https://d3c9jyj3w509b0.cloudfront.net",
 }
 
-
 // Creating main.yaml and .aws/credentials in configure mode.
 func CreateRequiredFilesInConfigureMode(ctx *context.Context) {
 	homePath, pathError := myuser.GetUserHomeDir()
@@ -139,7 +138,7 @@ func CreateMainYaml(context *context.Context, myProfile string, myRegion string)
 		DefaultProfile:                 myProfile,
 		DefaultRegion:                  myRegion,
 		SpecificationURL:               myResourceSpecificationURL,
-		DefaultDecisionForMFA:          true,
+		DefaultDecisionForMFA:          false,
 		DefaultDurationForMFA:          3600,
 		DefaultVerbosity:               "INFO",
 		DefaultTemporaryFilesDirectory: myTemporaryFilesDirectory,
