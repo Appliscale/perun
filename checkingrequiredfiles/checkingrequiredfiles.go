@@ -231,6 +231,10 @@ func getProfilesFromFile(path string, mylogger logger.Logger) []string {
 		if strings.Contains(scanner.Text(), "[") {
 			profile := strings.TrimPrefix(scanner.Text(), "[")
 			profile = strings.TrimSuffix(profile, "]")
+			if strings.Contains(profile, "profile ") {
+				profile = strings.TrimPrefix(profile, "profile ")
+			}
+
 			profiles = append(profiles, profile)
 		}
 	}
@@ -272,8 +276,11 @@ func findRegionForProfile(profile string, path string, mylogger logger.Logger) s
 	}
 	section, sectionError := configuration.GetSection(profile)
 	if sectionError != nil {
-		mylogger.Error(sectionError.Error())
-		return ""
+		section, sectionError = configuration.GetSection("profile " + profile)
+		if sectionError != nil {
+			mylogger.Error(sectionError.Error())
+			return ""
+		}
 	}
 	region := section.Key("region").Value()
 	return region
