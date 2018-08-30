@@ -2,10 +2,9 @@ package checkingrequiredfiles
 
 import (
 	"bufio"
-	"github.com/Appliscale/perun/cliparser"
-	"github.com/Appliscale/perun/configuration"
 	"github.com/Appliscale/perun/configurator"
 	"github.com/Appliscale/perun/context"
+	"github.com/Appliscale/perun/helpers"
 	"github.com/Appliscale/perun/logger"
 	"github.com/Appliscale/perun/myuser"
 	"github.com/go-ini/ini"
@@ -19,17 +18,17 @@ import (
 func CheckingRequiredFiles(ctx *context.Context) {
 	myLogger := logger.CreateDefaultLogger()
 
-	mainYAMLexists, mainError := isMainYAMLPresent(myLogger)
+	mainYAMLexists, mainError := isMainYAMLPresent(&myLogger)
 	if mainError != nil {
 		myLogger.Error(mainError.Error())
 	}
 
-	configAWSExists, configError := isAWSConfigPresent(myLogger)
+	configAWSExists, configError := isAWSConfigPresent(&myLogger)
 	if configError != nil {
 		myLogger.Error(configError.Error())
 	}
 
-	credentialsExists, credentialsError := isCredentialsPresent(myLogger)
+	credentialsExists, credentialsError := isCredentialsPresent(&myLogger)
 	if credentialsError != nil {
 		myLogger.Error(credentialsError.Error())
 	}
@@ -43,135 +42,67 @@ func CheckingRequiredFiles(ctx *context.Context) {
 	region := "us-east-1"
 
 	if !mainYAMLexists {
-
 		if configAWSExists {
-			profilesInConfig := getProfilesFromFile(homePath+"/.aws/config", myLogger)
-			isDefaultProfile := findProfile(profilesInConfig, profile)
-
-			if isDefaultProfile {
-				var answer string
-				myLogger.GetInput("Default profile exists, do you want to use it *Y* or create your own *N*?", &answer)
-
-				if strings.ToUpper(answer) == "Y" {
-					region = findRegionForProfile(profile, homePath+"/.aws/config", myLogger)
-					con := configurator.CreateMainYaml(ctx, profile, region)
-					configuration.SaveToFile(con, homePath+"/.config/perun/main.yaml", &myLogger)
-					*ctx, _ = context.GetContext(cliparser.ParseCliArguments, configuration.GetConfiguration, configuration.ReadInconsistencyConfiguration)
-
-				} else if strings.ToUpper(answer) == "N" {
-					configurator.CreateRequiredFilesInConfigureMode(ctx)
-					configurator.CreateAWSCredentialsFile(ctx, profile)
-				}
-
-			} else { // isDefaultProfile == false
-				myLogger.Always("Available profiles from config:")
-				for _, prof := range profilesInConfig {
-					myLogger.Always(prof)
-				}
-				myLogger.GetInput("Which profile should perun use as a default?", &profile)
-				isUserProfile := findProfile(profilesInConfig, profile)
-				for !isUserProfile {
-					myLogger.GetInput("I cannnot find this profile, try again", &profile)
-					isUserProfile = findProfile(profilesInConfig, profile)
-				}
-				region = findRegionForProfile(profile, homePath+"/.aws/config", myLogger)
-				con := configurator.CreateMainYaml(ctx, profile, region)
-				configuration.SaveToFile(con, homePath+"/.config/perun/main.yaml", &myLogger)
-				*ctx, _ = context.GetContext(cliparser.ParseCliArguments, configuration.GetConfiguration, configuration.ReadInconsistencyConfiguration)
-
-			}
+			profile, *ctx = configIsPresent(profile, homePath, ctx, myLogger)
 			if !credentialsExists {
-				configurator.CreateAWSCredentialsFile(ctx, profile)
+				createCredentials(profile, homePath, ctx, &myLogger)
 			}
+
 		} else { //configAWSExists == false
 			var answer string
 			myLogger.GetInput("Config doesn't exist, create default *Y* or new *N*?", &answer)
-
 			if strings.ToUpper(answer) == "N" {
-				profile, region = configurator.GetRegionAndProfile(ctx)
-				configurator.CreateAWSConfigFile(ctx, profile, region)
-				con := configurator.CreateMainYaml(ctx, profile, region)
-				configuration.SaveToFile(con, homePath+"/.config/perun/main.yaml", &myLogger)
-				*ctx, _ = context.GetContext(cliparser.ParseCliArguments, configuration.GetConfiguration, configuration.ReadInconsistencyConfiguration)
-				configurator.CreateAWSCredentialsFile(ctx, profile)
-				profilesInCredentials := getProfilesFromFile(homePath+"/.aws/credentials", myLogger)
-				profilesInConfig := getProfilesFromFile(homePath+"/.aws/config", myLogger)
-				profiles := findNewProfileInCredentials(profilesInCredentials, profilesInConfig)
+				profile, region, *ctx = newConfigFile(profile, region, homePath, ctx, &myLogger)
+				addProfileToCredentials(profile, homePath, ctx, &myLogger)
+				addNewProfileFromCredentialsToConfig(profile, homePath, ctx, &myLogger)
 
-				if len(profiles) > 0 {
-					for _, prof := range profiles {
-						myLogger.Always("I found profile " + prof + " in credentials, but not in config. \nCreating new profile in config.")
-						myLogger.GetInput("Region", &region)
-						configurator.CreateAWSConfigFile(ctx, prof, region)
-					}
-				}
 			} else if strings.ToUpper(answer) == "Y" {
 				configurator.CreateAWSConfigFile(ctx, profile, region)
-				con := configurator.CreateMainYaml(ctx, profile, region)
-				configuration.SaveToFile(con, homePath+"/.config/perun/main.yaml", &myLogger)
-				*ctx, _ = context.GetContext(cliparser.ParseCliArguments, configuration.GetConfiguration, configuration.ReadInconsistencyConfiguration)
-				configurator.CreateAWSCredentialsFile(ctx, profile)
-
-			}
-		}
-
-		if credentialsExists {
-			isProfileInPresent := isProfileInCredentials(profile, homePath+"/.aws/credentials", myLogger)
-
-			if !isProfileInPresent {
+				*ctx = createNewMainYaml(profile, homePath, ctx, &myLogger)
 				configurator.CreateAWSCredentialsFile(ctx, profile)
 			}
-		}
 
+			if credentialsExists {
+				createCredentials(profile, homePath, ctx, &myLogger)
+			}
+		}
 	} else { //mainYAMLexists == true
-
 		if configAWSExists {
 			if !credentialsExists {
 				myLogger.Always("Profile from main.yaml: " + ctx.Config.DefaultProfile)
 				configurator.CreateAWSCredentialsFile(ctx, ctx.Config.DefaultProfile)
 			} else {
-				isProfileInPresent := isProfileInCredentials(ctx.Config.DefaultProfile, homePath+"/.aws/credentials", myLogger)
+				isProfileInPresent := isProfileInCredentials(ctx.Config.DefaultProfile, homePath+"/.aws/credentials", &myLogger)
 				if !isProfileInPresent {
 					myLogger.Always("Profile from main.yaml: " + ctx.Config.DefaultProfile)
 					configurator.CreateAWSCredentialsFile(ctx, ctx.Config.DefaultProfile)
 				}
 			}
-
 		} else { //configAWSExists ==false
 			var answer string
-			myLogger.GetInput("Config doesn't exist, create default *Y* or new *N*?", &answer)
+			myLogger.GetInput("Config doesn't exist, create default - "+ctx.Config.DefaultProfile+" *Y* or new *N*?", &answer)
 			if strings.ToUpper(answer) == "Y" {
 				configurator.CreateAWSConfigFile(ctx, ctx.Config.DefaultProfile, ctx.Config.DefaultRegion)
 			} else if strings.ToUpper(answer) == "N" {
-				profile, region = configurator.GetRegionAndProfile(ctx)
-				con := configurator.CreateMainYaml(ctx, profile, region)
-				configuration.SaveToFile(con, homePath+"/.config/perun/main.yaml", &myLogger)
-				configurator.CreateAWSCredentialsFile(ctx, profile)
-				configurator.CreateAWSConfigFile(ctx, profile, region)
-				*ctx, _ = context.GetContext(cliparser.ParseCliArguments, configuration.GetConfiguration, configuration.ReadInconsistencyConfiguration)
-
+				profile, region, *ctx = newConfigFile(profile, region, homePath, ctx, &myLogger)
+				addProfileToCredentials(profile, homePath, ctx, &myLogger)
 			}
-			profilesInCredentials := getProfilesFromFile(homePath+"/.aws/credentials", myLogger)
-			profilesInConfig := getProfilesFromFile(homePath+"/.aws/config", myLogger)
-			profiles := findNewProfileInCredentials(profilesInCredentials, profilesInConfig)
-			if len(profiles) > 0 {
-				for _, prof := range profiles {
-					myLogger.Always("I found profile " + prof + " in credentials, but not in config. \nCreating new profile in config.")
-					myLogger.GetInput("Region", &region)
-					configurator.CreateAWSConfigFile(ctx, prof, region)
-				}
+			addNewProfileFromCredentialsToConfig(ctx.Config.DefaultProfile, homePath, ctx, &myLogger)
+
+			if credentialsExists {
+				createCredentials(ctx.Config.DefaultProfile, homePath, ctx, &myLogger)
+
 			}
 		}
 	}
-
-	downloadError := downloadDefaultFile()
+	downloadError := downloadDefaultFiles()
 	if downloadError != nil {
 		myLogger.Error(downloadError.Error())
 	}
 }
 
 // Looking for main.yaml.
-func isMainYAMLPresent(myLogger logger.Logger) (bool, error) {
+func isMainYAMLPresent(myLogger *logger.Logger) (bool, error) {
 	homePath, pathError := myuser.GetUserHomeDir()
 	if pathError != nil {
 		myLogger.Error(pathError.Error())
@@ -189,7 +120,7 @@ func isMainYAMLPresent(myLogger logger.Logger) (bool, error) {
 }
 
 // Looking for .aws.config.
-func isAWSConfigPresent(myLogger logger.Logger) (bool, error) {
+func isAWSConfigPresent(myLogger *logger.Logger) (bool, error) {
 	homePath, pathError := myuser.GetUserHomeDir()
 	if pathError != nil {
 		myLogger.Error(pathError.Error())
@@ -204,7 +135,7 @@ func isAWSConfigPresent(myLogger logger.Logger) (bool, error) {
 }
 
 // Looking for .aws/credentials.
-func isCredentialsPresent(myLogger logger.Logger) (bool, error) {
+func isCredentialsPresent(myLogger *logger.Logger) (bool, error) {
 	homePath, pathError := myuser.GetUserHomeDir()
 	if pathError != nil {
 		myLogger.Error(pathError.Error())
@@ -218,7 +149,7 @@ func isCredentialsPresent(myLogger logger.Logger) (bool, error) {
 }
 
 // Looking for [profiles] in credentials or config and return all.
-func getProfilesFromFile(path string, mylogger logger.Logger) []string {
+func getProfilesFromFile(path string, mylogger *logger.Logger) []string {
 	credentials, credentialsError := os.Open(path)
 	if credentialsError != nil {
 		mylogger.Error(credentialsError.Error())
@@ -234,7 +165,9 @@ func getProfilesFromFile(path string, mylogger logger.Logger) []string {
 			if strings.Contains(profile, "profile ") {
 				profile = strings.TrimPrefix(profile, "profile ")
 			}
-
+			if strings.Contains(profile, "-long-term") {
+				profile = strings.TrimSuffix(profile, "-long-term")
+			}
 			profiles = append(profiles, profile)
 		}
 	}
@@ -242,7 +175,7 @@ func getProfilesFromFile(path string, mylogger logger.Logger) []string {
 }
 
 // Looking for user's profile in credentials or config.
-func isProfileInCredentials(profile string, path string, mylogger logger.Logger) bool {
+func isProfileInCredentials(profile string, path string, mylogger *logger.Logger) bool {
 	credentials, credentialsError := os.Open(path)
 	if credentialsError != nil {
 		mylogger.Error(credentialsError.Error())
@@ -258,18 +191,8 @@ func isProfileInCredentials(profile string, path string, mylogger logger.Logger)
 
 }
 
-// Looking for profile in profiles.
-func findProfile(profiles []string, myProfile string) bool {
-	for _, profile := range profiles {
-		if myProfile == profile {
-			return true
-		}
-	}
-	return false
-}
-
 // Looking for region for profile.
-func findRegionForProfile(profile string, path string, mylogger logger.Logger) string {
+func findRegionForProfile(profile string, path string, mylogger *logger.Logger) string {
 	configuration, loadError := ini.Load(path)
 	if loadError != nil {
 		mylogger.Error(loadError.Error())
@@ -297,7 +220,7 @@ func findNewProfileInCredentials(credentials []string, config []string) []string
 		}
 	}
 	for _, cred := range credentials {
-		isProfileHere := findProfile(config, cred)
+		isProfileHere := helpers.SliceContains(config, cred)
 		if !isProfileHere {
 			profiles = append(profiles, cred)
 			return profiles
@@ -306,9 +229,8 @@ func findNewProfileInCredentials(credentials []string, config []string) []string
 	return []string{}
 }
 
-// Downloadind other files.
-
-func downloadDefaultFile() error {
+// Downloading other files.
+func downloadDefaultFiles() error {
 	urls := make(map[string]string)
 	urls["blocked.json"] = "https://s3.amazonaws.com/perun-default-file/blocked.json"
 	urls["unblocked.json"] = "https://s3.amazonaws.com/perun-default-file/unblocked.json"
@@ -328,7 +250,7 @@ func downloadDefaultFile() error {
 			os.Mkdir(homePath, 0755)
 		}
 
-		_, openError := os.Open(homePath + file)
+		_, openError := os.Open(homePath + file) //checking if file exists
 		if openError != nil {
 			out, creatingFileError := os.Create(homePath + file)
 

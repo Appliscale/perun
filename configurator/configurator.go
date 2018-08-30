@@ -4,6 +4,7 @@ import (
 	"github.com/Appliscale/perun/cliparser"
 	"github.com/Appliscale/perun/configuration"
 	"github.com/Appliscale/perun/context"
+	"github.com/Appliscale/perun/logger"
 	"github.com/Appliscale/perun/myuser"
 	"os"
 	"strconv"
@@ -33,13 +34,14 @@ func CreateRequiredFilesInConfigureMode(ctx *context.Context) {
 	if pathError != nil {
 		ctx.Logger.Error(pathError.Error())
 	}
+	myLogger := logger.CreateDefaultLogger()
 	homePath += "/.config/perun"
 	ctx.Logger.Always("Configure file could be in \n  " + homePath + "\n  /etc/perun")
 	var yourPath string
 	var yourName string
 	ctx.Logger.GetInput("Your path", &yourPath)
 	ctx.Logger.GetInput("Filename", &yourName)
-	myProfile, myRegion := GetRegionAndProfile(ctx)
+	myProfile, myRegion := GetRegionAndProfile(&myLogger)
 	createConfigurationFile(yourPath+"/"+yourName, ctx, myProfile, myRegion)
 	*ctx, _ = context.GetContext(cliparser.ParseCliArguments, configuration.GetConfiguration, configuration.ReadInconsistencyConfiguration)
 	var answer string
@@ -68,56 +70,56 @@ func createConfigurationFile(path string, context *context.Context, myProfile st
 }
 
 //List of all available regions.
-func showRegions(context *context.Context) {
+func showRegions(myLogger *logger.Logger) {
 	regions := makeArrayRegions()
-	context.Logger.Always("Regions:")
+	myLogger.Always("Regions:")
 	for i := 0; i < len(regions); i++ {
 		pom := strconv.Itoa(i)
-		context.Logger.Always("Number " + pom + " region " + regions[i])
+		myLogger.Always("Number " + pom + " region " + regions[i])
 	}
 }
 
 // Choosing one region.
-func setRegions(context *context.Context) (region string, err bool) {
+func setRegions(myLogger *logger.Logger) (region string, err bool) {
 	var numberRegion int
-	context.Logger.GetInput("Choose region", &numberRegion)
+	myLogger.GetInput("Choose region", &numberRegion)
 	regions := makeArrayRegions()
 	if numberRegion >= 0 && numberRegion < 14 {
 		region = regions[numberRegion]
-		context.Logger.Always("Your region is: " + region)
+		myLogger.Always("Your region is: " + region)
 		err = true
 	} else {
-		context.Logger.Error("Invalid region")
+		myLogger.Error("Invalid region")
 		err = false
 	}
 	return
 }
 
 // Choosing one profile.
-func setProfile(context *context.Context) (profile string, err bool) {
-	context.Logger.GetInput("Input name of profile", &profile)
+func setProfile(myLogger *logger.Logger) (profile string, err bool) {
+	myLogger.GetInput("Input name of profile", &profile)
 	if profile != "" {
-		context.Logger.Always("Your profile is: " + profile)
+		myLogger.Always("Your profile is: " + profile)
 		err = true
 	} else {
-		context.Logger.Error("Invalid profile")
+		myLogger.Error("Invalid profile")
 		err = false
 	}
 	return
 }
 
 // Get region and profile from user.
-func GetRegionAndProfile(ctx *context.Context) (string, string) {
-	profile, err := setProfile(ctx)
+func GetRegionAndProfile(myLogger *logger.Logger) (string, string) {
+	profile, err := setProfile(myLogger)
 	for !err {
-		ctx.Logger.Always("Try again, invalid profile")
-		profile, err = setProfile(ctx)
+		myLogger.Always("Try again, invalid profile")
+		profile, err = setProfile(myLogger)
 	}
-	showRegions(ctx)
-	region, err1 := setRegions(ctx)
+	showRegions(myLogger)
+	region, err1 := setRegions(myLogger)
 	for !err1 {
-		ctx.Logger.Always("Try again, invalid region")
-		region, err = setRegions(ctx)
+		myLogger.Always("Try again, invalid region")
+		region, err1 = setRegions(myLogger)
 	}
 	return profile, region
 }
