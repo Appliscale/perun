@@ -38,6 +38,7 @@ var DestroySinkMode = "destroy-remote-sink"
 var CreateParametersMode = "create-parameters"
 var SetStackPolicyMode = "set-stack-policy"
 var CreateChangeSetMode = "create-change-set"
+var DeleteChangeSetMode = "delete-change-set"
 var LintMode = "lint"
 
 var ChangeSetDefaultName string
@@ -125,6 +126,10 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		createChangeSetLint              = createChangeSet.Flag("lint", "Enable template linting").Bool()
 		createChangeSetLintConfiguration = createChangeSet.Flag("lint-configuration", "A path to the configuration file").String()
 		createChangeSetEstimateCost      = createChangeSet.Flag("estimate-cost", "Enable cost estimation during validation").Bool()
+
+		deleteChangeSet          = app.Command(DeleteChangeSetMode, "Deletes a changeSet on aws")
+		deleteChangeSetStackName = deleteChangeSet.Arg("stack", "An AWS stack Name").Required().String()
+		deleteChangeSetName      = deleteChangeSet.Arg("change-set", "An AWS Change Set name").Required().String()
 
 		deleteStack     = app.Command(DestroyStackMode, "Deletes a stack on aws")
 		deleteStackName = deleteStack.Arg("stack", "An AWS stack name.").Required().String()
@@ -250,6 +255,11 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		cliArguments.Lint = createChangeSetLint
 		cliArguments.LinterConfiguration = createChangeSetLintConfiguration
 		cliArguments.EstimateCost = createChangeSetEstimateCost
+
+	case deleteChangeSet.FullCommand():
+		cliArguments.Mode = &DeleteChangeSetMode
+		cliArguments.Stack = deleteChangeSetStackName
+		cliArguments.ChangeSet = deleteChangeSetName
 
 		// set up remote sink
 	case setupSink.FullCommand():

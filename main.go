@@ -101,6 +101,11 @@ func main() {
 		}
 	}
 
+	if *ctx.CliArguments.Mode == cliparser.DeleteChangeSetMode {
+		ctx.InitializeAwsAPI()
+		utilities.CheckErrorCodeAndExit(stack.DeleteChangeSet(&ctx))
+	}
+
 	if *ctx.CliArguments.Mode == cliparser.UpdateStackMode {
 		ctx.InitializeAwsAPI()
 		if *ctx.CliArguments.SkipValidation || validator.ValidateAndEstimateCost(&ctx) {
