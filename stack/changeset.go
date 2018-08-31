@@ -21,6 +21,23 @@ func createChangeSetInput(template *string, stackName *string, params []*cloudfo
 	return templateStruct, nil
 }
 
+func createDeleteChangeSetInput(ctx *context.Context) cloudformation.DeleteChangeSetInput {
+	return cloudformation.DeleteChangeSetInput{
+		ChangeSetName: ctx.CliArguments.ChangeSet,
+		StackName:     ctx.CliArguments.Stack,
+	}
+}
+func DeleteChangeSet(ctx *context.Context) (err error) {
+	templateStruct := createDeleteChangeSetInput(ctx)
+	_, err = ctx.CloudFormation.DeleteChangeSet(&templateStruct)
+	if err != nil {
+		ctx.Logger.Error(err.Error())
+		return
+	}
+	ctx.Logger.Info("Deletion of Change Set " + *ctx.CliArguments.ChangeSet + " request successful")
+	return
+}
+
 func NewChangeSet(context *context.Context) (err error) {
 	template, stackName, err := getTemplateFromFile(context)
 	if err != nil {
@@ -72,23 +89,23 @@ func shouldExecuteChangeSet() bool {
 	return false
 }
 
-func describeChangeSet(context *context.Context) (err error) {
+func describeChangeSet(context *context.Context) error {
 	context.Logger.Info("Waiting for change set creation...")
 	describeChangeSetInput := cloudformation.DescribeChangeSetInput{
 		ChangeSetName: context.CliArguments.ChangeSet,
 		StackName:     context.CliArguments.Stack,
 	}
 
-	err = context.CloudFormation.WaitUntilChangeSetCreateComplete(&describeChangeSetInput)
+	err := context.CloudFormation.WaitUntilChangeSetCreateComplete(&describeChangeSetInput)
 	if err != nil {
 		context.Logger.Error(err.Error())
-		return
+		return err
 	}
 
 	describeChangeSetOutput, err := context.CloudFormation.DescribeChangeSet(&describeChangeSetInput)
 	if err != nil {
 		context.Logger.Error(err.Error())
-		return
+		return err
 	}
 
 	_, table := initStackTableWriter()
@@ -111,7 +128,7 @@ func describeChangeSet(context *context.Context) (err error) {
 		})
 	}
 	table.Render()
-	return
+	return nil
 }
 
 func initStackTableWriter() (*progress.ParseWriter, *tablewriter.Table) {

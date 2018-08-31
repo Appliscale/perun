@@ -17,6 +17,7 @@ type CloudFormationAPI interface {
 	CreateChangeSet(input *cloudformation.CreateChangeSetInput) (*cloudformation.CreateChangeSetOutput, error)
 	DescribeChangeSet(input *cloudformation.DescribeChangeSetInput) (*cloudformation.DescribeChangeSetOutput, error)
 	WaitUntilChangeSetCreateComplete(input *cloudformation.DescribeChangeSetInput) error
+	DeleteChangeSet(input *cloudformation.DeleteChangeSetInput) (*cloudformation.DeleteChangeSetOutput, error)
 }
 
 type AWSCloudFormationAPI struct {
@@ -62,4 +63,8 @@ func (cf *AWSCloudFormationAPI) DescribeChangeSet(input *cloudformation.Describe
 }
 func (cf *AWSCloudFormationAPI) WaitUntilChangeSetCreateComplete(input *cloudformation.DescribeChangeSetInput) error {
 	return cf.api.WaitUntilChangeSetCreateComplete(input)
+}
+
+func (cf *AWSCloudFormationAPI) DeleteChangeSet(input *cloudformation.DeleteChangeSetInput) (*cloudformation.DeleteChangeSetOutput, error) {
+	return cf.api.DeleteChangeSet(input)
 }
