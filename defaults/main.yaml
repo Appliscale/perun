@@ -1,7 +1,7 @@
 DefaultProfile: default
 DefaultRegion: us-east-1
 DefaultDurationForMFA: 3600
-DefaultDecisionForMFA: true
+DefaultDecisionForMFA: false
 DefaultVerbosity: INFO
 DefaultTemporaryFilesDirectory:
 SpecificationURL:

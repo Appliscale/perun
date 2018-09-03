@@ -20,7 +20,6 @@ package cliparser
 
 import (
 	"errors"
-
 	"github.com/Appliscale/perun/logger"
 	"github.com/Appliscale/perun/utilities"
 	"gopkg.in/alecthomas/kingpin.v2"

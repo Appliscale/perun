@@ -132,11 +132,11 @@ func notifyUserAboutConfigurationFile(configurationFilePath string, logger *logg
 	logger.Info("Configuration file from the following location will be used: " + configurationFilePath)
 }
 
-func SaveToFile(config Configuration, path string, logger logger.Logger) {
+func SaveToFile(config Configuration, path string, logger *logger.Logger) {
 	file, err := os.Create(path)
 	defer file.Close()
 	if err != nil {
-		logger.Error("Could not create file")
+		logger.Error(err.Error())
 		return
 	}
 	obj, _ := yaml.Marshal(config)
