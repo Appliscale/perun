@@ -161,3 +161,16 @@ func (m *MockCloudFormationAPI) WaitUntilChangeSetCreateComplete(input *cloudfor
 func (mr *MockCloudFormationAPIMockRecorder) WaitUntilChangeSetCreateComplete(input interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitUntilChangeSetCreateComplete", reflect.TypeOf((*MockCloudFormationAPI)(nil).WaitUntilChangeSetCreateComplete), input)
 }
+
+// DeleteChangeSet mocks base method
+func (m *MockCloudFormationAPI) DeleteChangeSet(input *cloudformation.DeleteChangeSetInput) (*cloudformation.DeleteChangeSetOutput, error) {
+	ret := m.ctrl.Call(m, "DeleteChangeSet", input)
+	ret0, _ := ret[0].(*cloudformation.DeleteChangeSetOutput)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteChangeSet indicates an expected call of DeleteChangeSet
+func (mr *MockCloudFormationAPIMockRecorder) DeleteChangeSet(input interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteChangeSet", reflect.TypeOf((*MockCloudFormationAPI)(nil).DeleteChangeSet), input)
+}

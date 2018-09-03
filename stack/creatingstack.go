@@ -55,7 +55,8 @@ func NewStack(context *context.Context) error {
 			context.Logger.Error("Error creating stack: " + creationError.Error())
 			return creationError
 		}
+		context.Logger.Info("Stack creation request successful")
 	}
-	context.Logger.Info("Stack creation request successful")
+
 	return nil
 }

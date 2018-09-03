@@ -18,15 +18,19 @@ func DestroyStack(context *context.Context) error {
 			return err
 		}
 		_, err = context.CloudFormation.DeleteStack(&delStackInput)
+		if err != nil {
+			context.Logger.Error(err.Error())
+			return err
+		}
 		conn.MonitorStackQueue()
 	} else {
 		_, err = context.CloudFormation.DeleteStack(&delStackInput)
+		if err != nil {
+			context.Logger.Error(err.Error())
+			return err
+		}
+		context.Logger.Info("Stack deletion request successful")
 	}
-	if err != nil {
-		context.Logger.Error(err.Error())
-		return err
-	}
-	context.Logger.Info("Stack deletion request successful")
 	return nil
 }
 
