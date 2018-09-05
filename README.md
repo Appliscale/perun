@@ -137,12 +137,6 @@ To apply your Stack Policy file you have to type:
 ~ $ perun set-stack-policy <NAME OF YOUR STACK>  <PATH TO YOUR TEMPLATE>
 ```
 
-or
-
-```bash
-~ $ perun set-stack-policy --stack=<NAME OF YOUR STACK> --template=<PATH TO YOUR TEMPLATE>
-```
-
 Perun has some default flags:
 
 - ``--block`` - Block all Update actions in stack.
