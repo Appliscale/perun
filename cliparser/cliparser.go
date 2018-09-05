@@ -20,10 +20,11 @@ package cliparser
 
 import (
 	"errors"
+	"time"
+
 	"github.com/Appliscale/perun/logger"
 	"github.com/Appliscale/perun/utilities"
 	"gopkg.in/alecthomas/kingpin.v2"
-	"time"
 )
 
 var ValidateMode = "validate"
@@ -157,7 +158,7 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 
 		setStackPolicy                  = app.Command(SetStackPolicyMode, "Set stack policy using JSON file.")
 		setStackPolicyName              = setStackPolicy.Arg("stack", "An AWS stack name.").Required().String()
-		setStackPolicyTemplate          = setStackPolicy.Arg("template", "A path to the template file.").Required().String()
+		setStackPolicyTemplate          = setStackPolicy.Arg("template", "A path to the template file.").String()
 		setDefaultBlockingStackPolicy   = setStackPolicy.Flag("block", "Blocking all actions.").Bool()
 		setDefaultUnblockingStackPolicy = setStackPolicy.Flag("unblock", "Unblocking all actions.").Bool()
 		setDisableStackTermination      = setStackPolicy.Flag("disable-stack-termination", "Allow to delete a stack.").Bool()
