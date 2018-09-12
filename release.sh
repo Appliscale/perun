@@ -13,12 +13,11 @@ git clone https://github.com/Appliscale/rpmbuild.git
 cd rpmbuild/SOURCES 
 rm $perun.tar.gz
 wget $release
-wget $files/defaults/main.yaml
 wget $files/LICENSE
 tar xvzf $perun.tar.gz
 rm $perun.tar.gz
-tar cvzf $perun.tar.gz $perun LICENSE main.yaml
-rm LICENSE main.yaml $perun
+tar cvzf $perun.tar.gz $perun LICENSE
+rm LICENSE $perun
 cd ..
 rpmbuild -ba SPECS/$perun.spec
 git remote
