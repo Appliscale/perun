@@ -26,8 +26,8 @@ import (
 
 const Motto = "Swiss army knife for AWS CloudFormation templates"
 
-const ReleaseName = "Nimbostratus"
-const VersionNumber = "1.1.0-beta"
+const ReleaseName = "Altostratus"
+const VersionNumber = "1.3.1"
 
 func VersionStatus() string {
 	return fmt.Sprintf("perun %s (%s release) - %s", VersionNumber, ReleaseName, Motto)
