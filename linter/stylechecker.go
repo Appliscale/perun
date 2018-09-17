@@ -92,8 +92,8 @@ func checkAWSCFSpecificStuff(ctx *context.Context, rawTemplate string, lintConf 
 	}
 
 	for resourceName := range goFormationTemplate.Resources {
-		if lintConf.CheckLogicalName(resourceName) {
-			ctx.Logger.Warning("Resource '" + resourceName + "' does not meet the given logical Name regex")
+		if !lintConf.CheckLogicalName(resourceName) {
+			ctx.Logger.Warning("Resource '" + resourceName + "' does not meet the given logical Name regex: " + lintConf.Global.NamingConventions.LogicalNames)
 		}
 	}
 }

@@ -3,6 +3,7 @@ package mocks
 import (
 	"github.com/Appliscale/perun/cliparser"
 	"github.com/Appliscale/perun/configuration"
+	"github.com/Appliscale/perun/configurator"
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/logger"
 	"io/ioutil"
@@ -19,11 +20,7 @@ func SetupContext(t *testing.T, args []string) *context.Context {
 		return &context.Context{}
 	}
 
-	config, err := configuration.GetConfiguration(cliArguments, &myLogger)
-	if err != nil {
-		t.Error(err.Error())
-		return &context.Context{}
-	}
+	config := createDefaultConfiguration()
 	iconsistenciesConfig := configuration.ReadInconsistencyConfiguration(&myLogger)
 
 	ctx := context.Context{
@@ -43,4 +40,14 @@ func ReadFile(t *testing.T, filePath string) string {
 	}
 	template := string(rawTemplate)
 	return template
+}
+
+func createDefaultConfiguration() configuration.Configuration {
+	return configuration.Configuration{
+		DefaultProfile:        "default",
+		DefaultRegion:         "region",
+		SpecificationURL:      configurator.ResourceSpecificationURL,
+		DefaultDecisionForMFA: false,
+		DefaultDurationForMFA: 3600,
+		DefaultVerbosity:      "INFO"}
 }
