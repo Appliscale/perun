@@ -71,9 +71,9 @@ func NewParseWriter() (pw *ParseWriter) {
 		createCompleteStatus:                          pw.bgGreen,
 		updateCompleteStatus:                          pw.bgGreen,
 		reviewInProgressStatus:                        pw.cyan,
-		add:    pw.bgGreen,
-		remove: pw.bgRed,
-		modify: pw.fgOrange,
+		add:                                           pw.bgGreen,
+		remove:                                        pw.bgRed,
+		modify:                                        pw.fgOrange,
 	}
 	return
 }
