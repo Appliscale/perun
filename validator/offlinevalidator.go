@@ -63,21 +63,21 @@ func ValidateAndEstimateCost(ctx *context.Context) bool {
 	return validateTemplateFile(*ctx.CliArguments.TemplatePath, *ctx.CliArguments.TemplatePath, ctx)
 }
 
-func validateTemplateFile(templatePath string, templateName string, context *context.Context) bool {
-	valid := false
+func validateTemplateFile(templatePath string, templateName string, context *context.Context) (valid bool) {
+	valid = false
 	defer printResult(templateName, &valid, context.Logger)
 
 	resourceSpecification, err := specification.GetSpecification(context)
 
 	if err != nil {
 		context.Logger.Error(err.Error())
-		return false
+		return
 	}
 
 	rawTemplate, err := ioutil.ReadFile(templatePath)
 	if err != nil {
 		context.Logger.Error(err.Error())
-		return false
+		return
 	}
 
 	var perunTemplate template.Template
@@ -86,27 +86,30 @@ func validateTemplateFile(templatePath string, templateName string, context *con
 	parser, err := helpers.GetParser(*context.CliArguments.TemplatePath)
 	if err != nil {
 		context.Logger.Error(err.Error())
-		return false
+		return
 	}
 	goFormationTemplate, err = parser(rawTemplate, perunTemplate, context.Logger)
 	if err != nil {
 		context.Logger.Error(err.Error())
-		return false
+		return
 	}
 
 	deNilizedTemplate, _ := nilNeutralize(goFormationTemplate, context.Logger)
 	resources := obtainResources(deNilizedTemplate, perunTemplate, context.Logger)
 	deadResources := getNilResources(resources)
 	deadProperties := getNilProperties(resources)
-	if !hasAllowedValuesParametersValid(goFormationTemplate.Parameters, context.Logger) {
-		return false
+	if hasAllowedValuesParametersValid(goFormationTemplate.Parameters, context.Logger) {
+		valid = true
+	} else {
+		valid = false
+		context.Logger.AddResourceForValidation("Parameters").AddValidationError("Allowed Values supports only Type String")
 	}
 
 	specInconsistency := context.InconsistencyConfig.SpecificationInconsistency
 
 	templateBody := string(rawTemplate)
-	valid = validateResources(resources, &resourceSpecification, deadProperties, deadResources, specInconsistency, context)
-	valid = valid && awsValidate(context, &templateBody)
+	valid = validateResources(resources, &resourceSpecification, deadProperties, deadResources, specInconsistency, context) && valid
+	valid = awsValidate(context, &templateBody) && valid
 
 	if *context.CliArguments.EstimateCost {
 		estimateCosts(context, &templateBody)
@@ -142,7 +145,6 @@ func hasAllowedValuesParametersValid(parameters template.Parameters, logger *log
 			}
 
 			if isAllovedValues && isType {
-				logger.Error("AllowedValues supports only Type String")
 				return false
 			}
 		}

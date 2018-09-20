@@ -20,6 +20,7 @@ func ApplyStackPolicy(context *context.Context) error {
 		return creationError
 	}
 
+	context.Logger.Info("Stack Policy Change request successful")
 	return nil
 }
 

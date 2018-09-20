@@ -40,5 +40,12 @@ func SetTerminationProtection(context *context.Context) error {
 		context.Logger.Error("Error setting stack termination protection: " + apiError.Error())
 		return apiError
 	}
+
+	if isProtectionEnable {
+		context.Logger.Info("Terminaction Protection Enabled successfully")
+	} else {
+		context.Logger.Info("Termination Protection Disabled successfully")
+	}
+
 	return nil
 }
