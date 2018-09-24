@@ -29,7 +29,10 @@ git push $github/rpmbuild.git master
 
 cd ~
 git clone https://github.com/Appliscale/perun-dpkg.git
-cd perun-dpkg/perun/usr/local/bin
+cd perun-dpkg
+chmod +x control.sh
+./control.sh $1
+cd /perun/usr/local/bin
 rm $perun
 wget $release
 tar xvzf $perun.tar.gz
