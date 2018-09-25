@@ -45,3 +45,15 @@ git config user.name $user
 git add .
 git commit -m "[AUTO] Update DPKG by Travis CI. Perun $1"
 git push $github/perun-dpkg.git master
+
+cd ~
+git clone https://github.com/Appliscale/homebrew-tap.git
+cd homebrew-tap
+chmod +x formula.sh
+./formula.sh $1
+git remote
+git config user.email $email
+git config user.name $user
+git add .
+git commit -m "[AUTO] Update Homebrew by Travis CI. Perun $1"
+git push $github/homebrew-tap.git master
