@@ -52,6 +52,8 @@ func CheckStyle(ctx *context.Context) (err error) {
 	return
 }
 
+//TODO: Test with TestingLogger
+
 func checkLineLengths(lines []string, lintConf LinterConfiguration, ctx *context.Context) {
 	for line := range lines {
 		if lintConf.Global.LineLength.Required && len(lines[line]) > int(lintConf.Global.LineLength.Value.(float64)) {
