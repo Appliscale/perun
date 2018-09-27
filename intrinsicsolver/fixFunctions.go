@@ -24,7 +24,7 @@ Mode `correctlong` prepares the file for conversion into JSON. If the file is a 
 But if there is any mixed notation (e.g. indented maps along with one-line maps, functions in one line with the key), parsing must be preceded with some additional operations.
 The result is returned as a []byte array.
 */
-func FixFunctions(template []byte, logger *logger.Logger, mode ...string) ([]byte, error) {
+func FixFunctions(template []byte, logger logger.LoggerInt, mode ...string) ([]byte, error) {
 	var quotationProcessed, temporaryResult []string
 	preLines, err := parseFileIntoLines(template, logger)
 	if err != nil {
@@ -98,7 +98,7 @@ func shortForm(name string) string {
 }
 
 // Function parseFileIntoLines is reading the []byte file and returns it line by line as []string slice.
-func parseFileIntoLines(template []byte, logger *logger.Logger) ([]string, error) {
+func parseFileIntoLines(template []byte, logger logger.LoggerInt) ([]string, error) {
 	bytesReader := bytes.NewReader(template)
 	lines := make([]string, 0)
 	scanner := bufio.NewScanner(bytesReader)

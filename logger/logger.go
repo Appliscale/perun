@@ -23,6 +23,20 @@ import (
 	"strings"
 )
 
+type LoggerInt interface {
+	Always(message string)
+	Warning(warning string)
+	Error(err string)
+	Info(info string)
+	Debug(debug string)
+	Trace(trace string)
+	GetInput(message string, v ...interface{}) error
+	log(verbosity Verbosity, message string)
+	PrintValidationErrors()
+	HasValidationErrors() bool
+	AddResourceForValidation(resourceName string) *ResourceValidation
+	SetVerbosity(verbosity string)
+}
 type Logger struct {
 	Quiet              bool
 	Yes                bool

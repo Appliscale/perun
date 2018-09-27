@@ -10,8 +10,18 @@ import (
 	"strings"
 )
 
+type CreatingFiles interface {
+	createNewMainYaml(profile string, homePath string, ctx *context.Context, myLogger logger.LoggerInt) context.Context
+	useProfileFromConfig(profilesInConfig []string, profile string, myLogger *logger.Logger) string
+	addNewProfileFromCredentialsToConfig(profile string, homePath string, ctx *context.Context, myLogger *logger.Logger)
+	addProfileToCredentials(profile string, homePath string, ctx *context.Context, myLogger *logger.Logger)
+	configIsPresent(profile string, homePath string, ctx *context.Context, myLogger logger.Logger) (string, context.Context)
+	newConfigFile(profile string, region string, homePath string, ctx *context.Context, myLogger *logger.Logger) (string, string, context.Context)
+	createCredentials(profile string, homePath string, ctx *context.Context, myLogger *logger.Logger)
+}
+
 // Creating main.yaml.
-func createNewMainYaml(profile string, homePath string, ctx *context.Context, myLogger *logger.Logger) context.Context {
+func createNewMainYaml(profile string, homePath string, ctx *context.Context, myLogger logger.LoggerInt) context.Context {
 	region := findRegionForProfile(profile, homePath+"/.aws/config", myLogger)
 	con := configurator.CreateMainYaml(ctx, profile, region)
 	configuration.SaveToFile(con, homePath+"/.config/perun/main.yaml", myLogger)
@@ -20,7 +30,7 @@ func createNewMainYaml(profile string, homePath string, ctx *context.Context, my
 }
 
 // If config exists, use profile from .aws/config.
-func useProfileFromConfig(profilesInConfig []string, profile string, myLogger *logger.Logger) string {
+func useProfileFromConfig(profilesInConfig []string, profile string, myLogger logger.LoggerInt) string {
 	myLogger.Always("Available profiles from config:")
 	for _, prof := range profilesInConfig {
 		myLogger.Always(prof)
@@ -35,7 +45,7 @@ func useProfileFromConfig(profilesInConfig []string, profile string, myLogger *l
 }
 
 // If profile exists in .aws/credentials, but not in aws/config, add profile.
-func addNewProfileFromCredentialsToConfig(profile string, homePath string, ctx *context.Context, myLogger *logger.Logger) {
+func addNewProfileFromCredentialsToConfig(profile string, homePath string, ctx *context.Context, myLogger logger.LoggerInt) {
 	profilesInCredentials := getProfilesFromFile(homePath+"/.aws/credentials", myLogger)
 	profilesInConfig := getProfilesFromFile(homePath+"/.aws/config", myLogger)
 	profiles := findNewProfileInCredentials(profilesInCredentials, profilesInConfig)

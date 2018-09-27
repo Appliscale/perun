@@ -33,13 +33,13 @@ func parseCliArgumentsValidStub(cliArguments cliparser.CliArguments) cliArgument
 }
 
 func getConfigurationValidStub(config configuration.Configuration) configurationReader {
-	return func(cliparser.CliArguments, *logger.Logger) (configuration.Configuration, error) {
+	return func(cliparser.CliArguments, logger.LoggerInt) (configuration.Configuration, error) {
 		return config, nil
 	}
 }
 
 func getInconsistencyConfigurationValidStub(config configuration.InconsistencyConfiguration) inconsistenciesReader {
-	return func(*logger.Logger) configuration.InconsistencyConfiguration {
+	return func(logger.LoggerInt) configuration.InconsistencyConfiguration {
 		return config
 	}
 }
@@ -48,7 +48,7 @@ func parseCliArgumentsErroneous(args []string) (cliparser.CliArguments, error) {
 	return cliparser.CliArguments{}, errors.New("")
 }
 
-func getConfigurationErroneous(cliparser.CliArguments, *logger.Logger) (configuration.Configuration, error) {
+func getConfigurationErroneous(cliparser.CliArguments, logger.LoggerInt) (configuration.Configuration, error) {
 	return configuration.Configuration{}, errors.New("")
 }
 

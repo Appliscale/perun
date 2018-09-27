@@ -54,7 +54,7 @@ func (config Configuration) GetSpecificationFileURLForCurrentRegion() (string, e
 }
 
 // Return perun configuration read from file.
-func GetConfiguration(cliArguments cliparser.CliArguments, logger *logger.Logger) (config Configuration, err error) {
+func GetConfiguration(cliArguments cliparser.CliArguments, logger logger.LoggerInt) (config Configuration, err error) {
 	mode := getMode(cliArguments)
 
 	if mode == cliparser.ConfigureMode {
@@ -106,7 +106,7 @@ func postProcessing(config *Configuration, cliArguments cliparser.CliArguments) 
 	}
 }
 
-func getConfigurationPath(cliArguments cliparser.CliArguments, logger *logger.Logger) (configPath string, err error) {
+func getConfigurationPath(cliArguments cliparser.CliArguments, logger logger.LoggerInt) (configPath string, err error) {
 	if *cliArguments.Sandbox {
 		return "", errors.New("No configuration file should be used.")
 	}
@@ -128,11 +128,11 @@ func getConfigurationPath(cliArguments cliparser.CliArguments, logger *logger.Lo
 	}
 }
 
-func notifyUserAboutConfigurationFile(configurationFilePath string, logger *logger.Logger) {
+func notifyUserAboutConfigurationFile(configurationFilePath string, logger logger.LoggerInt) {
 	logger.Info("Configuration file from the following location will be used: " + configurationFilePath)
 }
 
-func SaveToFile(config Configuration, path string, logger *logger.Logger) {
+func SaveToFile(config Configuration, path string, logger logger.LoggerInt) {
 	file, err := os.Create(path)
 	defer file.Close()
 	if err != nil {
@@ -143,7 +143,7 @@ func SaveToFile(config Configuration, path string, logger *logger.Logger) {
 	_, err = file.Write(obj)
 }
 
-func getConfigurationFromFile(cliArguments cliparser.CliArguments, logger *logger.Logger) (config Configuration, err error) {
+func getConfigurationFromFile(cliArguments cliparser.CliArguments, logger logger.LoggerInt) (config Configuration, err error) {
 	var configPath string
 	configPath, err = getConfigurationPath(cliArguments, logger)
 	if err != nil {

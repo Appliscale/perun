@@ -149,7 +149,7 @@ func isCredentialsPresent(myLogger *logger.Logger) (bool, error) {
 }
 
 // Looking for [profiles] in credentials or config and return all.
-func getProfilesFromFile(path string, mylogger *logger.Logger) []string {
+func getProfilesFromFile(path string, mylogger logger.LoggerInt) []string {
 	credentials, credentialsError := os.Open(path)
 	if credentialsError != nil {
 		mylogger.Error(credentialsError.Error())
@@ -192,7 +192,7 @@ func isProfileInCredentials(profile string, path string, mylogger *logger.Logger
 }
 
 // Looking for region for profile.
-func findRegionForProfile(profile string, path string, mylogger *logger.Logger) string {
+func findRegionForProfile(profile string, path string, mylogger logger.LoggerInt) string {
 	configuration, loadError := ini.Load(path)
 	if loadError != nil {
 		mylogger.Error(loadError.Error())
