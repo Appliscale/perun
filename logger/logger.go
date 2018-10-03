@@ -31,7 +31,7 @@ type LoggerInt interface {
 	Debug(debug string)
 	Trace(trace string)
 	GetInput(message string, v ...interface{}) error
-	log(verbosity Verbosity, message string)
+	//log(verbosity Verbosity, message string)
 	PrintValidationErrors()
 	HasValidationErrors() bool
 	AddResourceForValidation(resourceName string) *ResourceValidation

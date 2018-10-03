@@ -8,22 +8,6 @@ import (
 
 var sink logger.Logger
 
-/*
-func TestMainYAMLIsntPresent(t *testing.T) {
-	answerFunction, _ := isMainYAMLPresent(&sink)
-	assert.Falsef(t, answerFunction, "File main.yaml exist")
-}
-
-func TestIsAWSConfigPresent(t *testing.T) {
-	answerFunction, _ := isAWSConfigPresent(&sink)
-	assert.Falsef(t, answerFunction, "File .aws/config exist")
-}
-
-func TestIsCredentialsPresent(t *testing.T) {
-	answerFunction, _ := isCredentialsPresent(&sink)
-	assert.Falsef(t, answerFunction, "File credentials exist")
-}
-*/
 func TestGetProfilesFromFile(t *testing.T) {
 	profiles := getProfilesFromFile("test_resources/.aws/config", &sink)
 	assert.NotNilf(t, profiles, "Profiles are nil")

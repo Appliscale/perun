@@ -10,16 +10,6 @@ import (
 	"strings"
 )
 
-type CreatingFiles interface {
-	createNewMainYaml(profile string, homePath string, ctx *context.Context, myLogger logger.LoggerInt) context.Context
-	useProfileFromConfig(profilesInConfig []string, profile string, myLogger *logger.Logger) string
-	addNewProfileFromCredentialsToConfig(profile string, homePath string, ctx *context.Context, myLogger *logger.Logger)
-	addProfileToCredentials(profile string, homePath string, ctx *context.Context, myLogger *logger.Logger)
-	configIsPresent(profile string, homePath string, ctx *context.Context, myLogger logger.Logger) (string, context.Context)
-	newConfigFile(profile string, region string, homePath string, ctx *context.Context, myLogger *logger.Logger) (string, string, context.Context)
-	createCredentials(profile string, homePath string, ctx *context.Context, myLogger *logger.Logger)
-}
-
 // Creating main.yaml.
 func createNewMainYaml(profile string, homePath string, ctx *context.Context, myLogger logger.LoggerInt) context.Context {
 	region := findRegionForProfile(profile, homePath+"/.aws/config", myLogger)
@@ -63,7 +53,7 @@ func addNewProfileFromCredentialsToConfig(profile string, homePath string, ctx *
 }
 
 // Checking if profile is in .aws/credentials.
-func addProfileToCredentials(profile string, homePath string, ctx *context.Context, myLogger *logger.Logger) {
+func addProfileToCredentials(profile string, homePath string, ctx *context.Context, myLogger logger.LoggerInt) {
 	profilesInCredentials := getProfilesFromFile(homePath+"/.aws/credentials", myLogger)
 	temp := helpers.SliceContains(profilesInCredentials, profile)
 	if !temp {
@@ -74,21 +64,21 @@ func addProfileToCredentials(profile string, homePath string, ctx *context.Conte
 }
 
 // Creating main.yaml based on .aws/config or in configure mode.
-func configIsPresent(profile string, homePath string, ctx *context.Context, myLogger logger.Logger) (string, context.Context) {
-	profilesInConfig := getProfilesFromFile(homePath+"/.aws/config", &myLogger)
+func configIsPresent(profile string, homePath string, ctx *context.Context, myLogger logger.LoggerInt) (string, context.Context) {
+	profilesInConfig := getProfilesFromFile(homePath+"/.aws/config", myLogger)
 	isDefaultProfile := helpers.SliceContains(profilesInConfig, profile)
 	if isDefaultProfile {
 		var answer string
 		myLogger.GetInput("Default profile exists, do you want to use it *Y* or create your own *N*?", &answer)
 		if strings.ToUpper(answer) == "Y" {
-			*ctx = createNewMainYaml(profile, homePath, ctx, &myLogger)
+			*ctx = createNewMainYaml(profile, homePath, ctx, myLogger)
 		} else if strings.ToUpper(answer) == "N" {
 			configurator.CreateRequiredFilesInConfigureMode(ctx)
 
 		}
 	} else { // isDefaultProfile == false
-		profile = useProfileFromConfig(profilesInConfig, profile, &myLogger)
-		*ctx = createNewMainYaml(profile, homePath, ctx, &myLogger)
+		profile = useProfileFromConfig(profilesInConfig, profile, myLogger)
+		*ctx = createNewMainYaml(profile, homePath, ctx, myLogger)
 	}
 
 	return profile, *ctx
@@ -103,7 +93,7 @@ func newConfigFile(profile string, region string, homePath string, ctx *context.
 }
 
 // Creating credentials for all present profiles.
-func createCredentials(profile string, homePath string, ctx *context.Context, myLogger *logger.Logger) {
+func createCredentials(profile string, homePath string, ctx *context.Context, myLogger logger.LoggerInt) {
 	isProfileInPresent := isProfileInCredentials(profile, homePath+"/.aws/credentials", myLogger)
 
 	if !isProfileInPresent {
