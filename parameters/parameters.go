@@ -1,4 +1,4 @@
-// Copyright 2017 Appliscale
+// Copyright 2018 Appliscale
 //
 // Maintainers and contributors are listed in README file inside repository.
 //
@@ -16,7 +16,6 @@
 
 // Package parameters provides tools for interactive creation of parameters file for aws
 // cloud formation.
-
 package parameters
 
 import (
@@ -35,11 +34,13 @@ import (
 	"github.com/awslabs/goformation/cloudformation"
 )
 
+// Parameter contains Key and Value.
 type Parameter struct {
 	ParameterKey   string
 	ParameterValue string
 }
 
+// GetJSONParameters gets parameters
 func GetJSONParameters(context *context.Context) (resultString []byte, err error) {
 	var parameters []*Parameter
 	parameters, err = GetParameters(context)
@@ -56,6 +57,7 @@ func GetJSONParameters(context *context.Context) (resultString []byte, err error
 	return
 }
 
+// ConfigureParameters allows to create file with parameters.
 func ConfigureParameters(context *context.Context) error {
 	resultString, err := GetJSONParameters(context)
 	if err != nil {
@@ -87,6 +89,7 @@ func ConfigureParameters(context *context.Context) error {
 	return nil
 }
 
+// GetAwsParameters gets parameters from context and parses to aws parameters.
 func GetAwsParameters(context *context.Context) (parameters []*cloudformation2.Parameter, err error) {
 	var params []*Parameter
 	params, err = GetParameters(context)
@@ -97,6 +100,7 @@ func GetAwsParameters(context *context.Context) (parameters []*cloudformation2.P
 	return
 }
 
+// ParseParameterToAwsCompatible converts parameters from file to compatible with  AWS.
 func ParseParameterToAwsCompatible(params []*Parameter) (parameters []*cloudformation2.Parameter) {
 	for paramnum := range params {
 		parameters = append(parameters,
@@ -107,7 +111,7 @@ func ParseParameterToAwsCompatible(params []*Parameter) (parameters []*cloudform
 	return
 }
 
-// Get the parameters - if parameters file provided - from file, else - interactively from user
+// Get the parameters - if parameters file provided - from file, else - interactively from user.
 func ResolveParameters(context *context.Context) (params []*cloudformation2.Parameter, err error) {
 	if *context.CliArguments.ParametersFile == "" {
 		params, err = GetAwsParameters(context)
@@ -127,6 +131,7 @@ func ResolveParameters(context *context.Context) (params []*cloudformation2.Para
 	return
 }
 
+// GetParameters gets parameters from file, checks correctness and adds to Parameters.
 func GetParameters(context *context.Context) (parameters []*Parameter, err error) {
 	templateFile, err := parseTemplate(context)
 	if err != nil {

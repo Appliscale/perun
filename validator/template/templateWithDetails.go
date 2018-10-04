@@ -16,6 +16,7 @@
 
 package template
 
+// TemplateWithDetails - more detailed template.
 type TemplateWithDetails struct {
 	AWSTemplateFormatVersion *TemplateElement
 	Description              *TemplateElement
@@ -28,6 +29,7 @@ type TemplateWithDetails struct {
 	Outputs                  *TemplateElement
 }
 
+// TemplateElement describe each Element.
 type TemplateElement struct {
 	Name     string
 	Value    interface{}
@@ -37,6 +39,7 @@ type TemplateElement struct {
 	Column   int
 }
 
+// TemplateElementValueType describe type of the element value.
 type TemplateElementValueType int
 
 const (
@@ -50,14 +53,17 @@ const (
 	Unknown
 )
 
+// GetChildrenMap - get map in Element.
 func (te *TemplateElement) GetChildrenMap() map[string]*TemplateElement {
 	return te.Children.(map[string]*TemplateElement)
 }
 
+// GetChildrenSlice - get slice in Element.
 func (te *TemplateElement) GetChildrenSlice() []*TemplateElement {
 	return *te.Children.(*[]*TemplateElement)
 }
 
+// Traverse - get all maps and slices.
 func (te *TemplateElement) Traverse(iterator func(element *TemplateElement, parent *TemplateElement, depth int)) {
 	if te != nil {
 		te.traverse(iterator, nil, 0)
@@ -77,6 +83,7 @@ func (te *TemplateElement) traverse(iterator func(element *TemplateElement, pare
 	}
 }
 
+// Traverse - get all maps and slices for each element.
 func (twd TemplateWithDetails) Traverse(iterator func(element *TemplateElement, parent *TemplateElement, depth int)) {
 	twd.AWSTemplateFormatVersion.Traverse(iterator)
 	twd.Description.Traverse(iterator)

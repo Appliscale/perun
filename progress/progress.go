@@ -1,3 +1,20 @@
+// Copyright 2018 Appliscale
+//
+// Maintainers and contributors are listed in README file inside repository.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Package progress provides displaying of progress e.g during stack creation.
 package progress
 
 import (
@@ -13,6 +30,7 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
+// Connection contains elements need to get connection.
 type Connection struct {
 	context *context.Context
 
@@ -28,7 +46,7 @@ var sinkName = "perun-sink-"
 
 const awsTimestampLayout = "2006-01-02T15:04:05.000Z"
 
-// Configure AWS Resources needed for pregress monitoring
+// Configure AWS Resources needed for progress monitoring.
 func ConfigureRemoteSink(context *context.Context) (err error) {
 	conn := initRemoteConnection(context)
 	snsTopicExists, sqsQueueExists, err := conn.verifyRemoteSinkConfigured()
@@ -68,7 +86,7 @@ func ConfigureRemoteSink(context *context.Context) (err error) {
 	}
 }
 
-// Remove all AWS Resources created for stack monitoring
+// Remove all AWS Resources created for stack monitoring.
 func DestroyRemoteSink(context *context.Context) (conn Connection, err error) {
 	conn = initRemoteConnection(context)
 	snsTopicExists, sqsQueueExists, err := conn.verifyRemoteSinkConfigured()
@@ -89,7 +107,7 @@ func DestroyRemoteSink(context *context.Context) (conn Connection, err error) {
 	}
 }
 
-// Get configuration of created AWS Resources
+// Get configuration of created AWS Resources.
 func GetRemoteSink(context *context.Context) (conn Connection, err error) {
 	conn = initMessageService(context)
 	snsTopicExists, sqsQueueExists, err := conn.verifyRemoteSinkConfigured()
@@ -127,6 +145,7 @@ func (conn *Connection) verifyRemoteSinkConfigured() (snsTopicExists bool, sqsQu
 	return
 }
 
+// Message - struct with elements of message.
 type Message struct {
 	Type             string
 	MessageId        string
@@ -140,7 +159,7 @@ type Message struct {
 	UnsubscribeURL   string
 }
 
-// Monitor queue, that delivers messages sent by cloud formation stack progress
+// Monitor queue, that delivers messages sent by cloud formation stack progress.
 func (conn *Connection) MonitorStackQueue() {
 	waitTimeSeconds := int64(3)
 	receiveMessageInput := sqs.ReceiveMessageInput{

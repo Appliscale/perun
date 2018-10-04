@@ -1,3 +1,20 @@
+// Copyright 2018 Appliscale
+//
+// Maintainers and contributors are listed in README file inside repository.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Package configurator allows to create configuration file main.yaml.
 package configurator
 
 import (
@@ -11,6 +28,7 @@ import (
 	"strings"
 )
 
+// ResourceSpecificationURL contains links to Resource Specification for all regions.
 var ResourceSpecificationURL = map[string]string{
 	"us-east-2":      "https://dnwj8swjjbsbt.cloudfront.net",
 	"us-east-1":      "https://d1uauaxba7bl26.cloudfront.net",
@@ -28,7 +46,7 @@ var ResourceSpecificationURL = map[string]string{
 	"sa-east-1":      "https://d3c9jyj3w509b0.cloudfront.net",
 }
 
-// Creating main.yaml and .aws/credentials in configure mode.
+// CreateRequiredFilesInConfigureMode creates main.yaml and .aws/credentials in configure mode.
 func CreateRequiredFilesInConfigureMode(ctx *context.Context) {
 	homePath, pathError := myuser.GetUserHomeDir()
 	if pathError != nil {
@@ -108,7 +126,7 @@ func setProfile(myLogger *logger.Logger) (profile string, err bool) {
 	return
 }
 
-// Get region and profile from user.
+//GetRegionAndProfile gets region and profile from user.
 func GetRegionAndProfile(myLogger *logger.Logger) (string, string) {
 	profile, err := setProfile(myLogger)
 	for !err {
@@ -131,7 +149,7 @@ func setTemporaryFilesDirectory(context *context.Context) (path string) {
 	return path
 }
 
-// Creating main.yaml
+// CreateMainYaml creates new configuration file.
 func CreateMainYaml(context *context.Context, myProfile string, myRegion string) configuration.Configuration {
 	myTemporaryFilesDirectory := setTemporaryFilesDirectory(context)
 	myResourceSpecificationURL := ResourceSpecificationURL
@@ -170,7 +188,7 @@ func makeArrayRegions() []string {
 	return regions
 }
 
-// Creating .aws/credentials file.
+// CreateAWSCredentialsFile creates .aws/credentials file based on information from user.
 func CreateAWSCredentialsFile(ctx *context.Context, profile string) {
 	if profile != "" {
 		ctx.Logger.Always("You haven't got .aws/credentials file for profile " + profile)
@@ -198,7 +216,7 @@ func CreateAWSCredentialsFile(ctx *context.Context, profile string) {
 	}
 }
 
-// Creating .aws/config file.
+// CreateAWSConfigFile creates .aws/config file based on information from user.
 func CreateAWSConfigFile(ctx *context.Context, profile string, region string) {
 	var output string
 	ctx.Logger.GetInput("Output", &output)

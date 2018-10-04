@@ -1,4 +1,4 @@
-// Copyright 2017 Appliscale
+// Copyright 2018 Appliscale
 //
 // Maintainers and contributors are listed in README file inside repository.
 //
@@ -14,8 +14,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package template provides struct which describes AWS Template.
 package template
 
+// Template describes AWS Template.
 type Template struct {
 	AWSTemplateFormatVersion string                 `yaml:"AWSTemplateFormatVersion"`
 	Description              string                 `yaml:"Description"`
@@ -28,10 +30,12 @@ type Template struct {
 	Outputs                  map[string]interface{} `yaml:"Outputs"`
 }
 
+// Resource describes structure of Resources in Template.
 type Resource struct {
 	Type           string                 `yaml:"Type"`
 	Properties     map[string]interface{} `yaml:"Properties"`
 	DeletionPolicy string                 `yaml:"DeletionPolicy"`
 }
 
+// Parameters describes structure of Parameters in Template.
 type Parameters map[string]interface{}

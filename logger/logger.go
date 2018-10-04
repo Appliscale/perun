@@ -1,4 +1,4 @@
-// Copyright 2017 Appliscale
+// Copyright 2018 Appliscale
 //
 // Maintainers and contributors are listed in README file inside repository.
 //
@@ -23,6 +23,7 @@ import (
 	"strings"
 )
 
+// Logger contains information type of logger tool.
 type Logger struct {
 	Quiet              bool
 	Yes                bool
@@ -30,11 +31,13 @@ type Logger struct {
 	resourceValidation []*ResourceValidation
 }
 
+// ResourceValidation contains name of resource and errors.
 type ResourceValidation struct {
 	ResourceName string
 	Errors       []string
 }
 
+// Verbosity - type of logger.
 type Verbosity int
 
 const (
@@ -139,6 +142,7 @@ func (logger *Logger) PrintValidationErrors() {
 	}
 }
 
+// HasValidationErrors checks if resource has errors.
 func (logger *Logger) HasValidationErrors() bool {
 	for _, resourceValidation := range logger.resourceValidation {
 		if len(resourceValidation.Errors) > 0 {
@@ -167,6 +171,7 @@ func (logger *Logger) SetVerbosity(verbosity string) {
 	}
 }
 
+// Check if verbosity is one of the given types.
 func IsVerbosityValid(verbosity string) bool {
 	switch verbosity {
 	case

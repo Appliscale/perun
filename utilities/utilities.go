@@ -1,4 +1,4 @@
-// Copyright 2017 Appliscale
+// Copyright 2018 Appliscale
 //
 // Maintainers and contributors are listed in README file inside repository.
 //
@@ -24,19 +24,26 @@ import (
 	"time"
 )
 
+// Motto - perun's motto.
 const Motto = "Swiss army knife for AWS CloudFormation templates"
 
+// ReleaseName - name of the release.
 const ReleaseName = "Altostratus"
+
+// VersionNumber - number of the release.
 const VersionNumber = "1.3.1"
 
+// VersionStatus shows perun's release.
 func VersionStatus() string {
 	return fmt.Sprintf("perun %s (%s release) - %s", VersionNumber, ReleaseName, Motto)
 }
 
+// TruncateDuration prepares shorter message with duration.
 func TruncateDuration(d time.Duration) time.Duration {
 	return -(d - d%(time.Duration(1)*time.Second))
 }
 
+// CheckErrorCodeAndExit checks if error exists.
 func CheckErrorCodeAndExit(err error) {
 	if err != nil {
 		os.Exit(1)
@@ -45,6 +52,7 @@ func CheckErrorCodeAndExit(err error) {
 	}
 }
 
+// CheckFlagAndExit checks error flag.
 func CheckFlagAndExit(valid bool) {
 	if valid {
 		os.Exit(0)

@@ -1,4 +1,4 @@
-// Copyright 2017 Appliscale
+// Copyright 2018 Appliscale
 //
 // Maintainers and contributors are listed in README file inside repository.
 //
@@ -23,6 +23,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
+// VpcProperties describe structure of Vpc.
 type VpcProperties struct {
 	CidrBlock          string
 	EnableDnsSupport   bool
@@ -31,7 +32,7 @@ type VpcProperties struct {
 	Tags               []Tag
 }
 
-// IsVpcValid : Checks if CIDR block is valid
+// IsVpcValid : Checks if CIDR block is valid.
 func IsVpcValid(vpc template.Resource, resourceValidation *logger.ResourceValidation) bool {
 	valid := true
 	var properties VpcProperties

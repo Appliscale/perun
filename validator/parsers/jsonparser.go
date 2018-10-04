@@ -14,6 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package parsers provides some parsers to prepare Template.
 package parsers
 
 import (
@@ -22,6 +23,7 @@ import (
 	"strconv"
 )
 
+// ParseJson parses byte to TemplateWithDetails.
 func ParseJson(fileContents []byte, tmpl *template.TemplateWithDetails) error {
 	elements, err := parse(fileContents)
 	if err != nil {

@@ -1,4 +1,4 @@
-// Copyright 2017 Appliscale
+// Copyright 2018 Appliscale
 //
 // Maintainers and contributors are listed in README file inside repository.
 //
@@ -30,17 +30,20 @@ import (
 	"github.com/Appliscale/perun/context"
 )
 
+// Specification contains information about specification.
 type Specification struct {
 	PropertyTypes                map[string]PropertyType
 	ResourceSpecificationVersion string
 	ResourceTypes                map[string]Resource
 }
 
+// PropertyType - Documentation and Properties.
 type PropertyType struct {
 	Documentation string
 	Properties    map[string]Property
 }
 
+// Property - elements.
 type Property struct {
 	Documentation     string
 	DuplicatesAllowed bool
@@ -52,12 +55,14 @@ type Property struct {
 	UpdateType        string
 }
 
+// Resource with attributes and properties.
 type Resource struct {
 	Documentation string
 	Attributes    map[string]Attribute
 	Properties    map[string]Property
 }
 
+// Attribute of item.
 type Attribute struct {
 	ItemType          string
 	PrimitiveItemType string
@@ -65,7 +70,7 @@ type Attribute struct {
 	Type              string
 }
 
-// IsSubproperty : Checks if it is subproperty
+// IsSubproperty : Checks if it is subproperty.
 func (property *Property) IsSubproperty() bool {
 	if property.Type != "List" && property.Type != "Map" && len(property.Type) > 0 {
 		return true
