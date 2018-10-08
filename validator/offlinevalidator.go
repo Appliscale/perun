@@ -49,7 +49,7 @@ var validatorsMap = map[string]interface{}{
 	"AWS::EC2::VPC": validators.IsVpcValid,
 }
 
-func printResult(templateName string, valid *bool, logger *logger.Logger) {
+func printResult(templateName string, valid *bool, logger logger.LoggerInt) {
 	logger.PrintValidationErrors()
 	if !*valid {
 		logger.Error(fmt.Sprintf("Template %s is invalid!", templateName))
@@ -119,7 +119,7 @@ func validateTemplateFile(templatePath string, templateName string, context *con
 }
 
 // Looking for AllowedValues and checking what Type is it. If it finds Type other than String then it will return false.
-func hasAllowedValuesParametersValid(parameters template.Parameters, logger *logger.Logger) bool {
+func hasAllowedValuesParametersValid(parameters template.Parameters, logger logger.LoggerInt) bool {
 	isType := false
 	isAllovedValues := false
 	for _, value := range parameters {
@@ -183,7 +183,7 @@ func validateProperties(
 	propertyValue specification.Property,
 	resourceValidation *logger.ResourceValidation,
 	specInconsistency map[string]configuration.Property,
-	logger *logger.Logger) {
+	logger logger.LoggerInt) {
 
 	warnAboutSpecificationInconsistencies(propertyName, specInconsistency[resourceValue.Type], logger)
 	if _, ok := resourceValue.Properties[propertyName]; !ok {
@@ -202,7 +202,7 @@ func validateProperties(
 }
 
 // check should be before validate, someone might add property because he thought it is required and here he would not get notified about inconsistency...
-func warnAboutSpecificationInconsistencies(subpropertyName string, specInconsistentProperty configuration.Property, logger *logger.Logger) {
+func warnAboutSpecificationInconsistencies(subpropertyName string, specInconsistentProperty configuration.Property, logger logger.LoggerInt) {
 	if specInconsistentProperty[subpropertyName] != nil {
 		for _, inconsistentPropertyName := range specInconsistentProperty[subpropertyName] {
 			if inconsistentPropertyName == "Required" {
@@ -218,7 +218,7 @@ func checkListProperties(
 	resourceValueType, propertyName, listItemType string,
 	resourceValidation *logger.ResourceValidation,
 	specInconsistency map[string]configuration.Property,
-	logger *logger.Logger) {
+	logger logger.LoggerInt) {
 
 	if listItemType == "" {
 		resourceSubproperties := toStringList(resourceProperties, propertyName)
@@ -252,7 +252,7 @@ func checkNestedProperties(
 	resourceValueType, propertyName, propertyType string,
 	resourceValidation *logger.ResourceValidation,
 	specInconsistency map[string]configuration.Property,
-	logger *logger.Logger) {
+	logger logger.LoggerInt) {
 
 	if propertySpec, hasSpec := spec.PropertyTypes[resourceValueType+"."+propertyType]; hasSpec {
 		resourceSubproperties, _ := toMap(resourceProperties, propertyName)
@@ -354,7 +354,7 @@ func checkMapProperties(
 	}
 }
 
-func obtainResources(goformationTemplate cloudformation.Template, perunTemplate template.Template, logger *logger.Logger) map[string]template.Resource {
+func obtainResources(goformationTemplate cloudformation.Template, perunTemplate template.Template, logger logger.LoggerInt) map[string]template.Resource {
 	perunResources := perunTemplate.Resources
 	goformationResources := goformationTemplate.Resources
 
@@ -415,7 +415,7 @@ func toMap(resourceProperties map[string]interface{}, propertyName string) (map[
 // There is a possibility that a hash map inside the template would have one of it's element's being an intrinsic function designed to output `key : value` pair.
 // If this function would be unresolved, it would output a standalone <nil> of type interface{}. It would be an alien element in a hash map.
 // To prevent the parser from breaking, we wipe out the entire, expected hash map element.
-func nilNeutralize(template cloudformation.Template, logger *logger.Logger) (output cloudformation.Template, err error) {
+func nilNeutralize(template cloudformation.Template, logger logger.LoggerInt) (output cloudformation.Template, err error) {
 	bytes, initErr := json.Marshal(template)
 	if initErr != nil {
 		logger.Error(err.Error())
@@ -499,7 +499,7 @@ func getNilResources(resources map[string]template.Resource) []string {
 	return list
 }
 
-func checkWhereIsNil(n interface{}, v interface{}, baseLevel string, logger *logger.Logger, fullPath []interface{}, dsc *interface{}) {
+func checkWhereIsNil(n interface{}, v interface{}, baseLevel string, logger logger.LoggerInt, fullPath []interface{}, dsc *interface{}) {
 	if v == nil { // Value we encountered is nil - this is the end of investigation.
 		where := ""
 		for _, element := range fullPath {
