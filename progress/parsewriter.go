@@ -44,7 +44,7 @@ const add = "Add"
 const remove = "Remove"
 const modify = "Modify"
 
-// ParseWriter structure.
+// ParseWriter structure describes functions to stain text.
 type ParseWriter struct {
 	linesPrinted   int
 	bgRed          func(a ...interface{}) string
@@ -58,7 +58,7 @@ type ParseWriter struct {
 	statusColorMap map[string]func(a ...interface{}) string
 }
 
-// NewParseWriter creates new parserWriter.
+// NewParseWriter is used to show progress in colorful table.
 func NewParseWriter() (pw *ParseWriter) {
 	pw = &ParseWriter{}
 	pw.linesPrinted = 0
@@ -96,6 +96,7 @@ func NewParseWriter() (pw *ParseWriter) {
 	return
 }
 
+// Write prints lines.
 func (pw *ParseWriter) Write(p []byte) (n int, err error) {
 	var newString = pw.colorStatuses(string(p))
 	fmt.Print(newString)

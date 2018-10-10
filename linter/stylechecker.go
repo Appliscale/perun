@@ -28,7 +28,7 @@ import (
 	"strings"
 )
 
-// Parameter - structure.
+// Parameter describes all element which parameter in template should have.
 type Parameter struct {
 	Type          string   `json:"Type"`
 	Default       string   `json:"Default"`

@@ -30,20 +30,20 @@ import (
 	"github.com/Appliscale/perun/context"
 )
 
-// Specification contains information about specification.
+// Specification contains information about specification - type and version.
 type Specification struct {
 	PropertyTypes                map[string]PropertyType
 	ResourceSpecificationVersion string
 	ResourceTypes                map[string]Resource
 }
 
-// PropertyType - Documentation and Properties.
+// PropertyType contains Documentation and map of Properties.
 type PropertyType struct {
 	Documentation string
 	Properties    map[string]Property
 }
 
-// Property - elements.
+// Property describes what should be in structure.
 type Property struct {
 	Documentation     string
 	DuplicatesAllowed bool
@@ -55,7 +55,7 @@ type Property struct {
 	UpdateType        string
 }
 
-// Resource with attributes and properties.
+// Resource in specification contains documentation, map of attributes and properties.
 type Resource struct {
 	Documentation string
 	Attributes    map[string]Attribute
@@ -88,7 +88,7 @@ func GetSpecification(context *context.Context) (specification Specification, er
 	return GetSpecificationFromFile(filePath)
 }
 
-// Get specification from file.
+// Get specification from file. It's used in GetSpecification().
 func GetSpecificationFromFile(specificationFilePath string) (specification Specification, err error) {
 	specificationFile, err := ioutil.ReadFile(specificationFilePath)
 	if err != nil {

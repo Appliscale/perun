@@ -21,7 +21,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 )
 
-// CloudFormationAPI interface.
+// CloudFormationAPI collects all functions which using Cloudformation, e.g creating stack.
 type CloudFormationAPI interface {
 	CreateStack(input *cloudformation.CreateStackInput) (*cloudformation.CreateStackOutput, error)
 	DeleteStack(input *cloudformation.DeleteStackInput) (*cloudformation.DeleteStackOutput, error)

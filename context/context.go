@@ -43,7 +43,7 @@ type cliArgumentsParser func(args []string) (cliparser.CliArguments, error)
 type configurationReader func(cliparser.CliArguments, *logger.Logger) (configuration.Configuration, error)
 type inconsistenciesReader func(*logger.Logger) configuration.InconsistencyConfiguration
 
-// GetContext creates CLI context.
+// GetContext creates CLI context. Creating logger and config and checking inconsistency.
 func GetContext(cliArgParser cliArgumentsParser, confReader configurationReader, inconsistReader inconsistenciesReader) (context Context, err error) {
 	myLogger := logger.CreateDefaultLogger()
 

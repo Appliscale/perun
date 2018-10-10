@@ -34,13 +34,13 @@ import (
 	"github.com/awslabs/goformation/cloudformation"
 )
 
-// Parameter contains Key and Value.
+// Parameter contains Key and Value. It describes how looks each parameter.
 type Parameter struct {
 	ParameterKey   string
 	ParameterValue string
 }
 
-// GetJSONParameters gets parameters
+// GetJSONParameters gets parameters from context.CliArguments.TemplatePath.
 func GetJSONParameters(context *context.Context) (resultString []byte, err error) {
 	var parameters []*Parameter
 	parameters, err = GetParameters(context)
@@ -89,7 +89,7 @@ func ConfigureParameters(context *context.Context) error {
 	return nil
 }
 
-// GetAwsParameters gets parameters from context and parses to aws parameters.
+// GetAwsParameters gets parameters from context and parses to AWS parameters.
 func GetAwsParameters(context *context.Context) (parameters []*cloudformation2.Parameter, err error) {
 	var params []*Parameter
 	params, err = GetParameters(context)
@@ -100,7 +100,7 @@ func GetAwsParameters(context *context.Context) (parameters []*cloudformation2.P
 	return
 }
 
-// ParseParameterToAwsCompatible converts parameters from file to compatible with  AWS.
+// ParseParameterToAwsCompatible converts parameters from file to compatible with AWS.
 func ParseParameterToAwsCompatible(params []*Parameter) (parameters []*cloudformation2.Parameter) {
 	for paramnum := range params {
 		parameters = append(parameters,

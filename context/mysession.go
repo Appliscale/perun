@@ -32,7 +32,7 @@ import (
 
 const dateFormat = "2006-01-02 15:04:05"
 
-// InitializeSession creates session.
+// InitializeSession creates session and updates session token.
 func InitializeSession(context *Context) *session.Session {
 	tokenError := UpdateSessionToken(context.Config.DefaultProfile, context.Config.DefaultRegion, context.Config.DefaultDurationForMFA, context)
 	if tokenError != nil {
@@ -66,7 +66,7 @@ func CreateSession(context *Context, profile string, region *string) (*session.S
 	return currentSession, nil
 }
 
-// UpdateSessionToken updates session token in .aws/credentials.
+// UpdateSessionToken updates session token for profile in .aws/credentials.
 func UpdateSessionToken(profile string, region string, defaultDuration int64, context *Context) error {
 	if *context.CliArguments.MFA || *context.CliArguments.Mode == cliparser.MfaMode {
 		currentUser, userError := user.Current()

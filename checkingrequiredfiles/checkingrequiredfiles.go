@@ -136,7 +136,7 @@ func isMainYAMLPresent(myLogger *logger.Logger) (bool, error) {
 	return true, pathError
 }
 
-// Looking for .aws.config.
+// Looking for .aws/config.
 func isAWSConfigPresent(myLogger *logger.Logger) (bool, error) {
 	homePath, pathError := myuser.GetUserHomeDir()
 	if pathError != nil {

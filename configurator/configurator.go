@@ -188,7 +188,7 @@ func makeArrayRegions() []string {
 	return regions
 }
 
-// CreateAWSCredentialsFile creates .aws/credentials file based on information from user.
+// CreateAWSCredentialsFile creates .aws/credentials file based on information from user. The file contains access key and MFA serial.
 func CreateAWSCredentialsFile(ctx *context.Context, profile string) {
 	if profile != "" {
 		ctx.Logger.Always("You haven't got .aws/credentials file for profile " + profile)
@@ -216,7 +216,7 @@ func CreateAWSCredentialsFile(ctx *context.Context, profile string) {
 	}
 }
 
-// CreateAWSConfigFile creates .aws/config file based on information from user.
+// CreateAWSConfigFile creates .aws/config file based on information from user. The file contains profile name, region and type of output.
 func CreateAWSConfigFile(ctx *context.Context, profile string, region string) {
 	var output string
 	ctx.Logger.GetInput("Output", &output)

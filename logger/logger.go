@@ -142,7 +142,7 @@ func (logger *Logger) PrintValidationErrors() {
 	}
 }
 
-// HasValidationErrors checks if resource has errors.
+// HasValidationErrors checks if resource has errors. It's used in validateResources().
 func (logger *Logger) HasValidationErrors() bool {
 	for _, resourceValidation := range logger.resourceValidation {
 		if len(resourceValidation.Errors) > 0 {
@@ -152,7 +152,7 @@ func (logger *Logger) HasValidationErrors() bool {
 	return false
 }
 
-// AddResourceForValidation : Adds resource for validation
+// AddResourceForValidation : Adds resource for validation. It's used in validateResources().
 func (logger *Logger) AddResourceForValidation(resourceName string) *ResourceValidation {
 	resourceValidation := &ResourceValidation{
 		ResourceName: resourceName,

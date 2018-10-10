@@ -43,7 +43,7 @@ func TruncateDuration(d time.Duration) time.Duration {
 	return -(d - d%(time.Duration(1)*time.Second))
 }
 
-// CheckErrorCodeAndExit checks if error exists.
+// CheckErrorCodeAndExit checks if error exists and exits with 1 or 0 code.
 func CheckErrorCodeAndExit(err error) {
 	if err != nil {
 		os.Exit(1)
@@ -52,7 +52,7 @@ func CheckErrorCodeAndExit(err error) {
 	}
 }
 
-// CheckFlagAndExit checks error flag.
+// CheckFlagAndExit checks error flag exits with 1 or 0 code.
 func CheckFlagAndExit(valid bool) {
 	if valid {
 		os.Exit(0)

@@ -56,7 +56,7 @@ func DeleteChangeSet(ctx *context.Context) (err error) {
 	return
 }
 
-// NewChangeSet create change set.
+// NewChangeSet create change set and gets parameters.
 func NewChangeSet(context *context.Context) (err error) {
 	template, stackName, err := getTemplateFromFile(context)
 	if err != nil {

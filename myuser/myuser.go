@@ -21,7 +21,7 @@ import (
 	"os/user"
 )
 
-// GetUserHomeDir gets path to home directory.
+// GetUserHomeDir gets path to user's home directory. It's used when perun checks if configuration files exists.
 func GetUserHomeDir() (string, error) {
 	user, userError := user.Current()
 	if userError != nil {

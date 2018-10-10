@@ -14,7 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package intrinsicsolver contains of its own solver.
+// Package intrinsicsolver contains its own solver.
 package intrinsicsolver
 
 // Function indentations checks how much an element is indented by counting all the spaces encountered in searching for the first non-space character in line.

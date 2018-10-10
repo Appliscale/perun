@@ -39,7 +39,7 @@ func createStackInput(template *string, stackName *string, context *context.Cont
 	return templateStruct, nil
 }
 
-// NewStack create Stack.
+// NewStack create Stack. It's get template from context.CliArguments.TemplatePath.
 func NewStack(context *context.Context) error {
 	template, stackName, incorrectPath := getTemplateFromFile(context)
 	if incorrectPath != nil {

@@ -23,7 +23,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
-// VpcProperties describe structure of Vpc.
+// VpcProperties describes structure of Vpc.
 type VpcProperties struct {
 	CidrBlock          string
 	EnableDnsSupport   bool

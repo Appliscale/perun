@@ -14,7 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package linter provides revision of templates.
+// Package linter provides revision of templates. Linter configuration is in default/style.yaml.
 package linter
 
 import (
@@ -26,14 +26,14 @@ import (
 	"regexp"
 )
 
-// LinterConfiguration contains configuration for two types: Yaml and JSON, and global.
+// LinterConfiguration contains configuration for two types - Yaml and JSON, and global.
 type LinterConfiguration struct {
 	Yaml   YamlLinterConfiguration   `yaml:"yaml"`
 	Json   JsonLinterConfiguration   `yaml:"json"`
 	Global GlobalLinterConfiguration `yaml:"global"`
 }
 
-// GlobalLinterConfiguration describes global configuration.
+// GlobalLinterConfiguration describes global configuration. It's used in LinterConfiguration as one of type of Linter.
 type GlobalLinterConfiguration struct {
 	LineLength        Check             `yaml:"lineLength"`
 	Indent            Check             `yaml:"indent"`
@@ -42,35 +42,35 @@ type GlobalLinterConfiguration struct {
 	BlankLinesAllowed bool              `yaml:"blankLinesAllowed"`
 }
 
-// Check stores "Required" and its value.
+// Check stores information about if something is required or not and value e.g indent.
 type Check struct {
 	Required bool        `yaml:"required"`
 	Value    interface{} `yaml:"value"`
 }
 
-// NamingConventions describes names.
+// NamingConventions describes how should looks names.
 type NamingConventions struct {
 	LogicalNames string `yaml:"logicalNames"`
 }
 
-// RequiredFields stores Description.
+// RequiredFields says which elements in template are required.
 type RequiredFields struct {
 	TemplateDescription   bool `yaml:"templateDescription"`
 	ParametersDescription bool `yaml:"parametersDescription"`
 }
 
-// JsonLinterConfiguration describes Spaces.
+// JsonLinterConfiguration describes where should be spaces.
 type JsonLinterConfiguration struct {
 	Spaces SpacesConfiguration `yaml:"spaces"`
 }
 
-// SpacesConfiguration stores information about spaces.
+// SpacesConfiguration stores information about spaces before and after something.
 type SpacesConfiguration struct {
 	After  []string `yaml:"after"`
 	Before []string `yaml:"before"`
 }
 
-// YamlLinterConfiguration describes configuration for Yaml.
+// YamlLinterConfiguration describes configuration for Yaml - what type of quotes, lists and indent is used.
 type YamlLinterConfiguration struct {
 	AllowedQuotes      Quotes       `yaml:"allowedQuotes"`
 	AllowedLists       AllowedLists `yaml:"allowedLists"`
@@ -90,7 +90,7 @@ type AllowedLists struct {
 	Dash   bool `yaml:"dash"`
 }
 
-// CheckLogicalName checks name.
+// CheckLogicalName checks name. It use NamingConventions.
 func (this LinterConfiguration) CheckLogicalName(name string) bool {
 	return regexp.MustCompile(this.Global.NamingConventions.LogicalNames).MatchString(name)
 }

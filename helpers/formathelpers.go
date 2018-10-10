@@ -130,7 +130,7 @@ func lineAndCharacter(input string, offset int) (line int, character int) {
 	return line, character
 }
 
-// CountLeadingSpaces counts leading spaces.
+// CountLeadingSpaces counts leading spaces. It's used in checkYamlIndentation().
 func CountLeadingSpaces(line string) int {
 	i := 0
 	for _, runeValue := range line {
