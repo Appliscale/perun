@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/Appliscale/perun/checkingrequiredfiles/mocks"
-	mockContext "github.com/Appliscale/perun/stack/mocks"
+	"github.com/Appliscale/perun/stack/stack_mocks"
 	"github.com/golang/mock/gomock"
 )
 
@@ -35,7 +35,7 @@ func TestAddNewProfileFromCredentialsToConfig(t *testing.T) {
 	profile := "perun"
 	homePath := "./test_resources"
 	templatePath := "../stack/test_resources/test_template.yaml"
-	ctx := mockContext.SetupContext(t, []string{"cmd", "create-stack", "teststack", templatePath})
+	ctx := stack_mocks.SetupContext(t, []string{"cmd", "create-stack", "teststack", templatePath})
 
 	mockLogger.EXPECT().GetInput("I found profile "+profile+" in credentials, but not in config. \nCreate new profile in config? Y/N", gomock.Any()).Return(nil).Times(1)
 
@@ -49,7 +49,7 @@ func TestAddProfileToCredentials(t *testing.T) {
 	profile := "perun"
 	homePath := "./test_resources"
 	templatePath := "../stack/test_resources/test_template.yaml"
-	ctx := mockContext.SetupContext(t, []string{"cmd", "create-stack", "teststack", templatePath})
+	ctx := stack_mocks.SetupContext(t, []string{"cmd", "create-stack", "teststack", templatePath})
 
 	mockLogger.EXPECT().Always("Profile " + profile + " has already credentials").Times(1)
 
@@ -63,7 +63,7 @@ func TestConfigIsPresent(t *testing.T) {
 	profile := "default"
 	homePath := "./test_resources"
 	templatePath := "../stack/test_resources/test_template.yaml"
-	ctx := mockContext.SetupContext(t, []string{"cmd", "create-stack", "teststack", templatePath})
+	ctx := stack_mocks.SetupContext(t, []string{"cmd", "create-stack", "teststack", templatePath})
 
 	mockLogger.EXPECT().GetInput("Default profile exists, do you want to use it *Y* or create your own *N*?", gomock.Any()).Return(nil).Times(1)
 
@@ -77,7 +77,7 @@ func TestCreateCredentials(t *testing.T) {
 	profile := "test1"
 	homePath := "./test_resources"
 	templatePath := "../stack/test_resources/test_template.yaml"
-	ctx := mockContext.SetupContext(t, []string{"cmd", "create-stack", "teststack", templatePath})
+	ctx := stack_mocks.SetupContext(t, []string{"cmd", "create-stack", "teststack", templatePath})
 
 	mockLogger.EXPECT().GetInput("I found profile "+profile+" in .aws/config without credentials, add? Y/N", gomock.Any())
 

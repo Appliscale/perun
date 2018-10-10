@@ -2,7 +2,7 @@ package validator
 
 import (
 	"github.com/Appliscale/perun/parameters"
-	"github.com/Appliscale/perun/stack/mocks"
+	"github.com/Appliscale/perun/stack/stack_mocks"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -11,11 +11,11 @@ import (
 )
 
 func TestIsTemplateValid(t *testing.T) {
-	ctx := mocks.SetupContext(t, []string{"cmd", "validate", "templatePath"})
+	ctx := stack_mocks.SetupContext(t, []string{"cmd", "validate", "templatePath"})
 
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	mockAWSPI := mocks.NewMockCloudFormationAPI(mockCtrl)
+	mockAWSPI := stack_mocks.NewMockCloudFormationAPI(mockCtrl)
 	ctx.CloudFormation = mockAWSPI
 
 	templateBody := "templateBody"
@@ -31,11 +31,11 @@ func TestIsTemplateValid(t *testing.T) {
 
 func TestEstimateCost(t *testing.T) {
 	templatePath := "./test_resources/test_template.yaml"
-	ctx := mocks.SetupContext(t, []string{"cmd", "validate", templatePath})
+	ctx := stack_mocks.SetupContext(t, []string{"cmd", "validate", templatePath})
 
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	mockAWSPI := mocks.NewMockCloudFormationAPI(mockCtrl)
+	mockAWSPI := stack_mocks.NewMockCloudFormationAPI(mockCtrl)
 	ctx.CloudFormation = mockAWSPI
 
 	templateBodyBytes, err := ioutil.ReadFile(templatePath)

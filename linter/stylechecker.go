@@ -52,12 +52,10 @@ func CheckStyle(ctx *context.Context) (err error) {
 	return
 }
 
-//TODO: Test with TestingLogger
-
 func checkLineLengths(lines []string, lintConf LinterConfiguration, ctx *context.Context) {
 	for line := range lines {
 		if lintConf.Global.LineLength.Required && len(lines[line]) > int(lintConf.Global.LineLength.Value.(float64)) {
-			ctx.Logger.Warning("line " + strconv.Itoa(line) + ": maximum line lenght exceeded")
+			ctx.Logger.Warning("line " + strconv.Itoa(line+1) + ": maximum line lenght exceeded")
 		}
 	}
 }
@@ -87,7 +85,7 @@ func checkAWSCFSpecificStuff(ctx *context.Context, rawTemplate string, lintConf 
 
 	if lintConf.Global.RequiredFields.ParametersDescription {
 		for parameterName, parameterValue := range goFormationTemplate.Parameters {
-			if parameterValue.(map[string]interface{})["Description"] != nil {
+			if parameterValue.(map[string]interface{})["Description"] == nil {
 				ctx.Logger.Warning("No description provided for parameter " + parameterName)
 			}
 		}
@@ -101,15 +99,16 @@ func checkAWSCFSpecificStuff(ctx *context.Context, rawTemplate string, lintConf 
 }
 
 func checkJsonSpaces(ctx *context.Context, lintConf LinterConfiguration, lines []string) {
+	reg := regexp.MustCompile(`"([^"]*)"`)
 	for line := range lines {
 		for sign := range lintConf.Json.Spaces.After {
-			if strings.Count(lines[line], lintConf.Json.Spaces.After[sign]) != strings.Count(lines[line], lintConf.Json.Spaces.After[sign]+" ") {
-				ctx.Logger.Warning("line " + strconv.Itoa(line) + ": no space after '" + string(lintConf.Json.Spaces.After[sign]) + "'")
+			if strings.Count(reg.ReplaceAllString(lines[line], "\"*\""), lintConf.Json.Spaces.After[sign]) != strings.Count(reg.ReplaceAllString(lines[line], "\"*\""), lintConf.Json.Spaces.After[sign]+" ") {
+				ctx.Logger.Warning("line " + strconv.Itoa(line+1) + ": no space after '" + string(lintConf.Json.Spaces.After[sign]) + "'")
 			}
 		}
 		for sign := range lintConf.Json.Spaces.Before {
-			if strings.Count(lines[line], lintConf.Json.Spaces.Before[sign]) != strings.Count(lines[line], " "+lintConf.Json.Spaces.Before[sign]) {
-				ctx.Logger.Warning("line " + strconv.Itoa(line) + ": no space before '" + string(lintConf.Json.Spaces.Before[sign]) + "'")
+			if strings.Count(reg.ReplaceAllString(lines[line], "\"*\""), lintConf.Json.Spaces.Before[sign]) != strings.Count(reg.ReplaceAllString(lines[line], "\"*\""), " "+lintConf.Json.Spaces.Before[sign]) {
+				ctx.Logger.Warning("line " + strconv.Itoa(line+1) + ": no space before '" + string(lintConf.Json.Spaces.Before[sign]) + "'")
 			}
 		}
 	}

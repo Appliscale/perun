@@ -1,7 +1,7 @@
 package stack
 
 import (
-	"github.com/Appliscale/perun/stack/mocks"
+	"github.com/Appliscale/perun/stack/stack_mocks"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -10,14 +10,14 @@ import (
 func TestApplyStackPolicy(t *testing.T) {
 	stackName := "StackName"
 	policyPath := "./test_resources/test_stackpolicy.json"
-	ctx := mocks.SetupContext(t, []string{"cmd", "set-stack-policy", stackName, policyPath})
+	ctx := stack_mocks.SetupContext(t, []string{"cmd", "set-stack-policy", stackName, policyPath})
 
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	mockAWSPI := mocks.NewMockCloudFormationAPI(mockCtrl)
+	mockAWSPI := stack_mocks.NewMockCloudFormationAPI(mockCtrl)
 	ctx.CloudFormation = mockAWSPI
 
-	template := mocks.ReadFile(t, policyPath)
+	template := stack_mocks.ReadFile(t, policyPath)
 
 	input := createStackPolicyInput(&template, &stackName)
 	mockAWSPI.EXPECT().SetStackPolicy(&input).Return(nil, nil).Times(1)
