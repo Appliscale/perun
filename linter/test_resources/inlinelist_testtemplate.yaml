@@ -4,9 +4,7 @@ Parameters:
   TestParameter1:
     Description: "Prefix of the bucket name - environment"
     Type: String
-    AllowedValues:
-      - prod
-      - staging
+    AllowedValues: [prod, staging]
 
 Resources:
   TestS3:

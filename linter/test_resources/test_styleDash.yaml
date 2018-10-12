@@ -1,11 +1,11 @@
 yaml:
   allowedQuotes:
-    double: true
-    single: true
-    noquotes: false
+    double: false
+    single: false
+    noquotes: true
   allowedLists:
-    inline: true
-    dash: false
+    inline: false
+    dash: true
   continuationIndent: # checked only when indent is required
     required: true
     value: 4
