@@ -29,7 +29,10 @@ git push $github/rpmbuild.git master
 
 cd ~
 git clone https://github.com/Appliscale/perun-dpkg.git
-cd perun-dpkg/perun/usr/local/bin
+cd perun-dpkg
+chmod +x control.sh
+./control.sh $1
+cd /perun/usr/local/bin
 rm $perun
 wget $release
 tar xvzf $perun.tar.gz
@@ -42,3 +45,17 @@ git config user.name $user
 git add .
 git commit -m "[AUTO] Update DPKG by Travis CI. Perun $1"
 git push $github/perun-dpkg.git master
+
+cd ~
+git clone https://github.com/Appliscale/homebrew-tap.git
+cd homebrew-tap
+wget https://github.com/Appliscale/perun/blob/master/formula.sh
+chmod +x formula.sh
+./formula.sh $1
+rm formula.sh
+git remote
+git config user.email $email
+git config user.name $user
+git add .
+git commit -m "[AUTO] Update Homebrew by Travis CI. Perun $1"
+git push $github/homebrew-tap.git master

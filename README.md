@@ -32,11 +32,10 @@ $GOPATH $ cd perun
 Then build and install configuration for the application inside perun directory by executing:
 
 ```bash
-perun $ make config-install
 perun $ make all
 ```
 
-With first command a default configuration files (`defaults/main.yaml` and `defaults/specification_inconsistency.yaml`) will be copied to your home directory under the `~/.config/perun/` path. After second command application will be compiled as a `perun` binary inside `bin` directory in your `$GOPATH/perun` workspace.
+Application will be compiled as a `perun` binary inside `bin` directory in your `$GOPATH/perun` workspace.
 
 ## Working with Perun
 
