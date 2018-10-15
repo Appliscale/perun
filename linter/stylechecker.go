@@ -55,7 +55,7 @@ func CheckStyle(ctx *context.Context) (err error) {
 func checkLineLengths(lines []string, lintConf LinterConfiguration, ctx *context.Context) {
 	for line := range lines {
 		if lintConf.Global.LineLength.Required && len(lines[line]) > int(lintConf.Global.LineLength.Value.(float64)) {
-			ctx.Logger.Warning("line " + strconv.Itoa(line) + ": maximum line lenght exceeded")
+			ctx.Logger.Warning("line " + strconv.Itoa(line+1) + ": maximum line lenght exceeded")
 		}
 	}
 }
@@ -85,7 +85,7 @@ func checkAWSCFSpecificStuff(ctx *context.Context, rawTemplate string, lintConf 
 
 	if lintConf.Global.RequiredFields.ParametersDescription {
 		for parameterName, parameterValue := range goFormationTemplate.Parameters {
-			if parameterValue.(map[string]interface{})["Description"] != nil {
+			if parameterValue.(map[string]interface{})["Description"] == nil {
 				ctx.Logger.Warning("No description provided for parameter " + parameterName)
 			}
 		}
@@ -99,15 +99,16 @@ func checkAWSCFSpecificStuff(ctx *context.Context, rawTemplate string, lintConf 
 }
 
 func checkJsonSpaces(ctx *context.Context, lintConf LinterConfiguration, lines []string) {
+	reg := regexp.MustCompile(`"([^"]*)"`)
 	for line := range lines {
 		for sign := range lintConf.Json.Spaces.After {
-			if strings.Count(lines[line], lintConf.Json.Spaces.After[sign]) != strings.Count(lines[line], lintConf.Json.Spaces.After[sign]+" ") {
-				ctx.Logger.Warning("line " + strconv.Itoa(line) + ": no space after '" + string(lintConf.Json.Spaces.After[sign]) + "'")
+			if strings.Count(reg.ReplaceAllString(lines[line], "\"*\""), lintConf.Json.Spaces.After[sign]) != strings.Count(reg.ReplaceAllString(lines[line], "\"*\""), lintConf.Json.Spaces.After[sign]+" ") {
+				ctx.Logger.Warning("line " + strconv.Itoa(line+1) + ": no space after '" + string(lintConf.Json.Spaces.After[sign]) + "'")
 			}
 		}
 		for sign := range lintConf.Json.Spaces.Before {
-			if strings.Count(lines[line], lintConf.Json.Spaces.Before[sign]) != strings.Count(lines[line], " "+lintConf.Json.Spaces.Before[sign]) {
-				ctx.Logger.Warning("line " + strconv.Itoa(line) + ": no space before '" + string(lintConf.Json.Spaces.Before[sign]) + "'")
+			if strings.Count(reg.ReplaceAllString(lines[line], "\"*\""), lintConf.Json.Spaces.Before[sign]) != strings.Count(reg.ReplaceAllString(lines[line], "\"*\""), " "+lintConf.Json.Spaces.Before[sign]) {
+				ctx.Logger.Warning("line " + strconv.Itoa(line+1) + ": no space before '" + string(lintConf.Json.Spaces.Before[sign]) + "'")
 			}
 		}
 	}
@@ -118,7 +119,7 @@ func checkYamlLists(ctx *context.Context, lintConf LinterConfiguration, template
 	dashListRegex := regexp.MustCompile(".*- .*")
 	inlineListRegex := regexp.MustCompile(`.*: \[.*].*`)
 	if !lintConf.Yaml.AllowedLists.Dash && dashListRegex.MatchString(preprocessed) {
-		ctx.Logger.Warning("dash list are not allowed in current lint configuration")
+		ctx.Logger.Warning("dash lists are not allowed in current lint configuration")
 	}
 	if !lintConf.Yaml.AllowedLists.Inline && inlineListRegex.MatchString(preprocessed) {
 		ctx.Logger.Warning("inline lists are not allowed in current lint configuration")
@@ -128,14 +129,14 @@ func checkYamlLists(ctx *context.Context, lintConf LinterConfiguration, template
 func checkYamlQuotes(ctx *context.Context, lintConf LinterConfiguration, lines []string) {
 	for line := range lines {
 		if !lintConf.Yaml.AllowedQuotes.Double && strings.Contains(lines[line], "\"") {
-			ctx.Logger.Warning("line " + strconv.Itoa(line) + ": double quotes not allowed")
+			ctx.Logger.Warning("line " + strconv.Itoa(line+1) + ": double quotes not allowed")
 		}
-		if !lintConf.Yaml.AllowedQuotes.Single && strings.Contains(lines[line], "\"") {
-			ctx.Logger.Warning("line " + strconv.Itoa(line) + ": single quotes not allowed")
+		if !lintConf.Yaml.AllowedQuotes.Single && strings.Contains(lines[line], "'") {
+			ctx.Logger.Warning("line " + strconv.Itoa(line+1) + ": single quotes not allowed")
 		}
 		noQuotesRegex := regexp.MustCompile(".*: [^\"']*")
 		if !lintConf.Yaml.AllowedQuotes.Noquotes && noQuotesRegex.MatchString(lines[line]) {
-			ctx.Logger.Warning("line " + strconv.Itoa(line) + ": quotes required")
+			ctx.Logger.Warning("line " + strconv.Itoa(line+1) + ": quotes required")
 		}
 	}
 }
@@ -149,15 +150,14 @@ func checkYamlIndentation(ctx *context.Context, lintConf LinterConfiguration, li
 		}
 		curr_spaces := helpers.CountLeadingSpaces(lines[line])
 		if lintConf.Global.Indent.Required {
-			if curr_spaces%indent != 0 {
-				ctx.Logger.Error("line " + strconv.Itoa(line) + ": indentation error")
+			if curr_spaces%indent != 0 || (last_spaces < curr_spaces && last_spaces+indent != curr_spaces) {
+				ctx.Logger.Error("line " + strconv.Itoa(line+1) + ": indentation error")
 			}
 		}
 
 		if last_spaces < curr_spaces {
-			if last_spaces+indent != curr_spaces ||
-				wrongYAMLContinuationIndent(lintConf, lines, line, last_spaces, curr_spaces) {
-				ctx.Logger.Error("line " + strconv.Itoa(line) + ": indentation error")
+			if wrongYAMLContinuationIndent(lintConf, lines, line, last_spaces, curr_spaces) {
+				ctx.Logger.Error("line " + strconv.Itoa(line+1) + ": continuation indent error")
 			}
 		}
 		last_spaces = curr_spaces
@@ -174,15 +174,16 @@ func checkJsonIndentation(ctx *context.Context, lintConf LinterConfiguration, li
 	if lintConf.Global.Indent.Required {
 		indent := int(lintConf.Global.Indent.Value.(float64))
 		jsonIndentations := map[string]int{
-			",": 0,
-			"{": indent,
-			"}": -indent,
-			"[": indent,
-			"]": -indent,
+			",":  0,
+			"{":  indent,
+			"}":  -indent,
+			"[":  indent,
+			"]":  -indent,
+			"\"": -indent,
 		}
 		last_spaces = 0
 		for line := range lines {
-			if line == 0 {
+			if line == 0 || len(lines[line]) == 0 {
 				continue
 			}
 			prevLine := lines[line-1]
@@ -192,7 +193,7 @@ func checkJsonIndentation(ctx *context.Context, lintConf LinterConfiguration, li
 			}
 			curr_spaces := helpers.CountLeadingSpaces(lines[line])
 			if curr_spaces-last_spaces != indentation {
-				ctx.Logger.Error("line " + strconv.Itoa(line) + ": indentation error")
+				ctx.Logger.Error("line " + strconv.Itoa(line+1) + ": indentation error")
 			}
 			last_spaces = curr_spaces
 		}

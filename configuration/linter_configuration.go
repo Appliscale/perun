@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-func GetLinterConfigurationFile(linterFile *string, logger *logger.Logger) (rawLintConfiguration string) {
+func GetLinterConfigurationFile(linterFile *string, logger logger.LoggerInt) (rawLintConfiguration string) {
 	if *linterFile != "" {
 		bytesConfiguration, err := ioutil.ReadFile(*linterFile)
 		if err != nil {
@@ -29,6 +29,6 @@ func GetLinterConfigurationFile(linterFile *string, logger *logger.Logger) (rawL
 	return
 }
 
-func funcName(logger *logger.Logger, linterFile string) {
+func funcName(logger logger.LoggerInt, linterFile string) {
 	logger.Info("Linter Configuration file from the following location will be used: " + linterFile)
 }

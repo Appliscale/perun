@@ -2,7 +2,7 @@ package stack
 
 import (
 	"github.com/Appliscale/perun/context"
-	"github.com/Appliscale/perun/stack/mocks"
+	"github.com/Appliscale/perun/stack/stack_mocks"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -16,12 +16,12 @@ func TestNewChangeSet(t *testing.T) {
 	stackName := "StackName"
 	templatePath := "./test_resources/test_template.yaml"
 	changeSetName := "ChangeSetName"
-	template := mocks.ReadFile(t, templatePath)
-	ctx := mocks.SetupContext(t, []string{"cmd", "create-change-set", stackName, templatePath, changeSetName})
+	template := stack_mocks.ReadFile(t, templatePath)
+	ctx := stack_mocks.SetupContext(t, []string{"cmd", "create-change-set", stackName, templatePath, changeSetName})
 
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	mockAWSPI := mocks.NewMockCloudFormationAPI(mockCtrl)
+	mockAWSPI := stack_mocks.NewMockCloudFormationAPI(mockCtrl)
 	ctx.CloudFormation = mockAWSPI
 
 	describeChangeSetInput := cloudformation.DescribeChangeSetInput{
@@ -52,8 +52,8 @@ func TestCreateChangeSetInput(t *testing.T) {
 	stackName := "StackName"
 	templatePath := "./test_resources/test_template.yaml"
 	changeSetName := "ChangeSetName"
-	ctx := mocks.SetupContext(t, []string{"cmd", "create-change-set", stackName, templatePath, changeSetName})
-	template := mocks.ReadFile(t, templatePath)
+	ctx := stack_mocks.SetupContext(t, []string{"cmd", "create-change-set", stackName, templatePath, changeSetName})
+	template := stack_mocks.ReadFile(t, templatePath)
 
 	returnedInput, err := createChangeSetInput(&template, &stackName, []*cloudformation.Parameter{}, ctx)
 	assert.Empty(t, err)
@@ -67,11 +67,11 @@ func TestDescribeChangeSet(t *testing.T) {
 	stackName := "StackName"
 	templatePath := "./test_resources/test_template.yaml"
 	changeSetName := "ChangeSetName"
-	ctx := mocks.SetupContext(t, []string{"cmd", "create-change-set", stackName, templatePath, changeSetName})
+	ctx := stack_mocks.SetupContext(t, []string{"cmd", "create-change-set", stackName, templatePath, changeSetName})
 
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	mockAWSPI := mocks.NewMockCloudFormationAPI(mockCtrl)
+	mockAWSPI := stack_mocks.NewMockCloudFormationAPI(mockCtrl)
 	ctx.CloudFormation = mockAWSPI
 
 	describeChangeSetInput := cloudformation.DescribeChangeSetInput{

@@ -15,7 +15,7 @@ type InconsistencyConfiguration struct {
 
 type Property map[string][]string
 
-func ReadInconsistencyConfiguration(logger *logger.Logger) (config InconsistencyConfiguration) {
+func ReadInconsistencyConfiguration(logger logger.LoggerInt) (config InconsistencyConfiguration) {
 	if path, ok := getUserConfigFile(os.Stat, "specification_inconsistency.yaml"); ok {
 		rawConfig, err := ioutil.ReadFile(path)
 		if err != nil {

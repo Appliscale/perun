@@ -15,7 +15,7 @@ import (
 	"regexp"
 )
 
-func GetParser(filename string) (func([]byte, template.Template, *logger.Logger) (cloudformation.Template, error), error) {
+func GetParser(filename string) (func([]byte, template.Template, logger.LoggerInt) (cloudformation.Template, error), error) {
 	templateFileExtension := path.Ext(filename)
 	if templateFileExtension == ".json" {
 		return ParseJSON, nil
@@ -26,7 +26,7 @@ func GetParser(filename string) (func([]byte, template.Template, *logger.Logger)
 	}
 }
 
-func ParseJSON(templateFile []byte, refTemplate template.Template, logger *logger.Logger) (template cloudformation.Template, err error) {
+func ParseJSON(templateFile []byte, refTemplate template.Template, logger logger.LoggerInt) (template cloudformation.Template, err error) {
 
 	err = json.Unmarshal(templateFile, &refTemplate)
 	if err != nil {
@@ -52,7 +52,7 @@ func ParseJSON(templateFile []byte, refTemplate template.Template, logger *logge
 	return returnTemplate, nil
 }
 
-func ParseYAML(templateFile []byte, refTemplate template.Template, logger *logger.Logger) (template cloudformation.Template, err error) {
+func ParseYAML(templateFile []byte, refTemplate template.Template, logger logger.LoggerInt) (template cloudformation.Template, err error) {
 
 	err = yaml.Unmarshal(templateFile, &refTemplate)
 	if err != nil {

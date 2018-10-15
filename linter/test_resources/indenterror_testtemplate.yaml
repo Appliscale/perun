@@ -1,0 +1,16 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Resources:
+  TestS3:
+    Type: AWS::S3::Bucket
+    Properties:
+       BucketName: peruntestbucketnameisatestbucketname
+  TestEC2Instance:
+     Type: AWS::EC2::Instance
+    Properties:
+      ImageId: "my-ami"
+      InstanceType: t2.small
+      KeyName: "my-key"
+  SecondTestS3:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: peruntestbucketnameisatestbucketname2
