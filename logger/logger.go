@@ -1,4 +1,4 @@
-// Copyright 2017 Appliscale
+// Copyright 2018 Appliscale
 //
 // Maintainers and contributors are listed in README file inside repository.
 //
@@ -23,6 +23,7 @@ import (
 	"strings"
 )
 
+// Logger contains information type of logger tool.
 type LoggerInt interface {
 	Always(message string)
 	Warning(warning string)
@@ -31,7 +32,6 @@ type LoggerInt interface {
 	Debug(debug string)
 	Trace(trace string)
 	GetInput(message string, v ...interface{}) error
-	//log(verbosity Verbosity, message string)
 	PrintValidationErrors()
 	HasValidationErrors() bool
 	AddResourceForValidation(resourceName string) *ResourceValidation
@@ -44,11 +44,13 @@ type Logger struct {
 	resourceValidation []*ResourceValidation
 }
 
+// ResourceValidation contains name of resource and errors.
 type ResourceValidation struct {
 	ResourceName string
 	Errors       []string
 }
 
+// Verbosity - type of logger.
 type Verbosity int
 
 const (
@@ -153,6 +155,7 @@ func (logger *Logger) PrintValidationErrors() {
 	}
 }
 
+// HasValidationErrors checks if resource has errors. It's used in validateResources().
 func (logger *Logger) HasValidationErrors() bool {
 	for _, resourceValidation := range logger.resourceValidation {
 		if len(resourceValidation.Errors) > 0 {
@@ -162,7 +165,7 @@ func (logger *Logger) HasValidationErrors() bool {
 	return false
 }
 
-// AddResourceForValidation : Adds resource for validation
+// AddResourceForValidation : Adds resource for validation. It's used in validateResources().
 func (logger *Logger) AddResourceForValidation(resourceName string) *ResourceValidation {
 	resourceValidation := &ResourceValidation{
 		ResourceName: resourceName,
@@ -181,6 +184,7 @@ func (logger *Logger) SetVerbosity(verbosity string) {
 	}
 }
 
+// Check if verbosity is one of the given types.
 func IsVerbosityValid(verbosity string) bool {
 	switch verbosity {
 	case
