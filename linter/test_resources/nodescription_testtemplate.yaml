@@ -1,0 +1,17 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Parameters:
+  TestParameter1:
+    Description: "Prefix of the bucket name - environment"
+    Type: String
+    AllowedValues:
+      - prod
+      - staging
+  TestParameter2:
+    Type: String
+    AllowedPattern: "[a-z]+"
+
+Resources:
+  S3:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Join [ "-", [!Ref TestParameter1, !Ref TestParameter2]]

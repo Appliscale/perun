@@ -33,7 +33,7 @@ import (
 )
 
 // GetParser chooses parser based on file extension.
-func GetParser(filename string) (func([]byte, template.Template, *logger.Logger) (cloudformation.Template, error), error) {
+func GetParser(filename string) (func([]byte, template.Template, logger.LoggerInt) (cloudformation.Template, error), error) {
 	templateFileExtension := path.Ext(filename)
 	if templateFileExtension == ".json" {
 		return ParseJSON, nil
@@ -45,8 +45,7 @@ func GetParser(filename string) (func([]byte, template.Template, *logger.Logger)
 }
 
 // ParseJSON parses JSON template file to cloudformation template.
-func ParseJSON(templateFile []byte, refTemplate template.Template, logger *logger.Logger) (template cloudformation.Template, err error) {
-
+func ParseJSON(templateFile []byte, refTemplate template.Template, logger logger.LoggerInt) (template cloudformation.Template, err error) {
 	err = json.Unmarshal(templateFile, &refTemplate)
 	if err != nil {
 		if syntaxError, isSyntaxError := err.(*json.SyntaxError); isSyntaxError {
@@ -72,8 +71,7 @@ func ParseJSON(templateFile []byte, refTemplate template.Template, logger *logge
 }
 
 // ParseYAML parses YAML template file to cloudformation template.
-func ParseYAML(templateFile []byte, refTemplate template.Template, logger *logger.Logger) (template cloudformation.Template, err error) {
-
+func ParseYAML(templateFile []byte, refTemplate template.Template, logger logger.LoggerInt) (template cloudformation.Template, err error) {
 	err = yaml.Unmarshal(templateFile, &refTemplate)
 	if err != nil {
 		return template, err

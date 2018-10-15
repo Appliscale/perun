@@ -17,7 +17,7 @@
 package stack
 
 import (
-	"github.com/Appliscale/perun/stack/mocks"
+	"github.com/Appliscale/perun/stack/stack_mocks"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -26,11 +26,11 @@ import (
 
 func TestDestroyStack(t *testing.T) {
 	stackName := "StackName"
-	context := mocks.SetupContext(t, []string{"cmd", "delete-stack", stackName})
+	context := stack_mocks.SetupContext(t, []string{"cmd", "delete-stack", stackName})
 
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	mockAWSPI := mocks.NewMockCloudFormationAPI(mockCtrl)
+	mockAWSPI := stack_mocks.NewMockCloudFormationAPI(mockCtrl)
 	context.CloudFormation = mockAWSPI
 
 	templateStruct := cloudformation.DeleteStackInput{
@@ -43,7 +43,7 @@ func TestDestroyStack(t *testing.T) {
 
 func TestDeleteStackInput(t *testing.T) {
 	stackName := "StackName"
-	context := mocks.SetupContext(t, []string{"cmd", "delete-stack", stackName})
+	context := stack_mocks.SetupContext(t, []string{"cmd", "delete-stack", stackName})
 	returnedValue := deleteStackInput(context)
 	assert.Equal(t, returnedValue.StackName, &stackName)
 }

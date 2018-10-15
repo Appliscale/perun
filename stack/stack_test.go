@@ -16,7 +16,7 @@
 package stack
 
 import (
-	"github.com/Appliscale/perun/stack/mocks"
+	"github.com/Appliscale/perun/stack/stack_mocks"
 	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
@@ -25,9 +25,9 @@ import (
 func TestGetTemplateFromFile(t *testing.T) {
 	stackName := "StackName"
 	templatePath := "./test_resources/test_template.yaml"
-	context := mocks.SetupContext(t, []string{"cmd", "create-stack", stackName, templatePath})
+	context := stack_mocks.SetupContext(t, []string{"cmd", "create-stack", stackName, templatePath})
 
-	templateBody := mocks.ReadFile(t, templatePath)
+	templateBody := stack_mocks.ReadFile(t, templatePath)
 
 	returnedTemplate, returnedStackName, err := getTemplateFromFile(context)
 	if err != nil {
@@ -63,7 +63,7 @@ func TestIsStackPolicyFileJSON(t *testing.T) {
 }
 
 func getPathForMode(t *testing.T, args []string) string {
-	context := mocks.SetupContext(t, args)
+	context := stack_mocks.SetupContext(t, args)
 	path, err := getPath(context)
 	if err != nil {
 		t.Error(err.Error())

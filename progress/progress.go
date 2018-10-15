@@ -175,8 +175,8 @@ func (conn *Connection) MonitorStackQueue() {
 	}
 	startReadingMessagesTime := time.Now().Add(-tolerance)
 
-	receivedAllMessages := true
-	for receivedAllMessages {
+	AnyMessagesLeft := true
+	for AnyMessagesLeft {
 		receivedMessages, err := conn.SqsClient.ReceiveMessage(&receiveMessageInput)
 		if err != nil {
 			conn.context.Logger.Error("Error reading messages: " + err.Error())
@@ -212,11 +212,11 @@ func (conn *Connection) MonitorStackQueue() {
 				table.Append([]string{v.Timestamp, messageMap["ResourceStatus"], messageMap["ResourceType"], messageMap["LogicalResourceId"], messageMap["ResourceStatusReason"]})
 				pw.returnWritten()
 				table.Render()
-			}
-			// Check if the message has been the last one (status COMPLETE for current stack resource)
-			if strings.Contains(messageMap["LogicalResourceId"], *conn.context.CliArguments.Stack) &&
-				strings.Contains(messageMap["ResourceStatus"], "COMPLETE") {
-				receivedAllMessages = false
+				// Check if the message has been the last one (status COMPLETE for current stack resource)
+				if strings.Contains(messageMap["LogicalResourceId"], *conn.context.CliArguments.Stack) &&
+					strings.Contains(messageMap["ResourceStatus"], "COMPLETE") {
+					AnyMessagesLeft = false
+				}
 			}
 		}
 	}

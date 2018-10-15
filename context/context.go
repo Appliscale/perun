@@ -32,7 +32,7 @@ import (
 // between specification and documentation, and session.
 type Context struct {
 	CliArguments        cliparser.CliArguments
-	Logger              *logger.Logger
+	Logger              logger.LoggerInt
 	Config              configuration.Configuration
 	InconsistencyConfig configuration.InconsistencyConfiguration
 	CloudFormation      awsapi.CloudFormationAPI
@@ -40,8 +40,8 @@ type Context struct {
 }
 
 type cliArgumentsParser func(args []string) (cliparser.CliArguments, error)
-type configurationReader func(cliparser.CliArguments, *logger.Logger) (configuration.Configuration, error)
-type inconsistenciesReader func(*logger.Logger) configuration.InconsistencyConfiguration
+type configurationReader func(cliparser.CliArguments, logger.LoggerInt) (configuration.Configuration, error)
+type inconsistenciesReader func(logger.LoggerInt) configuration.InconsistencyConfiguration
 
 // GetContext creates CLI context. Creating logger and config and checking inconsistency.
 func GetContext(cliArgParser cliArgumentsParser, confReader configurationReader, inconsistReader inconsistenciesReader) (context Context, err error) {

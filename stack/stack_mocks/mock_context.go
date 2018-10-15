@@ -1,4 +1,4 @@
-package mocks
+package stack_mocks
 
 import (
 	"github.com/Appliscale/perun/cliparser"

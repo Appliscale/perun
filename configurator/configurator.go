@@ -88,7 +88,7 @@ func createConfigurationFile(path string, context *context.Context, myProfile st
 }
 
 //List of all available regions.
-func showRegions(myLogger *logger.Logger) {
+func showRegions(myLogger logger.LoggerInt) {
 	regions := makeArrayRegions()
 	myLogger.Always("Regions:")
 	for i := 0; i < len(regions); i++ {
@@ -98,7 +98,7 @@ func showRegions(myLogger *logger.Logger) {
 }
 
 // Choosing one region.
-func setRegions(myLogger *logger.Logger) (region string, err bool) {
+func setRegions(myLogger logger.LoggerInt) (region string, err bool) {
 	var numberRegion int
 	myLogger.GetInput("Choose region", &numberRegion)
 	regions := makeArrayRegions()
@@ -114,7 +114,7 @@ func setRegions(myLogger *logger.Logger) (region string, err bool) {
 }
 
 // Choosing one profile.
-func setProfile(myLogger *logger.Logger) (profile string, err bool) {
+func setProfile(myLogger logger.LoggerInt) (profile string, err bool) {
 	myLogger.GetInput("Input name of profile", &profile)
 	if profile != "" {
 		myLogger.Always("Your profile is: " + profile)
@@ -127,7 +127,7 @@ func setProfile(myLogger *logger.Logger) (profile string, err bool) {
 }
 
 //GetRegionAndProfile gets region and profile from user.
-func GetRegionAndProfile(myLogger *logger.Logger) (string, string) {
+func GetRegionAndProfile(myLogger logger.LoggerInt) (string, string) {
 	profile, err := setProfile(myLogger)
 	for !err {
 		myLogger.Always("Try again, invalid profile")
