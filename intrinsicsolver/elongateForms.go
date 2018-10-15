@@ -61,7 +61,8 @@ func elongateForms(line *string, lines *[]string, idx int, name string) {
 	}
 }
 
-// SplitLinesIfNestedFunction if finds nested function then will split lines. It's used in elongateForms().
+// SplitLinesIfNestedFunction parses functions to form which CloudFormation parser can read properly
+// - adding indent and moving next function to new line.
 func SplitLinesIfNestedFunction(split []string, line *string, newFunctionForm string) string {
 	//if this function is nested in the same line
 	if len(split) > 1 && strings.Contains(split[0], "Fn::") {

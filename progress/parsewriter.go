@@ -96,7 +96,6 @@ func NewParseWriter() (pw *ParseWriter) {
 	return
 }
 
-// Write prints lines.
 func (pw *ParseWriter) Write(p []byte) (n int, err error) {
 	var newString = pw.colorStatuses(string(p))
 	fmt.Print(newString)

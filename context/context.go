@@ -29,7 +29,7 @@ import (
 )
 
 // Context contains perun's logger, configuration, information about inconsistency
-// between specification and documentation and session.
+// between specification and documentation, and session.
 type Context struct {
 	CliArguments        cliparser.CliArguments
 	Logger              *logger.Logger

@@ -26,7 +26,8 @@ func SliceContains(list []string, a string) bool {
 	return false
 }
 
-// IsPlainMap checks if map is plain. It's used in checkWhereIsNil().
+// IsPlainMap checks if map is plain. Plain map means that it's non-nil and it doesn't contain nested maps.
+//It's used in checkWhereIsNil().
 func IsPlainMap(mp map[string]interface{}) bool {
 	// First we check is it more complex. If so - it is worth investigating and we should stop checking.
 	for _, m := range mp {
@@ -44,7 +45,8 @@ func IsPlainMap(mp map[string]interface{}) bool {
 	return true // There is no <nil> and no complexity - it is a plain, non-nil map.
 }
 
-// IsPlainSlice checks if slice is plain. It's used in checkWhereIsNil().
+// IsPlainSlice checks if slice is plain. Slice is plain if it's non-nil and doesn't contain nested maps.
+//It's used in checkWhereIsNil().
 func IsPlainSlice(slc []interface{}) bool {
 	// The same flow as in `isPlainMap` function.
 	for _, s := range slc {
@@ -62,7 +64,7 @@ func IsPlainSlice(slc []interface{}) bool {
 	return true
 }
 
-// Discard looks for elements which are not the same.
+// Discard looks for elements which are not the same and return only unique.
 func Discard(slice []interface{}, n interface{}) []interface{} {
 	result := []interface{}{}
 	for _, s := range slice {
