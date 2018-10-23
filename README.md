@@ -14,42 +14,45 @@ Perun was created to improve work experience with CloudFormation. The idea came 
 ### OSX
 #### Homebrew:
 ```bash
-brew install Appliscale/tap/perun
+$ brew install Appliscale/tap/perun
 ```
 #### From binaries:
-Go to Perun’s releases https://github.com/Appliscale/perun/releases
-Find and download perun-darwin-amd64.tar.gz
-Unpack the archive
+* Go to Perun’s releases https://github.com/Appliscale/perun/releases
+* Find and download perun-darwin-amd64.tar.gz
+* Unpack the archive
 
 ### Debian
 #### Dpkg package manager:
-Go to https://github.com/Appliscale/perun-dpkg
-Download perun.deb
-Install:
-```
-dpkg -i perun.deb
+* Go to https://github.com/Appliscale/perun-dpkg
+* Download perun.deb
+* Install:
+```bash
+$ dpkg -i perun.deb
 ```
 #### From binaries:
-Go to Perun’s releases https://github.com/Appliscale/perun/releases
-Find and download perun-linux-amd64.tar.gz
-Unpack:
-tar xvzf perun-linux-amd64.tar.gz
+* Go to Perun’s releases https://github.com/Appliscale/perun/releases
+* Find and download perun-linux-amd64.tar.gz
+* Unpack:
+```bash
+$ tar xvzf perun-linux-amd64.tar.gz
+```
 
 ### Linux
 #### Rpm package manager:
-Go to: https://github.com/Appliscale/rpmbuild/tree/master/RPMS/x86_64
-Download perun-linux-amd64-1.2.0-1.x86_64.rpm
-Install:
-```
-rpm -ivh perun-linux-amd64-1.2.0-1.x86_64.rpm
+* Go to: https://github.com/Appliscale/rpmbuild/tree/master/RPMS/x86_64
+* Download perun-linux-amd64-1.2.0-1.x86_64.rpm
+* Install:
+```bash
+$ rpm -ivh perun-linux-amd64-1.2.0-1.x86_64.rpm
 ```
 
 #### From binaries:
-Go to Perun’s releases https://github.com/Appliscale/perun/releases
-Find and download perun-linux-amd64.tar.gz
-Unpack:
+* Go to Perun’s releases https://github.com/Appliscale/perun/releases
+* Find and download perun-linux-amd64.tar.gz
+* Unpack:
+```bash
 tar xvzf perun-linux-amd64.tar.gz
-
+```
 
 ### Building from sources
 
