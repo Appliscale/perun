@@ -37,23 +37,23 @@ func elongateForms(line *string, lines *[]string, idx int, name string) {
 				if strings.Contains(*line, short) && !strings.Contains(*line, "|") {
 					*line = strings.Replace(*line, short, full, -1)
 				} else if strings.Contains(*line, short) && strings.Contains(*line, "|") {
-					*line = strings.Replace(*line, (short + " |"), full, -1)
+					*line = strings.Replace(*line, (short + " |"), full + " |", -1)
 				}
 			} else if strings.Contains(*line, name) {
 
 				line = addQuotes(short, split, line)
 
 				newFunctionForm := "\"" + long + "\":"
-				newFunctionForm = SplitLinesIfNestedFunction(split, line, newFunctionForm)
+				newFunctionForm = SplitLinesIfNestedFunction(split, line, newFunctionForm, lines, idx)
 
 				if strings.Contains(*line, short) && !strings.Contains(*line, "|") {
 					*line = strings.Replace(*line, short, newFunctionForm, -1)
 				} else if strings.Contains(*line, short) && strings.Contains(*line, "|") {
-					*line = strings.Replace(*line, (short + " |"), newFunctionForm, -1)
+					*line = strings.Replace(*line, (short + " |"), (newFunctionForm + " |"), -1)
 				} else if strings.Contains(*line, full) && !strings.Contains(*line, "|") {
 					*line = strings.Replace(*line, full, newFunctionForm, -1)
 				} else if strings.Contains(*line, full) && strings.Contains(*line, "|") {
-					*line = strings.Replace(*line, (full + " |"), newFunctionForm, -1)
+					*line = strings.Replace(*line, (full + " |"), (newFunctionForm + " |"), -1)
 				}
 			}
 		}
@@ -61,9 +61,27 @@ func elongateForms(line *string, lines *[]string, idx int, name string) {
 	}
 }
 
+func adjustIndentForNestedFunctionBody(nestedFunctionLineNum int, line string, lines *[]string) {
+	if strings.Contains(line, "|") {
+		nextLineNum := nestedFunctionLineNum + 1
+		if len(*lines) == nextLineNum {
+			return
+		}
+		functionIndent := countLeadingSpaces(line)
+		bodyLineIndent := countLeadingSpaces((*lines)[nextLineNum])
+		for nextLineNum < len(*lines) && bodyLineIndent > functionIndent &&
+			(bodyLineIndent <= countLeadingSpaces((*lines)[nextLineNum]) || len(strings.TrimSpace((*lines)[nextLineNum])) == 0) {
+			if len(strings.TrimSpace((*lines)[nextLineNum])) != 0 {
+				(*lines)[nextLineNum] = "  " + (*lines)[nextLineNum]
+			}
+			nextLineNum += 1
+		}
+	}
+}
+
 // SplitLinesIfNestedFunction parses functions to form which CloudFormation parser can read properly
 // - adding indent and moving next function to new line.
-func SplitLinesIfNestedFunction(split []string, line *string, newFunctionForm string) string {
+func SplitLinesIfNestedFunction(split []string, line *string, newFunctionForm string, lines *[]string, idx int) string {
 	//if this function is nested in the same line
 	if len(split) > 1 && strings.Contains(split[0], "Fn::") {
 		indent := 2 // can be anything >
@@ -75,6 +93,7 @@ func SplitLinesIfNestedFunction(split []string, line *string, newFunctionForm st
 			i++
 		}
 		newFunctionForm = "\n" + spaces + newFunctionForm
+		adjustIndentForNestedFunctionBody(idx, *line, lines)
 	}
 	return newFunctionForm
 }
