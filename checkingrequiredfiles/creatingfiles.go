@@ -7,13 +7,14 @@ import (
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/helpers"
 	"github.com/Appliscale/perun/logger"
+	"github.com/Appliscale/perun/myuser"
 	"strings"
 )
 
 // Creating main.yaml.
 func createNewMainYaml(profile string, homePath string, ctx *context.Context, myLogger logger.LoggerInt) context.Context {
 	region := findRegionForProfile(profile, homePath+"/.aws/config", myLogger)
-	con := configurator.CreateMainYaml(ctx, profile, region)
+	con := configurator.CreateMainYaml(myLogger, profile, region)
 	configuration.SaveToFile(con, homePath+"/.config/perun/main.yaml", myLogger)
 	*ctx, _ = context.GetContext(cliparser.ParseCliArguments, configuration.GetConfiguration, configuration.ReadInconsistencyConfiguration)
 	return *ctx
@@ -46,7 +47,7 @@ func addNewProfileFromCredentialsToConfig(profile string, homePath string, ctx *
 			if strings.ToUpper(answer) == "Y" {
 				var region string
 				myLogger.GetInput("Region", &region)
-				configurator.CreateAWSConfigFile(ctx, prof, region)
+				configurator.CreateAWSConfigFile(ctx.Logger, prof, region)
 			}
 		}
 	}
@@ -87,7 +88,7 @@ func configIsPresent(profile string, homePath string, ctx *context.Context, myLo
 // Creating new .aws/config and main.yaml for profile.
 func newConfigFile(profile string, region string, homePath string, ctx *context.Context, myLogger *logger.Logger) (string, string, context.Context) {
 	profile, region = configurator.GetRegionAndProfile(myLogger)
-	configurator.CreateAWSConfigFile(ctx, profile, region)
+	configurator.CreateAWSConfigFile(ctx.Logger, profile, region)
 	*ctx = createNewMainYaml(profile, homePath, ctx, myLogger)
 	return profile, region, *ctx
 }
@@ -103,5 +104,47 @@ func createCredentials(profile string, homePath string, ctx *context.Context, my
 			configurator.CreateAWSCredentialsFile(ctx, profile)
 		}
 	}
+
+}
+
+func createCredentialsBasedOnEnvironmentVariables(envVar map[string]string, myLogger logger.LoggerInt) {
+	if len(envVar["profile"]) > 0 {
+		myLogger.Always("Creating .aws/credentials file based on environmentVariables")
+		homePath, pathError := myuser.GetUserHomeDir()
+		if pathError != nil {
+			myLogger.Error(pathError.Error())
+		}
+		path := homePath + "/.aws/credentials"
+		line := "[" + envVar["profile"] + "-long-term" + "]\n"
+		configurator.AppendStringToFile(path, line)
+		line = "aws_access_key_id" + " = " + envVar["id"] + "\n"
+		configurator.AppendStringToFile(path, line)
+		line = "aws_secret_access_key" + " = " + envVar["key"] + "\n"
+		configurator.AppendStringToFile(path, line)
+		line = "[" + envVar["profile"] + "]\n"
+		configurator.AppendStringToFile(path, line)
+		line = "aws_session_token" + " = " + envVar["token"] + "\n"
+		configurator.AppendStringToFile(path, line)
+	}
+}
+
+func checkingCredentials(ctx *context.Context, profile string, region string) (bool, string, string) {
+	if EnvironmentVariables["profile"] != "" {
+		var answer string
+		ctx.Logger.GetInput("Creating aws/credentials based on environment variables? Y/N", &answer)
+		if strings.ToUpper(answer) == "Y" {
+			createCredentialsBasedOnEnvironmentVariables(EnvironmentVariables, ctx.Logger)
+			profile = EnvironmentVariables["profile"]
+			region = EnvironmentVariables["region"]
+			return false, profile, region
+		} else if *ctx.CliArguments.Mode == cliparser.ValidateMode {
+			var answer string //offline walidacja
+			ctx.Logger.GetInput("You haven't got credentials file, run only offline validation? Y/N", &answer)
+			if strings.ToUpper(answer) == "Y" {
+				return true, "", "" //offline
+			}
+		}
+	}
+	return false, profile, region
 
 }

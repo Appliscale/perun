@@ -19,8 +19,6 @@ package main
 
 import (
 	"github.com/Appliscale/perun/checkingrequiredfiles"
-	"os"
-
 	"github.com/Appliscale/perun/cliparser"
 	"github.com/Appliscale/perun/configuration"
 	"github.com/Appliscale/perun/configurator"
@@ -31,11 +29,12 @@ import (
 	"github.com/Appliscale/perun/stack"
 	"github.com/Appliscale/perun/utilities"
 	"github.com/Appliscale/perun/validator"
+	"os"
 )
 
 func main() {
 	ctx, err := context.GetContext(cliparser.ParseCliArguments, configuration.GetConfiguration, configuration.ReadInconsistencyConfiguration)
-	checkingrequiredfiles.CheckingRequiredFiles(&ctx)
+	offline := checkingrequiredfiles.CheckingRequiredFiles(&ctx)
 
 	if ctx.CliArguments.Lint != nil && *ctx.CliArguments.Lint {
 		err = linter.CheckStyle(&ctx)
@@ -46,7 +45,7 @@ func main() {
 
 	if *ctx.CliArguments.Mode == cliparser.ValidateMode {
 		ctx.InitializeAwsAPI()
-		utilities.CheckFlagAndExit(validator.ValidateAndEstimateCost(&ctx))
+		utilities.CheckFlagAndExit(validator.ValidateAndEstimateCost(&ctx, offline))
 	}
 
 	if *ctx.CliArguments.Mode == cliparser.ConfigureMode {
@@ -65,7 +64,7 @@ func main() {
 	validationUnsuccessfullMsg := "To skip the validation part use the --no-validate flag"
 	if *ctx.CliArguments.Mode == cliparser.CreateStackMode {
 		ctx.InitializeAwsAPI()
-		if *ctx.CliArguments.SkipValidation || validator.ValidateAndEstimateCost(&ctx) {
+		if *ctx.CliArguments.SkipValidation || validator.ValidateAndEstimateCost(&ctx, offline) {
 			utilities.CheckErrorCodeAndExit(stack.NewStack(&ctx))
 		} else {
 			ctx.Logger.Info(validationUnsuccessfullMsg)
@@ -90,7 +89,7 @@ func main() {
 
 	if *ctx.CliArguments.Mode == cliparser.CreateChangeSetMode {
 		ctx.InitializeAwsAPI()
-		if *ctx.CliArguments.SkipValidation || validator.ValidateAndEstimateCost(&ctx) {
+		if *ctx.CliArguments.SkipValidation || validator.ValidateAndEstimateCost(&ctx, offline) {
 			err := stack.NewChangeSet(&ctx)
 			if err != nil {
 				ctx.Logger.Error(err.Error())
@@ -107,7 +106,7 @@ func main() {
 
 	if *ctx.CliArguments.Mode == cliparser.UpdateStackMode {
 		ctx.InitializeAwsAPI()
-		if *ctx.CliArguments.SkipValidation || validator.ValidateAndEstimateCost(&ctx) {
+		if *ctx.CliArguments.SkipValidation || validator.ValidateAndEstimateCost(&ctx, offline) {
 			utilities.CheckErrorCodeAndExit(stack.UpdateStack(&ctx))
 		} else {
 			ctx.Logger.Info(validationUnsuccessfullMsg)

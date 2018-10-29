@@ -31,10 +31,19 @@ import (
 	"strings"
 )
 
-//CheckingRequiredFiles looks for required and default files and if doesn't find will create these.
-func CheckingRequiredFiles(ctx *context.Context) {
-	myLogger := logger.CreateDefaultLogger()
+var EnvironmentVariables = map[string]string{
+	"profile": os.Getenv("AWS_PROFILE"),
+	"id":      os.Getenv("AWS_ACCESS_KEY_ID"),
+	"key":     os.Getenv("AWS_SECRET_ACCESS_KEY"),
+	"region":  os.Getenv("AWS_DEFAULT_REGION"),
+	"output":  os.Getenv("AWS_DEFAULT_OUTPUT"),
+	"token":   os.Getenv("AWS_SESSION_TOKEN"),
+}
 
+//CheckingRequiredFiles looks for required and default files and if doesn't find will create these.
+func CheckingRequiredFiles(ctx *context.Context) (offline bool) {
+	myLogger := logger.CreateDefaultLogger()
+	offline = false
 	mainYAMLexists, mainError := isMainYAMLPresent(&myLogger)
 	if mainError != nil {
 		myLogger.Error(mainError.Error())
@@ -62,9 +71,23 @@ func CheckingRequiredFiles(ctx *context.Context) {
 		if configAWSExists {
 			profile, *ctx = configIsPresent(profile, homePath, ctx, &myLogger)
 			if !credentialsExists {
-				createCredentials(profile, homePath, ctx, &myLogger)
-			}
+				//dane z zmiennych srodowiskowych
+				// var answer string
+				// ctx.Logger.GetInput("Creating aws/credentials based on environment variables? Y/N", &answer)
+				// if strings.ToUpper(answer) == "Y" {
+				// 	createCredentialsBasedOnEnvironmentVariables(EnvironmentVariables, ctx.Logger)
+				// 	profile = EnvironmentVariables["profile"]
+				// 	region = EnvironmentVariables["region"]
 
+				// } else if *ctx.CliArguments.Mode == cliparser.ValidateMode {
+				// 	var answer string
+				// 	myLogger.GetInput("You haven't got credentials file, run only offline validation? Y/N", &answer)
+				// 	if strings.ToUpper(answer) == "Y" {
+				// 		return true //offline
+				// 	}
+				createCredentials(profile, homePath, ctx, &myLogger)
+				//}
+			}
 		} else { //configAWSExists == false
 			var answer string
 			myLogger.GetInput("Config doesn't exist, create default *Y* or new *N*?", &answer)
@@ -74,7 +97,7 @@ func CheckingRequiredFiles(ctx *context.Context) {
 				addNewProfileFromCredentialsToConfig(profile, homePath, ctx, &myLogger)
 
 			} else if strings.ToUpper(answer) == "Y" {
-				configurator.CreateAWSConfigFile(ctx, profile, region)
+				configurator.CreateAWSConfigFile(&myLogger, profile, region)
 				*ctx = createNewMainYaml(profile, homePath, ctx, &myLogger)
 				configurator.CreateAWSCredentialsFile(ctx, profile)
 			}
@@ -86,8 +109,13 @@ func CheckingRequiredFiles(ctx *context.Context) {
 	} else { //mainYAMLexists == true
 		if configAWSExists {
 			if !credentialsExists {
+				offline, ctx.Config.DefaultProfile, ctx.Config.DefaultRegion = checkingCredentials(ctx, profile, region)
+				if offline == true {
+					return offline
+				}
 				myLogger.Always("Profile from main.yaml: " + ctx.Config.DefaultProfile)
-				configurator.CreateAWSCredentialsFile(ctx, ctx.Config.DefaultProfile)
+				addProfileToCredentials(ctx.Config.DefaultProfile, homePath, ctx, ctx.Logger)
+				//configurator.CreateAWSCredentialsFile(ctx, ctx.Config.DefaultProfile)
 			} else {
 				isProfileInPresent := isProfileInCredentials(ctx.Config.DefaultProfile, homePath+"/.aws/credentials", &myLogger)
 				if !isProfileInPresent {
@@ -99,7 +127,7 @@ func CheckingRequiredFiles(ctx *context.Context) {
 			var answer string
 			myLogger.GetInput("Config doesn't exist, create default - "+ctx.Config.DefaultProfile+" *Y* or new *N*?", &answer)
 			if strings.ToUpper(answer) == "Y" {
-				configurator.CreateAWSConfigFile(ctx, ctx.Config.DefaultProfile, ctx.Config.DefaultRegion)
+				configurator.CreateAWSConfigFile(ctx.Logger, ctx.Config.DefaultProfile, ctx.Config.DefaultRegion)
 			} else if strings.ToUpper(answer) == "N" {
 				profile, region, *ctx = newConfigFile(profile, region, homePath, ctx, &myLogger)
 				addProfileToCredentials(profile, homePath, ctx, &myLogger)
@@ -116,6 +144,7 @@ func CheckingRequiredFiles(ctx *context.Context) {
 	if downloadError != nil {
 		myLogger.Error(downloadError.Error())
 	}
+	return false
 }
 
 // Looking for main.yaml.
