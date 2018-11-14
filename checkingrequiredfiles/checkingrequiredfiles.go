@@ -32,15 +32,6 @@ import (
 	"strings"
 )
 
-var EnvironmentVariables = map[string]string{
-	"profile": os.Getenv("AWS_PROFILE"),
-	"id":      os.Getenv("AWS_ACCESS_KEY_ID"),
-	"key":     os.Getenv("AWS_SECRET_ACCESS_KEY"),
-	"region":  os.Getenv("AWS_DEFAULT_REGION"),
-	"output":  os.Getenv("AWS_DEFAULT_OUTPUT"),
-	"token":   os.Getenv("AWS_SESSION_TOKEN"),
-}
-
 //CheckingRequiredFiles looks for required and default files and if doesn't find will create these.
 func CheckingRequiredFiles(ctx *context.Context) (offline bool) {
 	myLogger := logger.CreateDefaultLogger()
