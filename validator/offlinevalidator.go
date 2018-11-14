@@ -109,8 +109,8 @@ func validateTemplateFile(templatePath string, templateName string, context *con
 
 	templateBody := string(rawTemplate)
 	valid = validateResources(resources, &resourceSpecification, deadProperties, deadResources, specInconsistency, context, offline) && valid
-	// offline flag
-	if !offline {
+
+	if offline == false {
 		valid = awsValidate(context, &templateBody) && valid
 	}
 

@@ -1,11 +1,13 @@
 package checkingrequiredfiles
 
 import (
+	"github.com/Appliscale/perun/logger"
 	"testing"
 
 	"github.com/Appliscale/perun/checkingrequiredfiles/mocks"
 	"github.com/Appliscale/perun/stack/stack_mocks"
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestUseProfileFromConfig(t *testing.T) {
@@ -83,4 +85,36 @@ func TestCreateCredentials(t *testing.T) {
 
 	createCredentials(profile, homePath, ctx, mockLogger)
 
+}
+
+func TestGetIamInstanceProfileAssociations(t *testing.T) {
+	sink := logger.CreateDefaultLogger()
+	output, _ := getIamInstanceProfileAssociations(sink, "us-east-1")
+
+	assert.Emptyf(t, output, "Should be empty")
+}
+
+func TestGetRegion(t *testing.T) {
+	region, _, _ := getRegion()
+	assert.Equalf(t, region, "", "Should be nil")
+}
+
+func TestWorkingOnEC2(t *testing.T) {
+	sink := logger.CreateDefaultLogger()
+	profile, _, _ := workingOnEC2(sink)
+
+	assert.Nilf(t, profile, "Should be nil")
+}
+
+func TestCreateEC2context(t *testing.T) {
+	templatePath := "../stack/test_resources/test_template.yaml"
+	ctx := stack_mocks.SetupContext(t, []string{"cmd", "validate", templatePath})
+	mockCtrl := gomock.NewController(t)
+	mockLogger := mocks.NewMockLoggerInt(mockCtrl)
+	defer mockCtrl.Finish()
+	a := ""
+	mockLogger.EXPECT().GetInput("Directory for temporary files", gomock.Any())
+	mockLogger.EXPECT().Always("Your temporary files directory is: " + a).Times(1)
+	mockLogger.EXPECT().Error("stat ./test_resources/.config/perun: no such file or directory").Times(1)
+	createEC2context("test", "./test_resources", "test", ctx, mockLogger)
 }

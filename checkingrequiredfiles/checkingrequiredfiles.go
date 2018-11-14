@@ -19,6 +19,7 @@ package checkingrequiredfiles
 
 import (
 	"bufio"
+	"github.com/Appliscale/perun/cliparser"
 	"github.com/Appliscale/perun/configurator"
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/helpers"
@@ -43,10 +44,29 @@ var EnvironmentVariables = map[string]string{
 //CheckingRequiredFiles looks for required and default files and if doesn't find will create these.
 func CheckingRequiredFiles(ctx *context.Context) (offline bool) {
 	myLogger := logger.CreateDefaultLogger()
+
 	offline = false
+	homePath, pathError := myuser.GetUserHomeDir()
+	if pathError != nil {
+		myLogger.Error(pathError.Error())
+	}
 	mainYAMLexists, mainError := isMainYAMLPresent(&myLogger)
 	if mainError != nil {
 		myLogger.Error(mainError.Error())
+	}
+
+	//checking if perun is running on EC2
+	_, _, isRunningOnEc2 := getRegion()
+	if isRunningOnEc2 {
+		if !mainYAMLexists {
+			profile, region, _ := workingOnEC2(myLogger)
+			*ctx = createEC2context(profile, homePath, region, ctx, &myLogger)
+		}
+		downloadError := downloadDefaultFiles()
+		if downloadError != nil {
+			myLogger.Error(downloadError.Error())
+		}
+		return false
 	}
 
 	configAWSExists, configError := isAWSConfigPresent(&myLogger)
@@ -59,11 +79,6 @@ func CheckingRequiredFiles(ctx *context.Context) (offline bool) {
 		myLogger.Error(credentialsError.Error())
 	}
 
-	homePath, pathError := myuser.GetUserHomeDir()
-	if pathError != nil {
-		myLogger.Error(pathError.Error())
-	}
-
 	profile := "default"
 	region := "us-east-1"
 
@@ -71,22 +86,14 @@ func CheckingRequiredFiles(ctx *context.Context) (offline bool) {
 		if configAWSExists {
 			profile, *ctx = configIsPresent(profile, homePath, ctx, &myLogger)
 			if !credentialsExists {
-				//dane z zmiennych srodowiskowych
-				// var answer string
-				// ctx.Logger.GetInput("Creating aws/credentials based on environment variables? Y/N", &answer)
-				// if strings.ToUpper(answer) == "Y" {
-				// 	createCredentialsBasedOnEnvironmentVariables(EnvironmentVariables, ctx.Logger)
-				// 	profile = EnvironmentVariables["profile"]
-				// 	region = EnvironmentVariables["region"]
-
-				// } else if *ctx.CliArguments.Mode == cliparser.ValidateMode {
-				// 	var answer string
-				// 	myLogger.GetInput("You haven't got credentials file, run only offline validation? Y/N", &answer)
-				// 	if strings.ToUpper(answer) == "Y" {
-				// 		return true //offline
-				// 	}
-				createCredentials(profile, homePath, ctx, &myLogger)
-				//}
+				if *ctx.CliArguments.Mode == cliparser.ValidateMode {
+					var answer string
+					myLogger.GetInput("You haven't got credentials file, run only offline validation? Y/N", &answer)
+					if strings.ToUpper(answer) == "Y" {
+						return true //offline
+					}
+					createCredentials(profile, homePath, ctx, &myLogger)
+				}
 			}
 		} else { //configAWSExists == false
 			var answer string
@@ -109,13 +116,19 @@ func CheckingRequiredFiles(ctx *context.Context) (offline bool) {
 	} else { //mainYAMLexists == true
 		if configAWSExists {
 			if !credentialsExists {
-				offline, ctx.Config.DefaultProfile, ctx.Config.DefaultRegion = checkingCredentials(ctx, profile, region)
-				if offline == true {
-					return offline
+				if *ctx.CliArguments.Mode == cliparser.ValidateMode {
+					var answer string
+					myLogger.GetInput("You haven't got credentials file, run only offline validation? Y/N", &answer)
+					if strings.ToUpper(answer) == "Y" {
+						ctx.Config.DefaultProfile = profile
+						ctx.Config.DefaultRegion = region
+						return true //offline
+					}
+					createCredentials(profile, homePath, ctx, &myLogger)
 				}
+
 				myLogger.Always("Profile from main.yaml: " + ctx.Config.DefaultProfile)
 				addProfileToCredentials(ctx.Config.DefaultProfile, homePath, ctx, ctx.Logger)
-				//configurator.CreateAWSCredentialsFile(ctx, ctx.Config.DefaultProfile)
 			} else {
 				isProfileInPresent := isProfileInCredentials(ctx.Config.DefaultProfile, homePath+"/.aws/credentials", &myLogger)
 				if !isProfileInPresent {

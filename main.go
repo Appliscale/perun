@@ -44,7 +44,9 @@ func main() {
 	}
 
 	if *ctx.CliArguments.Mode == cliparser.ValidateMode {
-		ctx.InitializeAwsAPI()
+		if !offline {
+			ctx.InitializeAwsAPI()
+		}
 		utilities.CheckFlagAndExit(validator.ValidateAndEstimateCost(&ctx, offline))
 	}
 

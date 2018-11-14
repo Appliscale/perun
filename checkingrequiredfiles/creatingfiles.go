@@ -7,7 +7,12 @@ import (
 	"github.com/Appliscale/perun/context"
 	"github.com/Appliscale/perun/helpers"
 	"github.com/Appliscale/perun/logger"
-	"github.com/Appliscale/perun/myuser"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/ec2metadata"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/ec2"
+	"os"
 	"strings"
 )
 
@@ -107,44 +112,82 @@ func createCredentials(profile string, homePath string, ctx *context.Context, my
 
 }
 
-func createCredentialsBasedOnEnvironmentVariables(envVar map[string]string, myLogger logger.LoggerInt) {
-	if len(envVar["profile"]) > 0 {
-		myLogger.Always("Creating .aws/credentials file based on environmentVariables")
-		homePath, pathError := myuser.GetUserHomeDir()
-		if pathError != nil {
-			myLogger.Error(pathError.Error())
+func getIamInstanceProfileAssociations(myLogger logger.Logger, region string) (*ec2.DescribeIamInstanceProfileAssociationsOutput, error) {
+	// Create a Session with a custom region
+	sess := session.Must(session.NewSession(&aws.Config{
+		Region: &region,
+	}))
+	svc := ec2.New(sess)
+	input := &ec2.DescribeIamInstanceProfileAssociationsInput{}
+
+	result, err := svc.DescribeIamInstanceProfileAssociations(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				myLogger.Error(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			myLogger.Error(err.Error())
 		}
-		path := homePath + "/.aws/credentials"
-		line := "[" + envVar["profile"] + "-long-term" + "]\n"
-		configurator.AppendStringToFile(path, line)
-		line = "aws_access_key_id" + " = " + envVar["id"] + "\n"
-		configurator.AppendStringToFile(path, line)
-		line = "aws_secret_access_key" + " = " + envVar["key"] + "\n"
-		configurator.AppendStringToFile(path, line)
-		line = "[" + envVar["profile"] + "]\n"
-		configurator.AppendStringToFile(path, line)
-		line = "aws_session_token" + " = " + envVar["token"] + "\n"
-		configurator.AppendStringToFile(path, line)
+		return result, err
 	}
+
+	return result, nil
 }
 
-func checkingCredentials(ctx *context.Context, profile string, region string) (bool, string, string) {
-	if EnvironmentVariables["profile"] != "" {
-		var answer string
-		ctx.Logger.GetInput("Creating aws/credentials based on environment variables? Y/N", &answer)
-		if strings.ToUpper(answer) == "Y" {
-			createCredentialsBasedOnEnvironmentVariables(EnvironmentVariables, ctx.Logger)
-			profile = EnvironmentVariables["profile"]
-			region = EnvironmentVariables["region"]
-			return false, profile, region
-		} else if *ctx.CliArguments.Mode == cliparser.ValidateMode {
-			var answer string //offline walidacja
-			ctx.Logger.GetInput("You haven't got credentials file, run only offline validation? Y/N", &answer)
-			if strings.ToUpper(answer) == "Y" {
-				return true, "", "" //offline
-			}
+// Get AWS region and check if perun is running on EC2.
+func getRegion() (string, error, bool) {
+	svc := ec2metadata.New(session.New())
+	region, err := svc.Region()
+	if err != nil {
+		return "", err, false
+	}
+	return region, nil, true
+}
+
+// Get IAM Instance profile name to use it as profile name.
+func getInstanceProfileName(output *ec2.DescribeIamInstanceProfileAssociationsOutput) string {
+	arn := output.IamInstanceProfileAssociations[0].IamInstanceProfile.Arn
+	name := strings.SplitAfter(*arn, "/")
+	return name[len(name)-1]
+}
+
+// Getting information about EC2 and prepare to run perun there.
+func workingOnEC2(myLogger logger.Logger) (profile string, region string, err error) {
+	region, regionError, _ := getRegion()
+	myLogger.Info("Running on EC2")
+	if regionError != nil {
+		myLogger.Error(regionError.Error())
+	}
+	instanceProfileAssociations, instanceError := getIamInstanceProfileAssociations(myLogger, region)
+	if instanceError != nil {
+		myLogger.Error(instanceError.Error())
+		return "", "", instanceError
+	}
+	instanceProfileName := getInstanceProfileName(instanceProfileAssociations)
+	return instanceProfileName, region, nil
+}
+
+// Create context and main.yaml if perun is running on EC2.
+func createEC2context(profile string, homePath string, region string, ctx *context.Context, myLogger logger.LoggerInt) context.Context {
+	con := configurator.CreateMainYaml(myLogger, profile, region)
+	_, err := os.Stat(homePath + "/.config/perun")
+	if os.IsNotExist(err) {
+		myLogger.Error(err.Error())
+		err1 := os.Mkdir(homePath+"/.config", 0755)
+		err2 := os.Mkdir(homePath+"/.config/perun", 0755)
+
+		if err1 != nil {
+			myLogger.Error(err1.Error())
+		}
+		if err2 != nil {
+			myLogger.Error(err2.Error())
 		}
 	}
-	return false, profile, region
-
+	configuration.SaveToFile(con, homePath+"/.config/perun/main.yaml", myLogger)
+	*ctx, _ = context.GetContext(cliparser.ParseCliArguments, configuration.GetConfiguration, configuration.ReadInconsistencyConfiguration)
+	return *ctx
 }

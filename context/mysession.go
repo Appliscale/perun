@@ -155,7 +155,3 @@ func UpdateSessionToken(profile string, region string, defaultDuration int64, co
 	}
 	return nil
 }
-
-func credentialsFromEnvironmentVariables() {
-
-}
