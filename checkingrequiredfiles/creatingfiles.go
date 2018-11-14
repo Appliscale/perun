@@ -161,6 +161,7 @@ func workingOnEC2(myLogger logger.Logger) (profile string, region string, err er
 	myLogger.Info("Running on EC2")
 	if regionError != nil {
 		myLogger.Error(regionError.Error())
+		return "", "", regionError
 	}
 	instanceProfileAssociations, instanceError := getIamInstanceProfileAssociations(myLogger, region)
 	if instanceError != nil {

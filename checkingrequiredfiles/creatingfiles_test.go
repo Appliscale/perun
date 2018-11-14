@@ -103,7 +103,7 @@ func TestWorkingOnEC2(t *testing.T) {
 	sink := logger.CreateDefaultLogger()
 	profile, _, _ := workingOnEC2(sink)
 
-	assert.Nilf(t, profile, "Should be nil")
+	assert.Equalf(t, profile, "", "Should be nil")
 }
 
 func TestCreateEC2context(t *testing.T) {
