@@ -20,7 +20,6 @@ package validator
 
 import (
 	"github.com/Appliscale/perun/context"
-	"github.com/Appliscale/perun/parameters"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"strings"
 )
@@ -47,24 +46,4 @@ func isTemplateValid(context *context.Context, template *string) (bool, error) {
 		return false, err
 	}
 	return true, nil
-}
-
-func estimateCosts(context *context.Context, template *string) (err error) {
-	templateParameters, err := parameters.ResolveParameters(context)
-	if err != nil {
-		context.Logger.Error(err.Error())
-		return
-	}
-	templateCostInput := cloudformation.EstimateTemplateCostInput{
-		TemplateBody: template,
-		Parameters:   templateParameters,
-	}
-	output, err := context.CloudFormation.EstimateTemplateCost(&templateCostInput)
-
-	if err != nil {
-		context.Logger.Error(err.Error())
-		return
-	}
-	context.Logger.Info("Costs estimation: " + *output.Url)
-	return
 }

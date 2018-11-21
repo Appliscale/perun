@@ -40,6 +40,7 @@ var SetStackPolicyMode = "set-stack-policy"
 var CreateChangeSetMode = "create-change-set"
 var DeleteChangeSetMode = "delete-change-set"
 var LintMode = "lint"
+var EstimateCostMode = "estimate-cost"
 
 var ChangeSetDefaultName string
 
@@ -72,7 +73,6 @@ type CliArguments struct {
 	ChangeSet               *string
 	Lint                    *bool
 	LinterConfiguration     *string
-	EstimateCost            *bool
 	SkipValidation          *bool
 }
 
@@ -97,7 +97,6 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		validateTemplate          = validate.Arg("template", "A path to the template file.").Required().String()
 		validateLint              = validate.Flag("lint", "Enable template linting").Bool()
 		validateLintConfiguration = validate.Flag("lint-configuration", "A path to the configuration file").String()
-		validateEstimateCost      = validate.Flag("estimate-cost", "Enable cost estimation during validation").Bool()
 		validateParams            = validate.Flag("parameter", "list of parameters").StringMap()
 		validateParametersFile    = validate.Flag("parameters-file", "filename with parameters").String()
 
@@ -115,7 +114,6 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		createStackParametersFile    = createStack.Flag("parameters-file", "filename with parameters").String()
 		createStackLint              = createStack.Flag("lint", "Enable template linting").Bool()
 		createStackLintConfiguration = createStack.Flag("lint-configuration", "A path to the configuration file").String()
-		createStackEstimateCost      = createStack.Flag("estimate-cost", "Enable cost estimation during validation").Bool()
 
 		createChangeSet                  = app.Command(CreateChangeSetMode, "Creates a changeSet on aws")
 		changeSetStackName               = createChangeSet.Arg("stack", "An AWS stack name").Required().String()
@@ -125,7 +123,6 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		createChangeSetParametersFile    = createChangeSet.Flag("parameters-file", "filename with parameters").String()
 		createChangeSetLint              = createChangeSet.Flag("lint", "Enable template linting").Bool()
 		createChangeSetLintConfiguration = createChangeSet.Flag("lint-configuration", "A path to the configuration file").String()
-		createChangeSetEstimateCost      = createChangeSet.Flag("estimate-cost", "Enable cost estimation during validation").Bool()
 
 		deleteChangeSet          = app.Command(DeleteChangeSetMode, "Deletes a changeSet on aws")
 		deleteChangeSetStackName = deleteChangeSet.Arg("stack", "An AWS stack Name").Required().String()
@@ -142,7 +139,6 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		updateStackParametersFile    = updateStack.Flag("parameters-file", "filename with parameters").String()
 		updateStackLint              = updateStack.Flag("lint", "Enable template linting").Bool()
 		updateStackLintConfiguration = updateStack.Flag("lint-configuration", "A path to the configuration file").String()
-		updateStackEstimateCost      = updateStack.Flag("estimate-cost", "Enable cost estimation during validation").Bool()
 
 		mfaCommand = app.Command(MfaMode, "Create temporary secure credentials with MFA.")
 
@@ -163,6 +159,11 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		setDefaultUnblockingStackPolicy = setStackPolicy.Flag("unblock", "Unblocking all actions.").Bool()
 		setDisableStackTermination      = setStackPolicy.Flag("disable-stack-termination", "Allow to delete a stack.").Bool()
 		setEnableStackTermination       = setStackPolicy.Flag("enable-stack-termination", "Protecting a stack from being deleted.").Bool()
+
+		estimateCost               = app.Command(EstimateCostMode, "Estimate template's cost.")
+		estimateCostTemplate       = estimateCost.Arg("template", "A path to the template file.").Required().String()
+		estimateCostParams         = estimateCost.Flag("parameter", "list of parameters").StringMap()
+		estimateCostParametersFile = estimateCost.Flag("parameters-file", "filename with parameters").String()
 	)
 
 	app.HelpFlag.Short('h')
@@ -176,7 +177,6 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		cliArguments.TemplatePath = validateTemplate
 		cliArguments.Lint = validateLint
 		cliArguments.LinterConfiguration = validateLintConfiguration
-		cliArguments.EstimateCost = validateEstimateCost
 		cliArguments.Parameters = validateParams
 		cliArguments.ParametersFile = validateParametersFile
 
@@ -199,9 +199,8 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		cliArguments.ParametersFile = createStackParametersFile
 		cliArguments.Lint = createStackLint
 		cliArguments.LinterConfiguration = createStackLintConfiguration
-		cliArguments.EstimateCost = createStackEstimateCost
 
-		// delete Stack
+	// delete Stack
 	case deleteStack.FullCommand():
 		cliArguments.Mode = &DestroyStackMode
 		cliArguments.Stack = deleteStackName
@@ -220,9 +219,8 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		cliArguments.Parameters = updateStackParams
 		cliArguments.Lint = updateStackLint
 		cliArguments.LinterConfiguration = updateStackLintConfiguration
-		cliArguments.EstimateCost = updateStackEstimateCost
 
-		// create Parameters
+	// create Parameters
 	case createParameters.FullCommand():
 		cliArguments.Mode = &CreateParametersMode
 		cliArguments.TemplatePath = createParametersTemplate
@@ -254,7 +252,6 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		cliArguments.ParametersFile = createChangeSetParametersFile
 		cliArguments.Lint = createChangeSetLint
 		cliArguments.LinterConfiguration = createChangeSetLintConfiguration
-		cliArguments.EstimateCost = createChangeSetEstimateCost
 
 	case deleteChangeSet.FullCommand():
 		cliArguments.Mode = &DeleteChangeSetMode
@@ -268,6 +265,13 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		// destroy remote sink
 	case destroySink.FullCommand():
 		cliArguments.Mode = &DestroySinkMode
+
+		// estimate template cost
+	case estimateCost.FullCommand():
+		cliArguments.Mode = &EstimateCostMode
+		cliArguments.TemplatePath = estimateCostTemplate
+		cliArguments.Parameters = estimateCostParams
+		cliArguments.ParametersFile = estimateCostParametersFile
 	}
 
 	// OTHER FLAGS
