@@ -34,7 +34,7 @@ import (
 
 func main() {
 	ctx, err := context.GetContext(cliparser.ParseCliArguments, configuration.GetConfiguration, configuration.ReadInconsistencyConfiguration)
-	offline := checkingrequiredfiles.CheckingRequiredFiles(&ctx)
+	checkingrequiredfiles.CheckingRequiredFiles(&ctx)
 
 	if ctx.CliArguments.Lint != nil && *ctx.CliArguments.Lint {
 		err = linter.CheckStyle(&ctx)
@@ -44,10 +44,8 @@ func main() {
 	}
 
 	if *ctx.CliArguments.Mode == cliparser.ValidateMode {
-		if !offline {
-			ctx.InitializeAwsAPI()
-		}
-		utilities.CheckFlagAndExit(validator.ValidateAndEstimateCost(&ctx, offline))
+		ctx.InitializeAwsAPI()
+		utilities.CheckFlagAndExit(validator.ValidateAndEstimateCost(&ctx))
 	}
 
 	if *ctx.CliArguments.Mode == cliparser.ConfigureMode {
@@ -66,7 +64,7 @@ func main() {
 	validationUnsuccessfullMsg := "To skip the validation part use the --no-validate flag"
 	if *ctx.CliArguments.Mode == cliparser.CreateStackMode {
 		ctx.InitializeAwsAPI()
-		if *ctx.CliArguments.SkipValidation || validator.ValidateAndEstimateCost(&ctx, offline) {
+		if *ctx.CliArguments.SkipValidation || validator.ValidateAndEstimateCost(&ctx) {
 			utilities.CheckErrorCodeAndExit(stack.NewStack(&ctx))
 		} else {
 			ctx.Logger.Info(validationUnsuccessfullMsg)
@@ -91,7 +89,7 @@ func main() {
 
 	if *ctx.CliArguments.Mode == cliparser.CreateChangeSetMode {
 		ctx.InitializeAwsAPI()
-		if *ctx.CliArguments.SkipValidation || validator.ValidateAndEstimateCost(&ctx, offline) {
+		if *ctx.CliArguments.SkipValidation || validator.ValidateAndEstimateCost(&ctx) {
 			err := stack.NewChangeSet(&ctx)
 			if err != nil {
 				ctx.Logger.Error(err.Error())
@@ -108,7 +106,7 @@ func main() {
 
 	if *ctx.CliArguments.Mode == cliparser.UpdateStackMode {
 		ctx.InitializeAwsAPI()
-		if *ctx.CliArguments.SkipValidation || validator.ValidateAndEstimateCost(&ctx, offline) {
+		if *ctx.CliArguments.SkipValidation || validator.ValidateAndEstimateCost(&ctx) {
 			utilities.CheckErrorCodeAndExit(stack.UpdateStack(&ctx))
 		} else {
 			ctx.Logger.Info(validationUnsuccessfullMsg)

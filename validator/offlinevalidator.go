@@ -59,11 +59,11 @@ func printResult(templateName string, valid *bool, logger logger.LoggerInt) {
 }
 
 // ValidateAndEstimateCost CloudFormation template.
-func ValidateAndEstimateCost(ctx *context.Context, offline bool) bool {
-	return validateTemplateFile(*ctx.CliArguments.TemplatePath, *ctx.CliArguments.TemplatePath, ctx, offline)
+func ValidateAndEstimateCost(ctx *context.Context) bool {
+	return validateTemplateFile(*ctx.CliArguments.TemplatePath, *ctx.CliArguments.TemplatePath, ctx)
 }
 
-func validateTemplateFile(templatePath string, templateName string, context *context.Context, offline bool) (valid bool) {
+func validateTemplateFile(templatePath string, templateName string, context *context.Context) (valid bool) {
 	valid = false
 	defer printResult(templateName, &valid, context.Logger)
 
@@ -108,11 +108,8 @@ func validateTemplateFile(templatePath string, templateName string, context *con
 	specInconsistency := context.InconsistencyConfig.SpecificationInconsistency
 
 	templateBody := string(rawTemplate)
-	valid = validateResources(resources, &resourceSpecification, deadProperties, deadResources, specInconsistency, context, offline) && valid
-
-	if offline == false {
-		valid = awsValidate(context, &templateBody) && valid
-	}
+	valid = validateResources(resources, &resourceSpecification, deadProperties, deadResources, specInconsistency, context) && valid
+	valid = awsValidate(context, &templateBody) && valid
 
 	if *context.CliArguments.EstimateCost {
 		estimateCosts(context, &templateBody)
@@ -155,12 +152,12 @@ func hasAllowedValuesParametersValid(parameters template.Parameters, logger logg
 	return true
 }
 
-func validateResources(resources map[string]template.Resource, specification *specification.Specification, deadProp []string, deadRes []string, specInconsistency map[string]configuration.Property, ctx *context.Context, offline bool) bool {
+func validateResources(resources map[string]template.Resource, specification *specification.Specification, deadProp []string, deadRes []string, specInconsistency map[string]configuration.Property, ctx *context.Context) bool {
 	sink := ctx.Logger
 	for resourceName, resourceValue := range resources {
 		if deadResource := helpers.SliceContains(deadRes, resourceName); !deadResource {
 			resourceValidation := sink.AddResourceForValidation(resourceName)
-			processNestedTemplates(resourceValue.Properties, ctx, offline)
+			processNestedTemplates(resourceValue.Properties, ctx)
 			if resourceSpecification, ok := specification.ResourceTypes[resourceValue.Type]; ok {
 				for propertyName, propertyValue := range resourceSpecification.Properties {
 					if deadProperty := helpers.SliceContains(deadProp, propertyName); !deadProperty {
@@ -278,10 +275,10 @@ func checkNestedProperties(
 	}
 }
 
-func processNestedTemplates(properties map[string]interface{}, ctx *context.Context, offline bool) {
+func processNestedTemplates(properties map[string]interface{}, ctx *context.Context) {
 	if rawTemplateURL, ok := properties["TemplateURL"]; ok {
 		if templateURL, ok := rawTemplateURL.(string); ok {
-			err := validateNestedTemplate(templateURL, ctx, offline)
+			err := validateNestedTemplate(templateURL, ctx)
 			if err != nil {
 				ctx.Logger.Error(err.Error())
 				os.Exit(1)
@@ -290,7 +287,7 @@ func processNestedTemplates(properties map[string]interface{}, ctx *context.Cont
 	}
 }
 
-func validateNestedTemplate(templateURL string, ctx *context.Context, offline bool) error {
+func validateNestedTemplate(templateURL string, ctx *context.Context) error {
 	err := context.UpdateSessionToken(ctx.Config.DefaultProfile, ctx.Config.DefaultRegion, ctx.Config.DefaultDurationForMFA, ctx)
 	if err != nil {
 		return err
@@ -306,7 +303,7 @@ func validateNestedTemplate(templateURL string, ctx *context.Context, offline bo
 		return err
 	}
 
-	validateTemplateFile(tempfile.Name(), templateURL, ctx, offline)
+	validateTemplateFile(tempfile.Name(), templateURL, ctx)
 
 	if err = tempfile.Close(); err != nil {
 		return err

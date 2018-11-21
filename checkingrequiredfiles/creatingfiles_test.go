@@ -101,9 +101,8 @@ func TestGetRegion(t *testing.T) {
 
 func TestWorkingOnEC2(t *testing.T) {
 	sink := logger.CreateDefaultLogger()
-	profile, _, _ := workingOnEC2(sink)
-
-	assert.Equalf(t, profile, "", "Should be nil")
+	_, _, err := workingOnEC2(sink)
+	assert.NotNilf(t, err, "Should be non-nil")
 }
 
 func TestCreateEC2context(t *testing.T) {

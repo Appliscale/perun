@@ -178,14 +178,9 @@ func createEC2context(profile string, homePath string, region string, ctx *conte
 	_, err := os.Stat(homePath + "/.config/perun")
 	if os.IsNotExist(err) {
 		myLogger.Error(err.Error())
-		err1 := os.Mkdir(homePath+"/.config", 0755)
-		err2 := os.Mkdir(homePath+"/.config/perun", 0755)
-
-		if err1 != nil {
-			myLogger.Error(err1.Error())
-		}
-		if err2 != nil {
-			myLogger.Error(err2.Error())
+		mkdirError := os.MkdirAll(homePath+"/.config/perun", 0755)
+		if mkdirError != nil {
+			myLogger.Error(mkdirError.Error())
 		}
 	}
 	configuration.SaveToFile(con, homePath+"/.config/perun/main.yaml", myLogger)
