@@ -53,7 +53,7 @@ func CheckingRequiredFiles(ctx *context.Context) {
 	_, _, isRunningOnEc2 := getRegion()
 	if isRunningOnEc2 {
 		if !mainYAMLexists {
-			profile, region, err := workingOnEC2(myLogger)
+			profile, region, err := workingOnEC2(&myLogger)
 			if err == nil {
 				*ctx = createEC2context(profile, homePath, region, ctx, &myLogger)
 			} else {

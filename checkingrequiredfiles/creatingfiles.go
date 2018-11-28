@@ -112,7 +112,7 @@ func createCredentials(profile string, homePath string, ctx *context.Context, my
 
 }
 
-func getIamInstanceProfileAssociations(myLogger logger.Logger, region string) (*ec2.DescribeIamInstanceProfileAssociationsOutput, error) {
+func getIamInstanceProfileAssociations(myLogger logger.LoggerInt, region string) (*ec2.DescribeIamInstanceProfileAssociationsOutput, error) {
 	// Create a Session with a custom region
 	sess := session.Must(session.NewSession(&aws.Config{
 		Region: &region,
@@ -156,7 +156,7 @@ func getInstanceProfileName(output *ec2.DescribeIamInstanceProfileAssociationsOu
 }
 
 // Getting information about EC2 and prepare to run perun there.
-func workingOnEC2(myLogger logger.Logger) (profile string, region string, err error) {
+func workingOnEC2(myLogger logger.LoggerInt) (profile string, region string, err error) {
 	region, regionError, _ := getRegion()
 	myLogger.Info("Running on EC2")
 	if regionError != nil {
