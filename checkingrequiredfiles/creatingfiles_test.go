@@ -107,20 +107,3 @@ func TestGetIamInstanceProfileAssociations(t *testing.T) {
 	assert.Emptyf(t, result, "Result shoulb be empty")
 	assert.NotNilf(t, err, "Error should be non-nil")
 }
-
-/*
-func TestCreateEC2context(t *testing.T) {
-	profile := "test"
-	region := "eu-west-2"
-	homePath := "./test_resources"
-	templatePath := "../stack/test_resources/test_template.yaml"
-	ctx := stack_mocks.SetupContext(t, []string{"cmd", "create-stack", "teststack", templatePath})
-	mockCtrl := gomock.NewController(t)
-	mockLogger := mocks.NewMockLoggerInt(mockCtrl)
-	defer mockCtrl.Finish()
-	mockLogger.EXPECT().GetInput("Directory for temporary files", gomock.Any()).Return(nil).Times(1)
-	mockLogger.EXPECT().Always("Your temporary files directory is: ")
-
-	createEC2context(profile, homePath, region, ctx, mockLogger)
-}
-*/
