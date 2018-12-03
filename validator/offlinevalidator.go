@@ -58,8 +58,8 @@ func printResult(templateName string, valid *bool, logger logger.LoggerInt) {
 	}
 }
 
-// ValidateAndEstimateCost CloudFormation template.
-func ValidateAndEstimateCost(ctx *context.Context) bool {
+// Validate CloudFormation template.
+func Validate(ctx *context.Context) bool {
 	return validateTemplateFile(*ctx.CliArguments.TemplatePath, *ctx.CliArguments.TemplatePath, ctx)
 }
 
@@ -110,10 +110,6 @@ func validateTemplateFile(templatePath string, templateName string, context *con
 	templateBody := string(rawTemplate)
 	valid = validateResources(resources, &resourceSpecification, deadProperties, deadResources, specInconsistency, context) && valid
 	valid = awsValidate(context, &templateBody) && valid
-
-	if *context.CliArguments.EstimateCost {
-		estimateCosts(context, &templateBody)
-	}
 
 	return valid
 }
