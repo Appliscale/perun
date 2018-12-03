@@ -8,7 +8,7 @@ yaml:
     dash: true
   continuationIndent: # checked only when indent is required
     required: true
-    value: 4
+    value: 2
 
 json:
   spaces:

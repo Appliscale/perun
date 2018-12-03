@@ -37,7 +37,7 @@ func fixMultiLineMap(line *string, lines *[]string, idx int, name string) {
 				// If so - we have multiple-level function with a body created of a map elements as the hyphen-noted structures.
 				if strings.Contains(*line, ":") {
 					// If so - we have key and a function name in one line. We have to relocate the function name into the next line, indent it and change it to the long form.
-					nextLineIndents := indentations(pLines[idx+1])
+					nextLineIndents := countLeadingSpaces(pLines[idx+1])
 					fullIndents := strings.Repeat(" ", nextLineIndents)
 					replacement := "\n" + fullIndents + full
 					*line = strings.Replace(*line, short, replacement, -1)
