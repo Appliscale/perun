@@ -19,6 +19,8 @@ package main
 
 import (
 	"github.com/Appliscale/perun/checkingrequiredfiles"
+	"github.com/Appliscale/perun/estimatecost"
+	"os"
 	"github.com/Appliscale/perun/cliparser"
 	"github.com/Appliscale/perun/configuration"
 	"github.com/Appliscale/perun/configurator"
@@ -45,7 +47,7 @@ func main() {
 
 	if *ctx.CliArguments.Mode == cliparser.ValidateMode {
 		ctx.InitializeAwsAPI()
-		utilities.CheckFlagAndExit(validator.ValidateAndEstimateCost(&ctx))
+		utilities.CheckFlagAndExit(validator.Validate(&ctx))
 	}
 
 	if *ctx.CliArguments.Mode == cliparser.ConfigureMode {
@@ -64,7 +66,7 @@ func main() {
 	validationUnsuccessfullMsg := "To skip the validation part use the --no-validate flag"
 	if *ctx.CliArguments.Mode == cliparser.CreateStackMode {
 		ctx.InitializeAwsAPI()
-		if *ctx.CliArguments.SkipValidation || validator.ValidateAndEstimateCost(&ctx) {
+		if *ctx.CliArguments.SkipValidation || validator.Validate(&ctx) {
 			utilities.CheckErrorCodeAndExit(stack.NewStack(&ctx))
 		} else {
 			ctx.Logger.Info(validationUnsuccessfullMsg)
@@ -89,7 +91,7 @@ func main() {
 
 	if *ctx.CliArguments.Mode == cliparser.CreateChangeSetMode {
 		ctx.InitializeAwsAPI()
-		if *ctx.CliArguments.SkipValidation || validator.ValidateAndEstimateCost(&ctx) {
+		if *ctx.CliArguments.SkipValidation || validator.Validate(&ctx) {
 			err := stack.NewChangeSet(&ctx)
 			if err != nil {
 				ctx.Logger.Error(err.Error())
@@ -106,7 +108,7 @@ func main() {
 
 	if *ctx.CliArguments.Mode == cliparser.UpdateStackMode {
 		ctx.InitializeAwsAPI()
-		if *ctx.CliArguments.SkipValidation || validator.ValidateAndEstimateCost(&ctx) {
+		if *ctx.CliArguments.SkipValidation || validator.Validate(&ctx) {
 			utilities.CheckErrorCodeAndExit(stack.UpdateStack(&ctx))
 		} else {
 			ctx.Logger.Info(validationUnsuccessfullMsg)
@@ -136,5 +138,10 @@ func main() {
 		} else {
 			utilities.CheckErrorCodeAndExit(stack.ApplyStackPolicy(&ctx))
 		}
+	}
+
+	if *ctx.CliArguments.Mode == cliparser.EstimateCostMode {
+		ctx.InitializeAwsAPI()
+		estimatecost.EstimateCosts(&ctx)
 	}
 }

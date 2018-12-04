@@ -37,7 +37,7 @@ func elongateForms(line *string, lines *[]string, idx int, name string) {
 				if strings.Contains(*line, short) && !strings.Contains(*line, "|") {
 					*line = strings.Replace(*line, short, full, -1)
 				} else if strings.Contains(*line, short) && strings.Contains(*line, "|") {
-					*line = strings.Replace(*line, (short + " |"), full + " |", -1)
+					*line = strings.Replace(*line, (short + " |"), full+" |", -1)
 				}
 			} else if strings.Contains(*line, name) {
 
