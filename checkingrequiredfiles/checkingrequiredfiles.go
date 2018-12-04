@@ -50,7 +50,7 @@ func CheckingRequiredFiles(ctx *context.Context) {
 		myLogger.Error(downloadError.Error())
 	}
 	//Checking if perun is running on EC2.
-	_, _, isRunningOnEc2 := getRegion()
+	_, isRunningOnEc2, _ := getRegion()
 	if isRunningOnEc2 {
 		if !mainYAMLexists {
 			profile, region, err := workingOnEC2(&myLogger)
@@ -146,7 +146,7 @@ func CheckingRequiredFiles(ctx *context.Context) {
 // Checking if Mode is "online" - needs config and credentials files or "offline" - needs only main.yaml.
 func isOffline() bool {
 	args, _ := cliparser.ParseCliArguments(os.Args)
-	offline := [6]string{cliparser.CreateParametersMode, cliparser.LintMode, cliparser.SetupSinkMode, cliparser.DestroySinkMode, cliparser.ConfigureMode}
+	offline := [6]string{cliparser.CreateParametersMode, cliparser.LintMode, cliparser.ConfigureMode}
 	for _, off := range offline {
 		if *args.Mode == off {
 			return true
@@ -228,10 +228,9 @@ func isCredentialsPresent(myLogger *logger.Logger) (bool, error) {
 }
 
 // Looking for [profiles] in credentials or config and return all.
-func getProfilesFromFile(path string, mylogger logger.LoggerInt) []string {
+func getProfilesFromFile(path string) []string {
 	credentials, credentialsError := os.Open(path)
 	if credentialsError != nil {
-		mylogger.Error(credentialsError.Error())
 		return []string{}
 	}
 	defer credentials.Close()
@@ -255,10 +254,7 @@ func getProfilesFromFile(path string, mylogger logger.LoggerInt) []string {
 
 // Looking for user's profile in credentials or config.
 func isProfileInCredentials(profile string, path string, mylogger logger.LoggerInt) bool {
-	credentials, credentialsError := os.Open(path)
-	if credentialsError != nil {
-		mylogger.Error(credentialsError.Error())
-	}
+	credentials, _ := os.Open(path)
 	defer credentials.Close()
 	scanner := bufio.NewScanner(credentials)
 	for scanner.Scan() {

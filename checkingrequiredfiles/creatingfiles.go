@@ -42,8 +42,8 @@ func useProfileFromConfig(profilesInConfig []string, profile string, myLogger lo
 
 // If profile exists in .aws/credentials, but not in aws/config, add profile.
 func addNewProfileFromCredentialsToConfig(profile string, homePath string, ctx *context.Context, myLogger logger.LoggerInt) {
-	profilesInCredentials := getProfilesFromFile(homePath+"/.aws/credentials", myLogger)
-	profilesInConfig := getProfilesFromFile(homePath+"/.aws/config", myLogger)
+	profilesInCredentials := getProfilesFromFile(homePath + "/.aws/credentials")
+	profilesInConfig := getProfilesFromFile(homePath + "/.aws/config")
 	profiles := findNewProfileInCredentials(profilesInCredentials, profilesInConfig)
 	if len(profiles) > 0 {
 		for _, prof := range profiles {
@@ -60,7 +60,7 @@ func addNewProfileFromCredentialsToConfig(profile string, homePath string, ctx *
 
 // Checking if profile is in .aws/credentials.
 func addProfileToCredentials(profile string, homePath string, ctx *context.Context, myLogger logger.LoggerInt) {
-	profilesInCredentials := getProfilesFromFile(homePath+"/.aws/credentials", myLogger)
+	profilesInCredentials := getProfilesFromFile(homePath + "/.aws/credentials")
 	temp := helpers.SliceContains(profilesInCredentials, profile)
 	if !temp {
 		configurator.CreateAWSCredentialsFile(ctx, profile)
@@ -71,7 +71,7 @@ func addProfileToCredentials(profile string, homePath string, ctx *context.Conte
 
 // Creating main.yaml based on .aws/config or in configure mode.
 func configIsPresent(profile string, homePath string, ctx *context.Context, myLogger logger.LoggerInt) (string, context.Context) {
-	profilesInConfig := getProfilesFromFile(homePath+"/.aws/config", myLogger)
+	profilesInConfig := getProfilesFromFile(homePath + "/.aws/config")
 	isDefaultProfile := helpers.SliceContains(profilesInConfig, profile)
 	if isDefaultProfile {
 		var answer string
@@ -139,13 +139,13 @@ func getIamInstanceProfileAssociations(myLogger logger.LoggerInt, region string)
 }
 
 // Get AWS region and check if perun is running on EC2.
-func getRegion() (string, error, bool) {
+func getRegion() (string, bool, error) {
 	svc := ec2metadata.New(session.New())
 	region, err := svc.Region()
 	if err != nil {
-		return "", err, false
+		return "", false, err
 	}
-	return region, nil, true
+	return region, true, nil
 }
 
 // Get IAM Instance profile name to use it as profile name.
@@ -157,7 +157,7 @@ func getInstanceProfileName(output *ec2.DescribeIamInstanceProfileAssociationsOu
 
 // Getting information about EC2 and prepare to run perun there.
 func workingOnEC2(myLogger logger.LoggerInt) (profile string, region string, err error) {
-	region, regionError, _ := getRegion()
+	region, _, regionError := getRegion()
 	myLogger.Info("Running on EC2")
 	if regionError != nil {
 		myLogger.Error(regionError.Error())
@@ -177,7 +177,6 @@ func createEC2context(profile string, homePath string, region string, ctx *conte
 	con := configurator.CreateMainYaml(myLogger, profile, region)
 	_, err := os.Stat(homePath + "/.config/perun")
 	if os.IsNotExist(err) {
-		myLogger.Error(err.Error())
 		mkdirError := os.MkdirAll(homePath+"/.config/perun", 0755)
 		if mkdirError != nil {
 			myLogger.Error(mkdirError.Error())
