@@ -93,7 +93,7 @@ func configIsPresent(profile string, homePath string, ctx *context.Context, myLo
 // Creating new .aws/config and main.yaml for profile.
 func newConfigFile(profile string, region string, homePath string, ctx *context.Context, myLogger *logger.Logger) (string, string, context.Context) {
 	profile, region = configurator.GetRegionAndProfile(myLogger)
-	configurator.CreateAWSConfigFile(ctx.Logger, profile, region)
+	configurator.CreateAWSConfigFile(myLogger, profile, region)
 	*ctx = createNewMainYaml(profile, homePath, ctx, myLogger)
 	return profile, region, *ctx
 }

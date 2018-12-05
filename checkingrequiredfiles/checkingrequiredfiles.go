@@ -128,6 +128,7 @@ func CheckingRequiredFiles(ctx *context.Context) {
 			myLogger.GetInput("Config doesn't exist, create default - "+ctx.Config.DefaultProfile+" *Y* or new *N*?", &answer)
 			if strings.ToUpper(answer) == "Y" {
 				configurator.CreateAWSConfigFile(ctx.Logger, ctx.Config.DefaultProfile, ctx.Config.DefaultRegion)
+				addProfileToCredentials(ctx.Config.DefaultProfile, homePath, ctx, ctx.Logger)
 
 			} else if strings.ToUpper(answer) == "N" {
 				profile, region, *ctx = newConfigFile(profile, region, homePath, ctx, &myLogger)
