@@ -19,19 +19,18 @@ package main
 
 import (
 	"github.com/Appliscale/perun/checkingrequiredfiles"
-	"github.com/Appliscale/perun/estimatecost"
-	"os"
-
 	"github.com/Appliscale/perun/cliparser"
 	"github.com/Appliscale/perun/configuration"
 	"github.com/Appliscale/perun/configurator"
 	"github.com/Appliscale/perun/context"
+	"github.com/Appliscale/perun/estimatecost"
 	"github.com/Appliscale/perun/linter"
 	"github.com/Appliscale/perun/parameters"
 	"github.com/Appliscale/perun/progress"
 	"github.com/Appliscale/perun/stack"
 	"github.com/Appliscale/perun/utilities"
 	"github.com/Appliscale/perun/validator"
+	"os"
 )
 
 func main() {

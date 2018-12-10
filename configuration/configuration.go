@@ -21,6 +21,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"os"
+	"strings"
 
 	"github.com/Appliscale/perun/cliparser"
 	"github.com/Appliscale/perun/logger"
@@ -133,6 +134,12 @@ func notifyUserAboutConfigurationFile(configurationFilePath string, logger logge
 }
 
 func SaveToFile(config Configuration, path string, logger logger.LoggerInt) {
+	wholePath := strings.Split(path, "/")
+	var newpath string
+	for i := 0; i < len(wholePath)-1; i++ {
+		newpath += "/" + wholePath[i]
+	}
+	os.MkdirAll(newpath, os.ModePerm)
 	file, err := os.Create(path)
 	defer file.Close()
 	if err != nil {
@@ -141,6 +148,9 @@ func SaveToFile(config Configuration, path string, logger logger.LoggerInt) {
 	}
 	obj, _ := yaml.Marshal(config)
 	_, err = file.Write(obj)
+	if err != nil {
+		logger.Error(err.Error())
+	}
 }
 
 func getConfigurationFromFile(cliArguments cliparser.CliArguments, logger logger.LoggerInt) (config Configuration, err error) {

@@ -60,7 +60,7 @@ func CreateRequiredFilesInConfigureMode(ctx *context.Context) {
 	ctx.Logger.GetInput("Your path", &yourPath)
 	ctx.Logger.GetInput("Filename", &yourName)
 	myProfile, myRegion := GetRegionAndProfile(&myLogger)
-	createConfigurationFile(yourPath+"/"+yourName, ctx, myProfile, myRegion)
+	createConfigurationFile(yourPath+"/"+yourName, ctx.Logger, myProfile, myRegion)
 	*ctx, _ = context.GetContext(cliparser.ParseCliArguments, configuration.GetConfiguration, configuration.ReadInconsistencyConfiguration)
 	var answer string
 	ctx.Logger.GetInput("Do you want to create .aws/credentials for this profile? Y/N", &answer)
@@ -70,18 +70,18 @@ func CreateRequiredFilesInConfigureMode(ctx *context.Context) {
 }
 
 // Creating main.yaml in user's path.
-func createConfigurationFile(path string, context *context.Context, myProfile string, myRegion string) {
-	context.Logger.Always("File will be created in " + path)
+func createConfigurationFile(path string, myLogger logger.LoggerInt, myProfile string, myRegion string) {
+	myLogger.Always("File will be created in " + path)
 	_, err := os.Stat(path)
 	if os.IsNotExist(err) {
-		con := CreateMainYaml(context, myProfile, myRegion)
-		configuration.SaveToFile(con, path, context.Logger)
+		con := CreateMainYaml(myLogger, myProfile, myRegion)
+		configuration.SaveToFile(con, path, myLogger)
 	} else {
 		var answer string
-		context.Logger.GetInput("File already exists in this path. Do you want to overwrite this file? Y/N", &answer)
+		myLogger.GetInput("File already exists in this path. Do you want to overwrite this file? Y/N", &answer)
 		if strings.ToUpper(answer) == "Y" {
-			con := CreateMainYaml(context, myProfile, myRegion)
-			configuration.SaveToFile(con, path, context.Logger)
+			con := CreateMainYaml(myLogger, myProfile, myRegion)
+			configuration.SaveToFile(con, path, myLogger)
 
 		}
 	}
@@ -143,15 +143,15 @@ func GetRegionAndProfile(myLogger logger.LoggerInt) (string, string) {
 }
 
 // Setting directory for temporary files.
-func setTemporaryFilesDirectory(context *context.Context) (path string) {
-	context.Logger.GetInput("Directory for temporary files", &path)
-	context.Logger.Always("Your temporary files directory is: " + path)
+func setTemporaryFilesDirectory(myLogger logger.LoggerInt) (path string) {
+	myLogger.GetInput("Directory for temporary files", &path)
+	myLogger.Always("Your temporary files directory is: " + path)
 	return path
 }
 
 // CreateMainYaml creates new configuration file.
-func CreateMainYaml(context *context.Context, myProfile string, myRegion string) configuration.Configuration {
-	myTemporaryFilesDirectory := setTemporaryFilesDirectory(context)
+func CreateMainYaml(myLogger logger.LoggerInt, myProfile string, myRegion string) configuration.Configuration {
+	myTemporaryFilesDirectory := setTemporaryFilesDirectory(myLogger)
 	myResourceSpecificationURL := ResourceSpecificationURL
 
 	myConfig := configuration.Configuration{
@@ -206,34 +206,34 @@ func CreateAWSCredentialsFile(ctx *context.Context, profile string) {
 		}
 		path := homePath + "/.aws/credentials"
 		line := "[" + profile + "-long-term" + "]\n"
-		appendStringToFile(path, line)
+		AppendStringToFile(path, line)
 		line = "aws_access_key_id" + " = " + awsAccessKeyID + "\n"
-		appendStringToFile(path, line)
+		AppendStringToFile(path, line)
 		line = "aws_secret_access_key" + " = " + awsSecretAccessKey + "\n"
-		appendStringToFile(path, line)
+		AppendStringToFile(path, line)
 		line = "mfa_serial" + " = " + mfaSerial + "\n"
-		appendStringToFile(path, line)
+		AppendStringToFile(path, line)
 	}
 }
 
 // CreateAWSConfigFile creates .aws/config file based on information from user. The file contains profile name, region and type of output.
-func CreateAWSConfigFile(ctx *context.Context, profile string, region string) {
+func CreateAWSConfigFile(myLogger logger.LoggerInt, profile string, region string) {
 	var output string
-	ctx.Logger.GetInput("Output", &output)
+	myLogger.GetInput("Output", &output)
 	homePath, pathError := myuser.GetUserHomeDir()
 	if pathError != nil {
-		ctx.Logger.Error(pathError.Error())
+		myLogger.Error(pathError.Error())
 	}
 	path := homePath + "/.aws/config"
 	line := "[" + profile + "]\n"
-	appendStringToFile(path, line)
+	AppendStringToFile(path, line)
 	line = "region" + " = " + region + "\n"
-	appendStringToFile(path, line)
+	AppendStringToFile(path, line)
 	line = "output" + " = " + output + "\n"
-	appendStringToFile(path, line)
+	AppendStringToFile(path, line)
 }
 
-func appendStringToFile(path, text string) error {
+func AppendStringToFile(path, text string) error {
 	f, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 	if err != nil {
 		return err
