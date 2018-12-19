@@ -91,13 +91,13 @@ func ParseYAML(templateFile []byte, refTemplate template.Template, logger logger
 	if parseError != nil {
 		return *cloudformation.NewTemplate(), parseError
 	}
-	findFnImportValue(templateFile, tempYAML)
+	findFnImportValue(preprocessed, tempYAML)
 	returnTemplate := *tempYAML
 
 	return returnTemplate, err
 }
 
-// Looking for Fn::ImportValue in a template.
+// Looking for ImportValue in a template.
 func findFnImportValue(templateFile []byte, tempYAML *cloudformation.Template) error {
 	refTemplate := template.Template{}
 	yaml.Unmarshal(templateFile, &refTemplate)
@@ -106,7 +106,6 @@ func findFnImportValue(templateFile []byte, tempYAML *cloudformation.Template) e
 		var path []string
 		startPath := []string{resourceName, "Properties"}
 		path = startPath
-
 		properties := resourceValue.Properties
 		for name, propertyValue := range properties {
 			switch propertyValue.(type) {
@@ -116,7 +115,7 @@ func findFnImportValue(templateFile []byte, tempYAML *cloudformation.Template) e
 						switch value.(type) {
 						case map[string]interface{}:
 							for key, val := range value.(map[string]interface{}) {
-								if strings.Contains(key, "Fn::ImportValue") {
+								if strings.Contains(key, "ImportValue") {
 									addToPathAndReplace(path, name, val.(string), tempYAML, startPath)
 								}
 							}
@@ -124,13 +123,13 @@ func findFnImportValue(templateFile []byte, tempYAML *cloudformation.Template) e
 							{
 								if _, ok := value.([]interface{}); ok {
 									for _, val := range value.([]interface{}) {
-										if strings.Contains(val.(string), "Fn::ImportValue") {
+										if strings.Contains(val.(string), "ImportValue") {
 											addToPathAndReplace(path, name, val.(string), tempYAML, startPath)
 										}
 									}
 
 								} else if _, ok := value.(string); ok {
-									if strings.Contains(value.(string), "Fn::ImportValue") {
+									if strings.Contains(value.(string), "ImportValue") {
 										addToPathAndReplace(path, name, value.(string), tempYAML, startPath)
 									}
 								}
@@ -144,14 +143,14 @@ func findFnImportValue(templateFile []byte, tempYAML *cloudformation.Template) e
 				}
 			case string:
 				{
-					if strings.Contains(propertyValue.(string), "Fn::ImportValue") {
+					if strings.Contains(propertyValue.(string), "ImportValue") {
 						addToPathAndReplace(path, name, propertyValue.(string), tempYAML, startPath)
 					}
 				}
 			case map[string]interface{}:
 				{
 					for key, val := range propertyValue.(map[string]interface{}) {
-						if strings.Contains(key, "Fn::ImportValue") {
+						if strings.Contains(key, "ImportValue") {
 							addToPathAndReplace(path, name, val.(string), tempYAML, startPath)
 						}
 					}
