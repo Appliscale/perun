@@ -22,6 +22,7 @@ import (
 	"errors"
 	"path"
 	"strconv"
+	"strings"
 
 	"github.com/Appliscale/perun/intrinsicsolver"
 	"github.com/Appliscale/perun/logger"
@@ -76,7 +77,6 @@ func ParseYAML(templateFile []byte, refTemplate template.Template, logger logger
 	if err != nil {
 		return template, err
 	}
-
 	for resource := range refTemplate.Resources {
 		var validDeletionPolicy = regexp.MustCompile("(^$)|(Delete)$|(Retain)$|(Snapshot)$")
 		if !validDeletionPolicy.MatchString(refTemplate.Resources[resource].DeletionPolicy) {
@@ -87,15 +87,113 @@ func ParseYAML(templateFile []byte, refTemplate template.Template, logger logger
 	if preprocessingError != nil {
 		logger.Error(preprocessingError.Error())
 	}
-
 	tempYAML, parseError := goformation.ParseYAML(preprocessed)
 	if parseError != nil {
 		return *cloudformation.NewTemplate(), parseError
 	}
-
+	findFnImportValue(preprocessed, tempYAML)
 	returnTemplate := *tempYAML
 
 	return returnTemplate, err
+}
+
+// Looking for ImportValue in a template.
+func findFnImportValue(templateFile []byte, tempYAML *cloudformation.Template) error {
+	refTemplate := template.Template{}
+	yaml.Unmarshal(templateFile, &refTemplate)
+	resources := refTemplate.Resources
+	for resourceName, resourceValue := range resources {
+		var path []string
+		startPath := []string{resourceName, "Properties"}
+		path = startPath
+		properties := resourceValue.Properties
+		for name, propertyValue := range properties {
+			switch propertyValue.(type) {
+			case []interface{}:
+				{
+					for _, value := range propertyValue.([]interface{}) {
+						switch value.(type) {
+						case map[string]interface{}:
+							for key, val := range value.(map[string]interface{}) {
+								if strings.Contains(key, "ImportValue") {
+									addToPathAndReplace(path, name, val.(string), tempYAML, startPath)
+								}
+							}
+						case interface{}:
+							{
+								if _, ok := value.([]interface{}); ok {
+									for _, val := range value.([]interface{}) {
+										if strings.Contains(val.(string), "ImportValue") {
+											addToPathAndReplace(path, name, val.(string), tempYAML, startPath)
+										}
+									}
+
+								} else if _, ok := value.(string); ok {
+									if strings.Contains(value.(string), "ImportValue") {
+										addToPathAndReplace(path, name, value.(string), tempYAML, startPath)
+									}
+								}
+							}
+						default:
+							return errors.New("Unsupported type")
+						}
+
+					}
+
+				}
+			case string:
+				{
+					if strings.Contains(propertyValue.(string), "ImportValue") {
+						addToPathAndReplace(path, name, propertyValue.(string), tempYAML, startPath)
+					}
+				}
+			case map[string]interface{}:
+				{
+					for key, val := range propertyValue.(map[string]interface{}) {
+						if strings.Contains(key, "ImportValue") {
+							addToPathAndReplace(path, name, val.(string), tempYAML, startPath)
+						}
+					}
+				}
+			default:
+				return errors.New("Unsupported type")
+			}
+		}
+	}
+	return nil
+}
+
+// Replace nil with correct value.
+func replaceImportValue(path []string, cfTemplate *cloudformation.Template) error {
+	len := len(path)
+	if len > 2 {
+		resource := cfTemplate.Resources[path[0]]
+		resourceValue, ok := resource.(map[string]interface{})
+		if !ok {
+			return errors.New("Error during replacing")
+		}
+		name := resourceValue[path[1]]
+		value, ok1 := name.(map[string]interface{})
+		if !ok1 {
+			return errors.New("Error during replacing")
+		}
+		array := []string{path[3]}
+		value[path[2]] = array
+
+	}
+	return nil
+}
+
+// Path helps to find where is nil instead of correct value.
+func addToPathAndReplace(path []string, name string, value string, tempYAML *cloudformation.Template, startPath []string) error {
+	path = append(path, name)
+	path = append(path, value)
+	err := replaceImportValue(path, tempYAML)
+	if err != nil {
+		return err
+	}
+	path = startPath
+	return nil
 }
 
 // PrettyPrintJSON prepares JSON file with indent to ease reading it.
