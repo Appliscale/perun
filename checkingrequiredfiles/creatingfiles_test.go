@@ -1,6 +1,8 @@
 package checkingrequiredfiles
 
 import (
+	"github.com/Appliscale/perun/logger"
+	"github.com/stretchr/testify/assert"
 	"testing"
 
 	"github.com/Appliscale/perun/checkingrequiredfiles/mocks"
@@ -83,4 +85,25 @@ func TestCreateCredentials(t *testing.T) {
 
 	createCredentials(profile, homePath, ctx, mockLogger)
 
+}
+
+func TestGetRegion(t *testing.T) {
+	region, _, _ := getRegion()
+	assert.Equalf(t, region, "", "Should be nil")
+}
+
+func TestWorkingOnEC2(t *testing.T) {
+	sink := logger.CreateDefaultLogger()
+	profile, region, err := workingOnEC2(&sink)
+	assert.Emptyf(t, profile, "Profile should be empty")
+	assert.Emptyf(t, region, "Region should be empty")
+	assert.NotNilf(t, err, "Error should be non-nil")
+}
+
+func TestGetIamInstanceProfileAssociations(t *testing.T) {
+	sink := logger.CreateDefaultLogger()
+	region := "eu-west-2"
+	result, err := getIamInstanceProfileAssociations(&sink, region)
+	assert.Emptyf(t, result, "Result shoulb be empty")
+	assert.NotNilf(t, err, "Error should be non-nil")
 }

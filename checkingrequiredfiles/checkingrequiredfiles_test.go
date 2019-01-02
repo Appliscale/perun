@@ -9,7 +9,7 @@ import (
 var sink logger.Logger
 
 func TestGetProfilesFromFile(t *testing.T) {
-	profiles := getProfilesFromFile("test_resources/.aws/config", &sink)
+	profiles := getProfilesFromFile("test_resources/.aws/config")
 	assert.NotNilf(t, profiles, "Profiles are nil")
 }
 
