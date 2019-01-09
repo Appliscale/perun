@@ -30,7 +30,7 @@ import (
 
 var spec specification.Specification
 
-var sink logger.Logger
+//var _ logger.Logger
 
 var deadProp = make([]string, 0)
 var deadRes = make([]string, 0)
@@ -342,25 +342,25 @@ func TestInvalidMapProperty(t *testing.T) {
 }
 
 func TestHasAllowedValuesParametersValid(t *testing.T) {
-	sink = logger.Logger{}
+	_ = logger.Logger{}
 	data := make(map[string]interface{})
 
 	data["AllowedValues"] = ""
 	data["Type"] = "String"
 	parameters := createParameters("Correct", data)
 
-	assert.True(t, hasAllowedValuesParametersValid(parameters, &sink), "This template has AllowedValues with Type String")
+	assert.True(t, hasAllowedValuesParametersValid(parameters), "This template has AllowedValues with Type String")
 }
 
 func TestHasAllowedValuesParametersInvalid(t *testing.T) {
-	sink = logger.Logger{}
+	_ = logger.Logger{}
 	data := make(map[string]interface{})
 
 	data["AllowedValues"] = ""
 	data["Type"] = "AWS::EC2::VPC::Id"
 	parameters := createParameters("Incorrect", data)
 
-	assert.False(t, hasAllowedValuesParametersValid(parameters, &sink), "This template has AllowedValues with Type other than String")
+	assert.False(t, hasAllowedValuesParametersValid(parameters), "This template has AllowedValues with Type other than String")
 }
 
 func createResourceWithNestedProperties(resourceType string, propertyName string, nestedPropertyValue map[string]interface{}) template.Resource {
