@@ -26,8 +26,8 @@ import (
 	"github.com/Appliscale/perun/logger"
 )
 
-var functions = []string{"Base64", "GetAtt", "GetAZs", "ImportValue", "Ref", "FindInMap", "Join", "Select", "Split", "Sub", "And", "Equals", "If", "Not", "Or"}
-var mapNature = functions[5:]
+var Functions = []string{"Base64", "GetAtt", "GetAZs", "ImportValue", "Ref", "FindInMap", "Join", "Select", "Split", "Sub", "And", "Equals", "If", "Not", "Or"}
+var mapNature = Functions[5:]
 
 /*
 FixFunctions : takes []byte file and firstly converts all single quotation marks to double ones (anything between single ones is treated as the rune in GoLang),
@@ -73,7 +73,7 @@ func FixFunctions(template []byte, logger logger.LoggerInt, mode ...string) ([]b
 				}
 			}
 			if m == "elongate" {
-				for _, function := range functions {
+				for _, function := range Functions {
 					elongateForms(&d, &lines, idx, function)
 				}
 			}

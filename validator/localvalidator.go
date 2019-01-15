@@ -154,6 +154,7 @@ func validateResources(resources map[string]template.Resource, specification *sp
 		if deadResource := helpers.SliceContains(deadRes, resourceName); !deadResource {
 			resourceValidation := sink.AddResourceForValidation(resourceName)
 			processNestedTemplates(resourceValue.Properties, ctx)
+			validators.GeneralValidateResourceByName(resourceValue, resourceValidation, ctx)
 			if resourceSpecification, ok := specification.ResourceTypes[resourceValue.Type]; ok {
 				for propertyName, propertyValue := range resourceSpecification.Properties {
 					if deadProperty := helpers.SliceContains(deadProp, propertyName); !deadProperty {
