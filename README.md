@@ -83,7 +83,7 @@ To validate your template, just type:
 ~ $ perun validate <PATH TO YOUR TEMPLATE>
 ```
 Your template will be then validated using both our validation mechanism and AWS API
-(*online validation*).
+(*aws validation*).
 
 #### Configuration
 To create your own configuration file use `configure` mode:

@@ -14,7 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package validator provides tools for offline CloudFormation template
+// Package validator provides tools for local CloudFormation template
 // validation.
 package validator
 
@@ -98,7 +98,7 @@ func validateTemplateFile(templatePath string, templateName string, context *con
 	resources := obtainResources(deNilizedTemplate, perunTemplate, context.Logger)
 	deadResources := getNilResources(resources)
 	deadProperties := getNilProperties(resources)
-	if hasAllowedValuesParametersValid(goFormationTemplate.Parameters, context.Logger) {
+	if hasAllowedValuesParametersValid(goFormationTemplate.Parameters) {
 		valid = true
 	} else {
 		valid = false
@@ -115,7 +115,7 @@ func validateTemplateFile(templatePath string, templateName string, context *con
 }
 
 // Looking for AllowedValues and checking what Type is it. If it finds Type other than String then it will return false.
-func hasAllowedValuesParametersValid(parameters template.Parameters, logger logger.LoggerInt) bool {
+func hasAllowedValuesParametersValid(parameters template.Parameters) bool {
 	isType := false
 	isAllovedValues := false
 	for _, value := range parameters {

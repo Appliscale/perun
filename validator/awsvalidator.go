@@ -14,7 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package onlinevalidator provides tools for online CloudFormation template
+// Package awsvalidator provides tools for online CloudFormation template
 // validation using AWS API.
 package validator
 
