@@ -15,8 +15,8 @@ test: get-deps create-mocks
 	go test -cover ./...
 
 create-mocks: get-mockgen
-	GOPATH=`go env GOPATH` ; $(GOPATH)/bin/mockgen -source=./awsapi/cloudformation.go  -destination=./stack/stack_mocks/mock_aws_api.go -package=stack_mocks CloudFormationAPI
-	GOPATH=`go env GOPATH` ; $(GOPATH)/bin/mockgen -source=./logger/logger.go  -destination=./checkingrequiredfiles/mocks/mock_logger.go -package=mocks LoggerInt
+	`go env GOPATH`/bin/mockgen -source=./awsapi/cloudformation.go  -destination=./stack/stack_mocks/mock_aws_api.go -package=stack_mocks CloudFormationAPI
+	`go env GOPATH`/bin/mockgen -source=./logger/logger.go  -destination=./checkingrequiredfiles/mocks/mock_logger.go -package=mocks LoggerInt
 
 get-mockgen:
 	go get github.com/golang/mock/gomock
