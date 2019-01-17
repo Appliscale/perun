@@ -100,10 +100,10 @@ func TestWorkingOnEC2(t *testing.T) {
 	assert.NotNilf(t, err, "Error should be non-nil")
 }
 
-func TestGetIamInstanceProfileAssociations(t *testing.T) {
+/*func TestGetIamInstanceProfileAssociations(t *testing.T) {
 	sink := logger.CreateDefaultLogger()
 	region := "eu-west-2"
 	result, err := getIamInstanceProfileAssociations(&sink, region)
 	assert.Emptyf(t, result, "Result should be empty")
 	assert.NotNilf(t, err, "Error should be non-nil")
-}
+}*/
