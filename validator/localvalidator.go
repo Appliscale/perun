@@ -53,6 +53,8 @@ func printResult(templateName string, valid *bool, logger logger.LoggerInt) {
 	logger.PrintValidationErrors()
 	if !*valid {
 		logger.Error(fmt.Sprintf("Template %s is invalid!", templateName))
+	} else if logger.HasValidationWarnings() {
+		logger.Warning(fmt.Sprintf("Template %s may not be valid", templateName))
 	} else {
 		logger.Info(fmt.Sprintf("Template %s is valid!", templateName))
 	}

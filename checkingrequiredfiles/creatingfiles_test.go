@@ -1,11 +1,11 @@
 package checkingrequiredfiles
 
 import (
-	"github.com/Appliscale/perun/logger"
 	"github.com/stretchr/testify/assert"
 	"testing"
 
 	"github.com/Appliscale/perun/checkingrequiredfiles/mocks"
+	"github.com/Appliscale/perun/logger"
 	"github.com/Appliscale/perun/stack/stack_mocks"
 	"github.com/golang/mock/gomock"
 )
@@ -104,6 +104,6 @@ func TestGetIamInstanceProfileAssociations(t *testing.T) {
 	sink := logger.CreateDefaultLogger()
 	region := "eu-west-2"
 	result, err := getIamInstanceProfileAssociations(&sink, region)
-	assert.Emptyf(t, result, "Result shoulb be empty")
+	assert.Emptyf(t, result, "Result should be empty")
 	assert.NotNilf(t, err, "Error should be non-nil")
 }
