@@ -53,6 +53,8 @@ func printResult(templateName string, valid *bool, logger logger.LoggerInt) {
 	logger.PrintValidationErrors()
 	if !*valid {
 		logger.Error(fmt.Sprintf("Template %s is invalid!", templateName))
+	} else if logger.HasValidationWarnings() {
+		logger.Warning(fmt.Sprintf("Template %s may not be valid", templateName))
 	} else {
 		logger.Info(fmt.Sprintf("Template %s is valid!", templateName))
 	}
@@ -154,6 +156,7 @@ func validateResources(resources map[string]template.Resource, specification *sp
 		if deadResource := helpers.SliceContains(deadRes, resourceName); !deadResource {
 			resourceValidation := sink.AddResourceForValidation(resourceName)
 			processNestedTemplates(resourceValue.Properties, ctx)
+			validators.GeneralValidateResourceByName(resourceValue, resourceValidation, ctx)
 			if resourceSpecification, ok := specification.ResourceTypes[resourceValue.Type]; ok {
 				for propertyName, propertyValue := range resourceSpecification.Properties {
 					if deadProperty := helpers.SliceContains(deadProp, propertyName); !deadProperty {

@@ -34,6 +34,7 @@ type LoggerInt interface {
 	GetInput(message string, v ...interface{}) error
 	PrintValidationErrors()
 	HasValidationErrors() bool
+	HasValidationWarnings() bool
 	AddResourceForValidation(resourceName string) *ResourceValidation
 	SetVerbosity(verbosity string)
 }
@@ -48,6 +49,7 @@ type Logger struct {
 type ResourceValidation struct {
 	ResourceName string
 	Errors       []string
+	Warnings     []string
 }
 
 // Verbosity - type of logger.
@@ -126,6 +128,11 @@ func (resourceValidation *ResourceValidation) AddValidationError(error string) {
 	resourceValidation.Errors = append(resourceValidation.Errors, error)
 }
 
+// Log validation error.
+func (resourceValidation *ResourceValidation) AddValidationWarning(warning string) {
+	resourceValidation.Warnings = append(resourceValidation.Warnings, warning)
+}
+
 // Get input from command line.
 func (logger *Logger) GetInput(message string, v ...interface{}) error {
 	fmt.Printf("%s: ", message)
@@ -145,10 +152,13 @@ func (logger *Logger) log(verbosity Verbosity, message string) {
 func (logger *Logger) PrintValidationErrors() {
 	if !logger.Quiet {
 		for _, resourceValidation := range logger.resourceValidation {
-			if len(resourceValidation.Errors) != 0 {
+			if len(resourceValidation.Errors) != 0 || len(resourceValidation.Warnings) != 0 {
 				fmt.Println(resourceValidation.ResourceName)
 				for _, err := range resourceValidation.Errors {
 					fmt.Println("        ", err)
+				}
+				for _, warning := range resourceValidation.Warnings {
+					fmt.Println("        ", warning)
 				}
 			}
 		}
@@ -159,6 +169,15 @@ func (logger *Logger) PrintValidationErrors() {
 func (logger *Logger) HasValidationErrors() bool {
 	for _, resourceValidation := range logger.resourceValidation {
 		if len(resourceValidation.Errors) > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+func (logger *Logger) HasValidationWarnings() bool {
+	for _, resourceValidation := range logger.resourceValidation {
+		if len(resourceValidation.Warnings) > 0 {
 			return true
 		}
 	}
