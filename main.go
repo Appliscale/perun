@@ -141,6 +141,10 @@ func main() {
 
 	if *ctx.CliArguments.Mode == cliparser.EstimateCostMode {
 		ctx.InitializeAwsAPI()
-		estimatecost.EstimateCosts(&ctx)
+		if *ctx.CliArguments.SkipValidation || validator.Validate(&ctx) {
+			estimatecost.EstimateCosts(&ctx)
+		} else {
+			ctx.Logger.Info(validationUnsuccessfullMsg)
+		}
 	}
 }
