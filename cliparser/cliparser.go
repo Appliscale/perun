@@ -171,7 +171,7 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 
 	switch kingpin.MustParse(app.Parse(args[1:])) {
 
-	//online validate
+	// validate
 	case validate.FullCommand():
 		cliArguments.Mode = &ValidateMode
 		cliArguments.TemplatePath = validateTemplate

@@ -14,7 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package validator provides tools for offline CloudFormation template
+// Package validator provides tools for local CloudFormation template
 // validation.
 package validator
 
@@ -53,6 +53,8 @@ func printResult(templateName string, valid *bool, logger logger.LoggerInt) {
 	logger.PrintValidationErrors()
 	if !*valid {
 		logger.Error(fmt.Sprintf("Template %s is invalid!", templateName))
+	} else if logger.HasValidationWarnings() {
+		logger.Warning(fmt.Sprintf("Template %s may not be valid", templateName))
 	} else {
 		logger.Info(fmt.Sprintf("Template %s is valid!", templateName))
 	}
@@ -98,7 +100,7 @@ func validateTemplateFile(templatePath string, templateName string, context *con
 	resources := obtainResources(deNilizedTemplate, perunTemplate, context.Logger)
 	deadResources := getNilResources(resources)
 	deadProperties := getNilProperties(resources)
-	if hasAllowedValuesParametersValid(goFormationTemplate.Parameters, context.Logger) {
+	if hasAllowedValuesParametersValid(goFormationTemplate.Parameters) {
 		valid = true
 	} else {
 		valid = false
@@ -115,7 +117,7 @@ func validateTemplateFile(templatePath string, templateName string, context *con
 }
 
 // Looking for AllowedValues and checking what Type is it. If it finds Type other than String then it will return false.
-func hasAllowedValuesParametersValid(parameters template.Parameters, logger logger.LoggerInt) bool {
+func hasAllowedValuesParametersValid(parameters template.Parameters) bool {
 	isType := false
 	isAllovedValues := false
 	for _, value := range parameters {
@@ -154,6 +156,7 @@ func validateResources(resources map[string]template.Resource, specification *sp
 		if deadResource := helpers.SliceContains(deadRes, resourceName); !deadResource {
 			resourceValidation := sink.AddResourceForValidation(resourceName)
 			processNestedTemplates(resourceValue.Properties, ctx)
+			validators.GeneralValidateResourceByName(resourceValue, resourceValidation, ctx)
 			if resourceSpecification, ok := specification.ResourceTypes[resourceValue.Type]; ok {
 				for propertyName, propertyValue := range resourceSpecification.Properties {
 					if deadProperty := helpers.SliceContains(deadProp, propertyName); !deadProperty {

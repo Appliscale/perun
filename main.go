@@ -30,6 +30,7 @@ import (
 	"github.com/Appliscale/perun/stack"
 	"github.com/Appliscale/perun/utilities"
 	"github.com/Appliscale/perun/validator"
+	"github.com/Appliscale/perun/validator/validators"
 	"os"
 )
 
@@ -65,7 +66,7 @@ func main() {
 	validationUnsuccessfullMsg := "To skip the validation part use the --no-validate flag"
 	if *ctx.CliArguments.Mode == cliparser.CreateStackMode {
 		ctx.InitializeAwsAPI()
-		if *ctx.CliArguments.SkipValidation || validator.Validate(&ctx) {
+		if *ctx.CliArguments.SkipValidation || (validator.Validate(&ctx) && validators.UserDecideGeneralRule(&ctx)) {
 			utilities.CheckErrorCodeAndExit(stack.NewStack(&ctx))
 		} else {
 			ctx.Logger.Info(validationUnsuccessfullMsg)
@@ -90,7 +91,7 @@ func main() {
 
 	if *ctx.CliArguments.Mode == cliparser.CreateChangeSetMode {
 		ctx.InitializeAwsAPI()
-		if *ctx.CliArguments.SkipValidation || validator.Validate(&ctx) {
+		if *ctx.CliArguments.SkipValidation || (validator.Validate(&ctx) && validators.UserDecideGeneralRule(&ctx)) {
 			err := stack.NewChangeSet(&ctx)
 			if err != nil {
 				ctx.Logger.Error(err.Error())
@@ -107,7 +108,7 @@ func main() {
 
 	if *ctx.CliArguments.Mode == cliparser.UpdateStackMode {
 		ctx.InitializeAwsAPI()
-		if *ctx.CliArguments.SkipValidation || validator.Validate(&ctx) {
+		if *ctx.CliArguments.SkipValidation || (validator.Validate(&ctx) && validators.UserDecideGeneralRule(&ctx)) {
 			utilities.CheckErrorCodeAndExit(stack.UpdateStack(&ctx))
 		} else {
 			ctx.Logger.Info(validationUnsuccessfullMsg)

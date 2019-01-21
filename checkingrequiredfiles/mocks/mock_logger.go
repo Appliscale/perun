@@ -132,6 +132,18 @@ func (mr *MockLoggerIntMockRecorder) HasValidationErrors() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasValidationErrors", reflect.TypeOf((*MockLoggerInt)(nil).HasValidationErrors))
 }
 
+// HasValidationWarnings mocks base method
+func (m *MockLoggerInt) HasValidationWarnings() bool {
+	ret := m.ctrl.Call(m, "HasValidationWarnings")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// HasValidationWarnings indicates an expected call of HasValidationWarnings
+func (mr *MockLoggerIntMockRecorder) HasValidationWarnings() *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasValidationWarnings", reflect.TypeOf((*MockLoggerInt)(nil).HasValidationWarnings))
+}
+
 // AddResourceForValidation mocks base method
 func (m *MockLoggerInt) AddResourceForValidation(resourceName string) *logger.ResourceValidation {
 	ret := m.ctrl.Call(m, "AddResourceForValidation", resourceName)

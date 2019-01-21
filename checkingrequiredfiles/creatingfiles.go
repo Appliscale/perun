@@ -135,7 +135,7 @@ func getIamInstanceProfileAssociations(myLogger logger.LoggerInt, region string)
 		return result, err
 	}
 
-	return result, nil
+	return result, err
 }
 
 // Get AWS region and check if perun is running on EC2.
