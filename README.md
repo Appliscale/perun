@@ -169,6 +169,13 @@ To destroy remote sink just type:
 ~ $ perun destroy-remote-sink
 ```
 
+#### Cost estimation
+
+```bash
+~ $ perun estimate-cost <PATH TO YOUR TEMPLATE>
+```
+To estimate template's cost run the command above with path to file. Perun resolves parameters located in the template and checks if it’s correct. Then you get url to Simple Monthly Calculator which will be filled with data from the template.
+
 #### Protecting Stack
 
 You can protect your stack by using Stack Policy file. It's JSON file where you describe which action is allowed or denied. This example allows to all Update Actions.
