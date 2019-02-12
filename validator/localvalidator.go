@@ -20,6 +20,7 @@ package validator
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -27,8 +28,6 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
-
-	"errors"
 
 	"github.com/Appliscale/perun/configuration"
 	"github.com/Appliscale/perun/context"
@@ -441,7 +440,6 @@ func nilNeutralize(template cloudformation.Template, logger logger.LoggerInt) (o
 	} else {
 		check3 = check2
 	}
-
 	byteSliceCorrected := []byte(check3)
 
 	tempJSON, err := goformation.ParseJSON(byteSliceCorrected)

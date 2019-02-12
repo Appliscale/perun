@@ -51,7 +51,7 @@ func TestFindFnImportValue(t *testing.T) {
 }
 
 func TestReplaceImportValue(t *testing.T) {
-	path := []string{"Resorce", "Property", "Name", "Value"}
+	path := []interface{}{"Resorce", "Property", "Name", "Value"}
 	cfTemplate := cloudformation.Template{}
 
 	err := replaceImportValue(path, &cfTemplate)
@@ -60,11 +60,12 @@ func TestReplaceImportValue(t *testing.T) {
 }
 
 func TestAddToPathAndReplace(t *testing.T) {
-	path := []string{}
+	var path = []interface{}{}
 	name := "name"
-	value := "value"
+	var value interface{}
+	value = "value"
 	tempYAML := cloudformation.Template{}
-	startPath := []string{}
+	startPath := []interface{}{}
 
 	err := addToPathAndReplace(path, name, value, &tempYAML, startPath)
 	assert.Nilf(t, err, "Error should be nil")

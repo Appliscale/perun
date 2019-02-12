@@ -20,17 +20,17 @@ package helpers
 import (
 	"encoding/json"
 	"errors"
-	"path"
-	"strconv"
-	"strings"
-
+	"fmt"
 	"github.com/Appliscale/perun/intrinsicsolver"
 	"github.com/Appliscale/perun/logger"
 	"github.com/Appliscale/perun/validator/template"
 	"github.com/awslabs/goformation"
 	"github.com/awslabs/goformation/cloudformation"
 	"github.com/ghodss/yaml"
+	"path"
 	"regexp"
+	"strconv"
+	"strings"
 )
 
 // GetParser chooses parser based on file extension.
@@ -93,7 +93,7 @@ func ParseYAML(templateFile []byte, refTemplate template.Template, logger logger
 	}
 	findFnImportValue(preprocessed, tempYAML)
 	returnTemplate := *tempYAML
-
+	fmt.Println(returnTemplate.Resources)
 	return returnTemplate, err
 }
 
@@ -103,8 +103,8 @@ func findFnImportValue(templateFile []byte, tempYAML *cloudformation.Template) e
 	yaml.Unmarshal(templateFile, &refTemplate)
 	resources := refTemplate.Resources
 	for resourceName, resourceValue := range resources {
-		var path []string
-		startPath := []string{resourceName, "Properties"}
+		var path []interface{}
+		startPath := []interface{}{resourceName, "Properties"}
 		path = startPath
 		properties := resourceValue.Properties
 		for name, propertyValue := range properties {
@@ -115,8 +115,28 @@ func findFnImportValue(templateFile []byte, tempYAML *cloudformation.Template) e
 						switch value.(type) {
 						case map[string]interface{}:
 							for key, val := range value.(map[string]interface{}) {
-								if strings.Contains(key, "ImportValue") {
-									addToPathAndReplace(path, name, val.(string), tempYAML, startPath)
+								switch val.(type) {
+								case []interface{}:
+									{
+										path = append(path, name)
+
+										for _, b := range val.([]interface{}) {
+											for _, d := range b.(map[string]interface{}) {
+												if d != nil { //ImportValue returns nil
+													addToPathAndReplace(path, key, d, tempYAML, startPath)
+												}
+											}
+										}
+										path = startPath
+									}
+								case string:
+									{
+										for key, val := range value.(map[string]interface{}) {
+											if strings.Contains(key, "ImportValue") {
+												addToPathAndReplace(path, name, val.(string), tempYAML, startPath)
+											}
+										}
+									}
 								}
 							}
 						case interface{}:
@@ -151,7 +171,23 @@ func findFnImportValue(templateFile []byte, tempYAML *cloudformation.Template) e
 				{
 					for key, val := range propertyValue.(map[string]interface{}) {
 						if strings.Contains(key, "ImportValue") {
-							addToPathAndReplace(path, name, val.(string), tempYAML, startPath)
+							switch val.(type) {
+							case string:
+								{
+									addToPathAndReplace(path, name, val.(string), tempYAML, startPath)
+								}
+							case map[string]interface{}:
+								{
+									for a, b := range val.(map[string]interface{}) {
+										c := a + b.(string)
+										addToPathAndReplace(path, name, c, tempYAML, startPath)
+									}
+
+								}
+							default:
+								return errors.New("Unsupported type")
+							}
+
 						}
 					}
 				}
@@ -163,29 +199,50 @@ func findFnImportValue(templateFile []byte, tempYAML *cloudformation.Template) e
 	return nil
 }
 
+// It doesn't work.
 // Replace nil with correct value.
-func replaceImportValue(path []string, cfTemplate *cloudformation.Template) error {
-	len := len(path)
-	if len > 2 {
-		resource := cfTemplate.Resources[path[0]]
+func replaceImportValue(path []interface{}, cfTemplate *cloudformation.Template) error {
+	length := len(path)
+	if length > 2 {
+		resource := cfTemplate.Resources[path[0].(string)]
 		resourceValue, ok := resource.(map[string]interface{})
 		if !ok {
 			return errors.New("Error during replacing")
 		}
-		name := resourceValue[path[1]]
+		name := resourceValue[path[1].(string)]
 		value, ok1 := name.(map[string]interface{})
 		if !ok1 {
 			return errors.New("Error during replacing")
 		}
-		array := []string{path[3]}
-		value[path[2]] = array
+		if length == 4 {
+			array := []string{path[3].(string)}
+			value[path[2].(string)] = array
+		} else if length == 5 {
+			valueOf := value[path[2].(string)]
+			temp := valueOf.([]interface{})
+			temp1 := temp[0].(map[string]interface{})
+			element := temp1[path[3].(string)]
+			last := element.([]interface{})
+			if len(last) == 1 {
+				temp1[path[3].(string)] = path[4]
+			} else if len(last) > 1 {
+				i := 0
+				x := temp1[path[3].(string)]
+				for _, val := range x.([]interface{}) {
+					if val == nil {
+						last[i] = path[4]
+						i++
+					}
+				}
+			}
+		}
 
 	}
 	return nil
 }
 
 // Path helps to find where is nil instead of correct value.
-func addToPathAndReplace(path []string, name string, value string, tempYAML *cloudformation.Template, startPath []string) error {
+func addToPathAndReplace(path []interface{}, name string, value interface{}, tempYAML *cloudformation.Template, startPath []interface{}) error {
 	path = append(path, name)
 	path = append(path, value)
 	err := replaceImportValue(path, tempYAML)
