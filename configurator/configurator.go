@@ -47,7 +47,7 @@ var ResourceSpecificationURL = map[string]string{
 	"sa-east-1":      "https://d3c9jyj3w509b0.cloudfront.net",
 }
 
-// List of available regions.
+// List of available regions
 var Regions = makeArrayRegions()
 
 // CreateRequiredFilesInConfigureMode creates main.yaml and .aws/credentials in configure mode.
