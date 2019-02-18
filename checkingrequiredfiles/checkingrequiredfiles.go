@@ -81,39 +81,30 @@ func CheckingRequiredFiles(ctx *context.Context) {
 	region := "us-east-1"
 
 	if !mainYAMLexists {
-		if configAWSExists {
-			profile, *ctx = configIsPresent(profile, homePath, ctx, &myLogger)
-			createCredentials(profile, homePath, ctx, &myLogger)
-		} else { //configAWSExists == false
-			var answer string
-			myLogger.GetInput("Config doesn't exist, create default *Y* or new *N*?", &answer)
-			if strings.ToUpper(answer) == "N" {
-				profile, region, *ctx = newConfigFile(profile, region, homePath, ctx, &myLogger)
-				addProfileToCredentials(profile, homePath, ctx, &myLogger)
-				addNewProfileFromCredentialsToConfig(profile, homePath, ctx, &myLogger)
-
-			} else if strings.ToUpper(answer) == "Y" {
-				configurator.CreateAWSConfigFile(&myLogger, profile, region)
-				*ctx = createNewMainYaml(profile, homePath, ctx, &myLogger)
+		profile, *ctx = configIsPresent(profile, homePath, ctx, &myLogger)
+	} else {
+		profile = ctx.Config.DefaultProfile
+		region = ctx.Config.DefaultRegion
+	}
+	if configAWSExists {
+		createCredentials(profile, homePath, ctx, &myLogger)
+	} else { //configAWSExists == false
+		var answer string
+		myLogger.GetInput("Config doesn't exist, create default - "+profile+" *Y* or new *N*?", &answer)
+		if strings.ToUpper(answer) == "N" {
+			profile, region, *ctx = newConfigFile(profile, region, homePath, ctx, &myLogger)
+			addProfileToCredentials(profile, homePath, ctx, &myLogger)
+		}
+		if strings.ToUpper(answer) == "Y" {
+			configurator.CreateAWSConfigFile(&myLogger, profile, region)
+			if !isProfileInCredentials(profile, homePath+"/.aws/credentials", &myLogger) {
 				configurator.CreateAWSCredentialsFile(ctx, profile)
 			}
-		}
-	} else { //mainYAMLexists == true
-		if configAWSExists {
-			createCredentials(ctx.Config.DefaultProfile, homePath, ctx, &myLogger)
-		} else { //configAWSExists ==false
-			var answer string
-			myLogger.GetInput("Config doesn't exist, create default - "+ctx.Config.DefaultProfile+" *Y* or new *N*?", &answer)
-			if strings.ToUpper(answer) == "Y" {
-				configurator.CreateAWSConfigFile(ctx.Logger, ctx.Config.DefaultProfile, ctx.Config.DefaultRegion)
-				addProfileToCredentials(ctx.Config.DefaultProfile, homePath, ctx, ctx.Logger)
-
-			} else if strings.ToUpper(answer) == "N" {
-				profile, region, *ctx = newConfigFile(profile, region, homePath, ctx, &myLogger)
-				addProfileToCredentials(profile, homePath, ctx, &myLogger)
+			if !mainYAMLexists {
+				*ctx = createNewMainYaml(profile, homePath, ctx, &myLogger)
 			}
-			addNewProfileFromCredentialsToConfig(ctx.Config.DefaultProfile, homePath, ctx, &myLogger)
 		}
+		addNewProfileFromCredentialsToConfig(profile, homePath, ctx, &myLogger)
 	}
 }
 

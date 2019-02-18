@@ -108,7 +108,6 @@ func createCredentials(profile string, homePath string, ctx *context.Context, my
 			configurator.CreateAWSCredentialsFile(ctx, profile)
 		}
 	}
-
 }
 
 func getIamInstanceProfileAssociations(myLogger logger.LoggerInt, region string) (*ec2.DescribeIamInstanceProfileAssociationsOutput, error) {
