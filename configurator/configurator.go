@@ -47,8 +47,8 @@ var ResourceSpecificationURL = map[string]string{
 	"sa-east-1":      "https://d3c9jyj3w509b0.cloudfront.net",
 }
 
-// List of available regions
-var Regions = makeArrayRegions()
+// List of available regions.
+var Regions = getAllRegions()
 
 // CreateRequiredFilesInConfigureMode creates main.yaml and .aws/credentials in configure mode.
 func CreateRequiredFilesInConfigureMode(ctx *context.Context) {
@@ -170,7 +170,7 @@ func CreateMainYaml(myLogger logger.LoggerInt, myProfile string, myRegion string
 }
 
 // Array of regions.
-func makeArrayRegions() []string {
+func getAllRegions() []string {
 	var regions = []string{}
 	for region := range ResourceSpecificationURL {
 		regions = append(regions, region)

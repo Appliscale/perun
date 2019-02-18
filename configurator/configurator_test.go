@@ -56,8 +56,8 @@ func TestCreateConfig(t *testing.T) {
 
 }
 
-func TestMakeArrayRegions(t *testing.T) {
-	region := makeArrayRegions()
+func TestGetAllRegions(t *testing.T) {
+	region := getAllRegions()
 	for i := 0; i < len(region); i++ {
 		assert.NotEmptyf(t, region[i], "Incorrect region and URL")
 	}
