@@ -50,8 +50,8 @@ func addNewProfileFromCredentialsToConfig(profile string, homePath string, ctx *
 			var answer string
 			myLogger.GetInput("I found profile "+prof+" in credentials, but not in config. \nCreate new profile in config? Y/N", &answer)
 			if strings.ToUpper(answer) == "Y" {
-				var region string
-				myLogger.GetInput("Region", &region)
+				configurator.ShowRegions(myLogger)
+				region, _ := configurator.SetRegions(myLogger)
 				configurator.CreateAWSConfigFile(ctx.Logger, prof, region)
 			}
 		}
@@ -101,7 +101,6 @@ func newConfigFile(profile string, region string, homePath string, ctx *context.
 // Creating credentials for all present profiles.
 func createCredentials(profile string, homePath string, ctx *context.Context, myLogger logger.LoggerInt) {
 	isProfileInPresent := isProfileInCredentials(profile, homePath+"/.aws/credentials", myLogger)
-
 	if !isProfileInPresent {
 		var answer string
 		myLogger.GetInput("I found profile "+profile+" in .aws/config without credentials, add? Y/N", &answer)
@@ -109,7 +108,6 @@ func createCredentials(profile string, homePath string, ctx *context.Context, my
 			configurator.CreateAWSCredentialsFile(ctx, profile)
 		}
 	}
-
 }
 
 func getIamInstanceProfileAssociations(myLogger logger.LoggerInt, region string) (*ec2.DescribeIamInstanceProfileAssociationsOutput, error) {

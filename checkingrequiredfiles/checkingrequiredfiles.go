@@ -77,77 +77,41 @@ func CheckingRequiredFiles(ctx *context.Context) {
 		myLogger.Error(configError.Error())
 	}
 
-	credentialsExists, credentialsError := isCredentialsPresent(&myLogger)
-	if credentialsError != nil {
-		myLogger.Error(credentialsError.Error())
-	}
-
 	profile := "default"
 	region := "us-east-1"
 
 	if !mainYAMLexists {
-		if configAWSExists {
-			profile, *ctx = configIsPresent(profile, homePath, ctx, &myLogger)
-			if !credentialsExists {
-				createCredentials(profile, homePath, ctx, &myLogger)
-			}
-		} else { //configAWSExists == false
-			var answer string
-			myLogger.GetInput("Config doesn't exist, create default *Y* or new *N*?", &answer)
-			if strings.ToUpper(answer) == "N" {
-				profile, region, *ctx = newConfigFile(profile, region, homePath, ctx, &myLogger)
-				addProfileToCredentials(profile, homePath, ctx, &myLogger)
-				addNewProfileFromCredentialsToConfig(profile, homePath, ctx, &myLogger)
-
-			} else if strings.ToUpper(answer) == "Y" {
-				configurator.CreateAWSConfigFile(&myLogger, profile, region)
-				*ctx = createNewMainYaml(profile, homePath, ctx, &myLogger)
+		profile, *ctx = configIsPresent(profile, homePath, ctx, &myLogger)
+	} else {
+		profile = ctx.Config.DefaultProfile
+		region = ctx.Config.DefaultRegion
+	}
+	if configAWSExists {
+		createCredentials(profile, homePath, ctx, &myLogger)
+	} else { //configAWSExists == false
+		var answer string
+		myLogger.GetInput("Config doesn't exist, create default - "+profile+" *Y* or new *N*?", &answer)
+		if strings.ToUpper(answer) == "N" {
+			profile, region, *ctx = newConfigFile(profile, region, homePath, ctx, &myLogger)
+			addProfileToCredentials(profile, homePath, ctx, &myLogger)
+		}
+		if strings.ToUpper(answer) == "Y" {
+			configurator.CreateAWSConfigFile(&myLogger, profile, region)
+			if !isProfileInCredentials(profile, homePath+"/.aws/credentials", &myLogger) {
 				configurator.CreateAWSCredentialsFile(ctx, profile)
 			}
-
-			if credentialsExists {
-				createCredentials(profile, homePath, ctx, &myLogger)
+			if !mainYAMLexists {
+				*ctx = createNewMainYaml(profile, homePath, ctx, &myLogger)
 			}
 		}
-	} else { //mainYAMLexists == true
-		if configAWSExists {
-			if !credentialsExists {
-				createCredentials(profile, homePath, ctx, &myLogger)
-				myLogger.Always("Profile from main.yaml: " + ctx.Config.DefaultProfile)
-				addProfileToCredentials(ctx.Config.DefaultProfile, homePath, ctx, ctx.Logger)
-
-			} else {
-				isProfileInPresent := isProfileInCredentials(ctx.Config.DefaultProfile, homePath+"/.aws/credentials", &myLogger)
-				if !isProfileInPresent {
-					myLogger.Always("Profile from main.yaml: " + ctx.Config.DefaultProfile)
-					configurator.CreateAWSCredentialsFile(ctx, ctx.Config.DefaultProfile)
-				}
-			}
-		} else { //configAWSExists ==false
-			var answer string
-			myLogger.GetInput("Config doesn't exist, create default - "+ctx.Config.DefaultProfile+" *Y* or new *N*?", &answer)
-			if strings.ToUpper(answer) == "Y" {
-				configurator.CreateAWSConfigFile(ctx.Logger, ctx.Config.DefaultProfile, ctx.Config.DefaultRegion)
-				addProfileToCredentials(ctx.Config.DefaultProfile, homePath, ctx, ctx.Logger)
-
-			} else if strings.ToUpper(answer) == "N" {
-				profile, region, *ctx = newConfigFile(profile, region, homePath, ctx, &myLogger)
-				addProfileToCredentials(profile, homePath, ctx, &myLogger)
-			}
-			addNewProfileFromCredentialsToConfig(ctx.Config.DefaultProfile, homePath, ctx, &myLogger)
-
-			if credentialsExists {
-				createCredentials(ctx.Config.DefaultProfile, homePath, ctx, &myLogger)
-
-			}
-		}
+		addNewProfileFromCredentialsToConfig(profile, homePath, ctx, &myLogger)
 	}
 }
 
 // Checking if Mode is "online" - needs config and credentials files or "offline" - needs only main.yaml.
 func isOffline() bool {
 	args, _ := cliparser.ParseCliArguments(os.Args)
-	offline := [6]string{cliparser.CreateParametersMode, cliparser.LintMode, cliparser.ConfigureMode}
+	offline := [3]string{cliparser.CreateParametersMode, cliparser.LintMode, cliparser.ConfigureMode}
 	for _, off := range offline {
 		if *args.Mode == off {
 			return true
@@ -212,20 +176,6 @@ func isAWSConfigPresent(myLogger *logger.Logger) (bool, error) {
 	}
 	return true, nil
 
-}
-
-// Looking for .aws/credentials.
-func isCredentialsPresent(myLogger *logger.Logger) (bool, error) {
-	homePath, pathError := myuser.GetUserHomeDir()
-	if pathError != nil {
-		myLogger.Error(pathError.Error())
-		return false, pathError
-	}
-	_, credentialsError := os.Open(homePath + "/.aws/credentials")
-	if credentialsError != nil {
-		return false, credentialsError
-	}
-	return true, nil
 }
 
 // Looking for [profiles] in credentials or config and return all.
