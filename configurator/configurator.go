@@ -92,7 +92,7 @@ func createConfigurationFile(path string, myLogger logger.LoggerInt, myProfile s
 }
 
 //List of all available regions.
-func showRegions(myLogger logger.LoggerInt) {
+func ShowRegions(myLogger logger.LoggerInt) {
 	myLogger.Always("Regions:")
 	for i := 0; i < len(Regions); i++ {
 		pom := strconv.Itoa(i)
@@ -101,7 +101,7 @@ func showRegions(myLogger logger.LoggerInt) {
 }
 
 // Choosing one region.
-func setRegions(myLogger logger.LoggerInt) (region string, err bool) {
+func SetRegions(myLogger logger.LoggerInt) (region string, err bool) {
 	var numberRegion int
 	myLogger.GetInput("Choose region", &numberRegion)
 	if numberRegion >= 0 && numberRegion < len(ResourceSpecificationURL) {
@@ -135,11 +135,11 @@ func GetRegionAndProfile(myLogger logger.LoggerInt) (string, string) {
 		myLogger.Always("Try again, invalid profile")
 		profile, err = setProfile(myLogger)
 	}
-	showRegions(myLogger)
-	region, err1 := setRegions(myLogger)
+	ShowRegions(myLogger)
+	region, err1 := SetRegions(myLogger)
 	for !err1 {
 		myLogger.Always("Try again, invalid region")
-		region, err1 = setRegions(myLogger)
+		region, err1 = SetRegions(myLogger)
 	}
 	return profile, region
 }
