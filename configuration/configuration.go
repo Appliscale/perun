@@ -42,7 +42,7 @@ type Configuration struct {
 	DefaultDurationForMFA int64
 	// Logger verbosity.
 	DefaultVerbosity string
-	// Direcotry for temporary files.
+	// Directory for temporary files.
 	DefaultTemporaryFilesDirectory string
 }
 

@@ -43,8 +43,12 @@ var ResourceSpecificationURL = map[string]string{
 	"eu-central-1":   "https://d1mta8qj7i28i2.cloudfront.net",
 	"eu-west-1":      "https://d3teyb21fexa9r.cloudfront.net",
 	"eu-west-2":      "https://d1742qcu2c1ncx.cloudfront.net",
+	"eu-west-3":      "https://d2d0mfegowb3wk.cloudfront.net",
 	"sa-east-1":      "https://d3c9jyj3w509b0.cloudfront.net",
 }
+
+// List of available regions.
+var Regions = getAllRegions()
 
 // CreateRequiredFilesInConfigureMode creates main.yaml and .aws/credentials in configure mode.
 func CreateRequiredFilesInConfigureMode(ctx *context.Context) {
@@ -89,11 +93,10 @@ func createConfigurationFile(path string, myLogger logger.LoggerInt, myProfile s
 
 //List of all available regions.
 func ShowRegions(myLogger logger.LoggerInt) {
-	regions := makeArrayRegions()
 	myLogger.Always("Regions:")
-	for i := 0; i < len(regions); i++ {
+	for i := 0; i < len(Regions); i++ {
 		pom := strconv.Itoa(i)
-		myLogger.Always("Number " + pom + " region " + regions[i])
+		myLogger.Always("Number " + pom + " region " + Regions[i])
 	}
 }
 
@@ -101,9 +104,8 @@ func ShowRegions(myLogger logger.LoggerInt) {
 func SetRegions(myLogger logger.LoggerInt) (region string, err bool) {
 	var numberRegion int
 	myLogger.GetInput("Choose region", &numberRegion)
-	regions := makeArrayRegions()
-	if numberRegion >= 0 && numberRegion < 14 {
-		region = regions[numberRegion]
+	if numberRegion >= 0 && numberRegion < len(ResourceSpecificationURL) {
+		region = Regions[numberRegion]
 		myLogger.Always("Your region is: " + region)
 		err = true
 	} else {
@@ -168,22 +170,10 @@ func CreateMainYaml(myLogger logger.LoggerInt, myProfile string, myRegion string
 }
 
 // Array of regions.
-func makeArrayRegions() []string {
-	var regions = []string{
-		"us-east-1",
-		"us-east-2",
-		"us-west-1",
-		"us-west-2",
-		"ca-central-1",
-		"ca-central-1",
-		"eu-west-1",
-		"eu-west-2",
-		"ap-northeast-1",
-		"ap-northeast-2",
-		"ap-southeast-1",
-		"ap-southeast-2",
-		"ap-south-1",
-		"sa-east-1",
+func getAllRegions() []string {
+	var regions = []string{}
+	for region := range ResourceSpecificationURL {
+		regions = append(regions, region)
 	}
 	return regions
 }
