@@ -1,4 +1,4 @@
-// Copyright 2017 Appliscale
+// Copyright 2018 Appliscale
 //
 // Maintainers and contributors are listed in README file inside repository.
 //
@@ -14,8 +14,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// +build !windows
-
 package configuration
 
 import (
@@ -25,8 +23,8 @@ import (
 
 type myStat func(string) (os.FileInfo, error)
 
-func getUserConfigFile(existenceChecker myStat) (val string, ok bool) {
-	const relativeUserConfigPath = "/.config/perun/main.yaml"
+func getUserConfigFile(existenceChecker myStat, fileName string) (val string, ok bool) {
+	relativeUserConfigPath := "/.config/perun/" + fileName
 
 	var err error
 	var usr *user.User

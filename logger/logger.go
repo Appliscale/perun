@@ -1,4 +1,4 @@
-// Copyright 2017 Appliscale
+// Copyright 2018 Appliscale
 //
 // Maintainers and contributors are listed in README file inside repository.
 //
@@ -23,6 +23,21 @@ import (
 	"strings"
 )
 
+// Logger contains information type of logger tool.
+type LoggerInt interface {
+	Always(message string)
+	Warning(warning string)
+	Error(err string)
+	Info(info string)
+	Debug(debug string)
+	Trace(trace string)
+	GetInput(message string, v ...interface{}) error
+	PrintValidationErrors()
+	HasValidationErrors() bool
+	HasValidationWarnings() bool
+	AddResourceForValidation(resourceName string) *ResourceValidation
+	SetVerbosity(verbosity string)
+}
 type Logger struct {
 	Quiet              bool
 	Yes                bool
@@ -30,11 +45,14 @@ type Logger struct {
 	resourceValidation []*ResourceValidation
 }
 
+// ResourceValidation contains name of resource and errors.
 type ResourceValidation struct {
 	ResourceName string
 	Errors       []string
+	Warnings     []string
 }
 
+// Verbosity - type of logger.
 type Verbosity int
 
 const (
@@ -42,13 +60,15 @@ const (
 	DEBUG
 	INFO
 	ERROR
+	WARNING
 )
 
 var verboseModes = [...]string{
 	"TRACE",
 	"DEBUG",
-	" INFO",
+	"INFO",
 	"ERROR",
+	"WARNING",
 }
 
 func (verbosity Verbosity) String() string {
@@ -79,6 +99,11 @@ func (logger *Logger) Always(message string) {
 }
 
 // Log error.
+func (logger *Logger) Warning(warning string) {
+	logger.log(WARNING, warning)
+}
+
+// Log error.
 func (logger *Logger) Error(err string) {
 	logger.log(ERROR, err)
 }
@@ -103,6 +128,11 @@ func (resourceValidation *ResourceValidation) AddValidationError(error string) {
 	resourceValidation.Errors = append(resourceValidation.Errors, error)
 }
 
+// Log validation error.
+func (resourceValidation *ResourceValidation) AddValidationWarning(warning string) {
+	resourceValidation.Warnings = append(resourceValidation.Warnings, warning)
+}
+
 // Get input from command line.
 func (logger *Logger) GetInput(message string, v ...interface{}) error {
 	fmt.Printf("%s: ", message)
@@ -112,7 +142,6 @@ func (logger *Logger) GetInput(message string, v ...interface{}) error {
 	}
 	return nil
 }
-
 func (logger *Logger) log(verbosity Verbosity, message string) {
 	if !logger.Quiet && verbosity >= logger.Verbosity {
 		fmt.Println(verbosity.String() + ": " + message)
@@ -123,18 +152,20 @@ func (logger *Logger) log(verbosity Verbosity, message string) {
 func (logger *Logger) PrintValidationErrors() {
 	if !logger.Quiet {
 		for _, resourceValidation := range logger.resourceValidation {
-			if len(resourceValidation.Errors) != 0 {
+			if len(resourceValidation.Errors) != 0 || len(resourceValidation.Warnings) != 0 {
 				fmt.Println(resourceValidation.ResourceName)
 				for _, err := range resourceValidation.Errors {
 					fmt.Println("        ", err)
 				}
-			} else {
-				fmt.Println(resourceValidation.ResourceName, " has no validation errors")
+				for _, warning := range resourceValidation.Warnings {
+					fmt.Println("        ", warning)
+				}
 			}
 		}
 	}
 }
 
+// HasValidationErrors checks if resource has errors. It's used in validateResources().
 func (logger *Logger) HasValidationErrors() bool {
 	for _, resourceValidation := range logger.resourceValidation {
 		if len(resourceValidation.Errors) > 0 {
@@ -144,7 +175,16 @@ func (logger *Logger) HasValidationErrors() bool {
 	return false
 }
 
-// AddResourceForValidation : Adds resource for validation
+func (logger *Logger) HasValidationWarnings() bool {
+	for _, resourceValidation := range logger.resourceValidation {
+		if len(resourceValidation.Warnings) > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+// AddResourceForValidation : Adds resource for validation. It's used in validateResources().
 func (logger *Logger) AddResourceForValidation(resourceName string) *ResourceValidation {
 	resourceValidation := &ResourceValidation{
 		ResourceName: resourceName,
@@ -163,12 +203,14 @@ func (logger *Logger) SetVerbosity(verbosity string) {
 	}
 }
 
+// Check if verbosity is one of the given types.
 func IsVerbosityValid(verbosity string) bool {
 	switch verbosity {
 	case
 		"TRACE",
 		"DEBUG",
 		"INFO",
+		"WARNING",
 		"ERROR":
 		return true
 	}

@@ -1,4 +1,4 @@
-// Copyright 2017 Appliscale
+// Copyright 2018 Appliscale
 //
 // Maintainers and contributors are listed in README file inside repository.
 //
@@ -20,47 +20,66 @@ package cliparser
 
 import (
 	"errors"
+	"time"
+
 	"github.com/Appliscale/perun/logger"
 	"github.com/Appliscale/perun/utilities"
 	"gopkg.in/alecthomas/kingpin.v2"
-	"strings"
 )
 
 var ValidateMode = "validate"
-var ConvertMode = "convert"
-var OfflineValidateMode = "validate_offline"
 var ConfigureMode = "configure"
 var CreateStackMode = "create-stack"
 var DestroyStackMode = "delete-stack"
+var UpdateStackMode = "update-stack"
+var MfaMode = "mfa"
+var SetupSinkMode = "setup-remote-sink"
+var DestroySinkMode = "destroy-remote-sink"
+var CreateParametersMode = "create-parameters"
+var SetStackPolicyMode = "set-stack-policy"
+var CreateChangeSetMode = "create-change-set"
+var DeleteChangeSetMode = "delete-change-set"
+var LintMode = "lint"
+var EstimateCostMode = "estimate-cost"
+
+var ChangeSetDefaultName string
 
 const JSON = "json"
 const YAML = "yaml"
 
 type CliArguments struct {
-	Mode              *string
-	TemplatePath      *string
-	OutputFilePath    *string
-	OutputFileFormat  *string
-	ConfigurationPath *string
-	Quiet             *bool
-	Yes               *bool
-	Verbosity         *string
-	MFA               *bool
-	DurationForMFA    *int64
-	Profile           *string
-	Region            *string
-	Sandbox           *bool
-	Stack             *string
-}
-
-func availableFormats() []string {
-	return []string{JSON, YAML}
+	Mode                    *string
+	TemplatePath            *string
+	Parameters              *map[string]string
+	OutputFilePath          *string
+	ConfigurationPath       *string
+	Quiet                   *bool
+	Yes                     *bool
+	Verbosity               *string
+	MFA                     *bool
+	DurationForMFA          *int64
+	Profile                 *string
+	Region                  *string
+	Sandbox                 *bool
+	Stack                   *string
+	Capabilities            *[]string
+	PrettyPrint             *bool
+	Progress                *bool
+	ParametersFile          *string
+	Block                   *bool
+	Unblock                 *bool
+	DisableStackTermination *bool
+	EnableStackTermination  *bool
+	ChangeSet               *string
+	Lint                    *bool
+	LinterConfiguration     *string
+	SkipValidation          *bool
 }
 
 // Get and validate CLI arguments. Returns error if validation fails.
 func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 	var (
-		app = kingpin.New("Perun", "Swiss army knife for AWS CloudFormation templates - validation, conversion, generators and other various stuff.")
+		app = kingpin.New("Perun", "A command-line validation tool for AWS Cloud Formation that allows to conquer the cloud faster!")
 
 		quiet             = app.Flag("quiet", "No console output, just return code.").Short('q').Bool()
 		yes               = app.Flag("yes", "Always say yes.").Short('y').Bool()
@@ -71,62 +90,188 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 		region            = app.Flag("region", "An AWS region to use.").Short('r').String()
 		sandbox           = app.Flag("sandbox", "Do not use configuration files hierarchy.").Bool()
 		configurationPath = app.Flag("config", "A path to the configuration file").Short('c').String()
+		showProgress      = app.Flag("progress", "Show progress of stack creation. Option available only after setting up a remote sink").Bool()
+		noValidate        = app.Flag("no-validate", "Disable validation before stack creation/update or creating Change Set.").Bool()
 
-		onlineValidate         = app.Command(ValidateMode, "Online template Validation")
-		onlineValidateTemplate = onlineValidate.Arg("template", "A path to the template file.").Required().String()
+		validate                  = app.Command(ValidateMode, "Template Validation")
+		validateTemplate          = validate.Arg("template", "A path to the template file.").Required().String()
+		validateLint              = validate.Flag("lint", "Enable template linting").Bool()
+		validateLintConfiguration = validate.Flag("lint-configuration", "A path to the configuration file").String()
+		validateParams            = validate.Flag("parameter", "list of parameters").StringMap()
+		validateParametersFile    = validate.Flag("parameters-file", "filename with parameters").String()
 
-		offlineValidate         = app.Command(OfflineValidateMode, "Offline Template Validation")
-		offlineValidateTemplate = offlineValidate.Arg("template", "A path to the template file.").Required().String()
-
-		convert             = app.Command(ConvertMode, "Convertion between JSON and YAML of template files")
-		convertTemplate     = convert.Arg("template", "A path to the template file.").Required().String()
-		convertOutputFile   = convert.Arg("output", "A path where converted file will be saved.").Required().String()
-		convertOutputFormat = convert.Arg("format", "Output format: "+strings.ToUpper(JSON)+" | "+strings.ToUpper(YAML)+".").HintAction(availableFormats).Required().String()
+		lint              = app.Command(LintMode, "Additional validation and template style checks")
+		lintTemplate      = lint.Arg("template", "A path to the template file.").Required().String()
+		lintConfiguration = lint.Flag("lint-configuration", "A path to the configuration file").String()
 
 		configure = app.Command(ConfigureMode, "Create your own configuration mode")
 
-		createStack     = app.Command(CreateStackMode, "Creates a stack on aws")
-		createStackName = createStack.Arg("stack", "An AWS stack name.").Required().String()
+		createStack                  = app.Command(CreateStackMode, "Creates a stack on aws")
+		createStackName              = createStack.Arg("stack", "An AWS stack name.").Required().String()
+		createStackTemplate          = createStack.Arg("template", "A path to the template file.").Required().String()
+		createStackCapabilities      = createStack.Flag("capabilities", "Capabilities: CAPABILITY_IAM | CAPABILITY_NAMED_IAM").Enums("CAPABILITY_IAM", "CAPABILITY_NAMED_IAM")
+		createStackParams            = createStack.Flag("parameter", "list of parameters").StringMap()
+		createStackParametersFile    = createStack.Flag("parameters-file", "filename with parameters").String()
+		createStackLint              = createStack.Flag("lint", "Enable template linting").Bool()
+		createStackLintConfiguration = createStack.Flag("lint-configuration", "A path to the configuration file").String()
+
+		createChangeSet                  = app.Command(CreateChangeSetMode, "Creates a changeSet on aws")
+		changeSetStackName               = createChangeSet.Arg("stack", "An AWS stack name").Required().String()
+		changeSetTemplate                = createChangeSet.Arg("template", "A path to the template file").Required().String()
+		createChangeSetName              = createChangeSet.Arg("changeSet", "An AWS Change Set name").String()
+		createChangeSetParams            = createChangeSet.Flag("parameter", "list of parameters").StringMap()
+		createChangeSetParametersFile    = createChangeSet.Flag("parameters-file", "filename with parameters").String()
+		createChangeSetLint              = createChangeSet.Flag("lint", "Enable template linting").Bool()
+		createChangeSetLintConfiguration = createChangeSet.Flag("lint-configuration", "A path to the configuration file").String()
+
+		deleteChangeSet          = app.Command(DeleteChangeSetMode, "Deletes a changeSet on aws")
+		deleteChangeSetStackName = deleteChangeSet.Arg("stack", "An AWS stack Name").Required().String()
+		deleteChangeSetName      = deleteChangeSet.Arg("change-set", "An AWS Change Set name").Required().String()
 
 		deleteStack     = app.Command(DestroyStackMode, "Deletes a stack on aws")
 		deleteStackName = deleteStack.Arg("stack", "An AWS stack name.").Required().String()
+
+		updateStack                  = app.Command(UpdateStackMode, "Updates a stack on aws")
+		updateStackName              = updateStack.Arg("stack", "An AWS stack name").Required().String()
+		updateStackTemplate          = updateStack.Arg("template", "A path to the template file.").Required().String()
+		updateStackCapabilities      = updateStack.Flag("capabilities", "Capabilities: CAPABILITY_IAM | CAPABILITY_NAMED_IAM").Enums("CAPABILITY_IAM", "CAPABILITY_NAMED_IAM")
+		updateStackParams            = updateStack.Flag("parameter", "list of parameters").StringMap()
+		updateStackParametersFile    = updateStack.Flag("parameters-file", "filename with parameters").String()
+		updateStackLint              = updateStack.Flag("lint", "Enable template linting").Bool()
+		updateStackLintConfiguration = updateStack.Flag("lint-configuration", "A path to the configuration file").String()
+
+		mfaCommand = app.Command(MfaMode, "Create temporary secure credentials with MFA.")
+
+		setupSink = app.Command(SetupSinkMode, "Sets up resources required for progress report on stack events (SNS Topic, SQS Queue and SQS Queue Policy)")
+
+		destroySink = app.Command(DestroySinkMode, "Destroys resources created with setup-remote-sink")
+
+		createParameters                 = app.Command(CreateParametersMode, "Creates a JSON parameters configuration suitable for give cloud formation file")
+		createParametersTemplate         = createParameters.Arg("template", "A path to the template file.").Required().String()
+		createParametersParamsOutputFile = createParameters.Arg("output", "A path to file where parameters will be saved.").Required().String()
+		createParametersParams           = createParameters.Flag("parameter", "list of parameters").StringMap()
+		createParametersPrettyPrint      = createParameters.Flag("pretty-print", "Pretty printing JSON").Bool()
+
+		setStackPolicy                  = app.Command(SetStackPolicyMode, "Set stack policy using JSON file.")
+		setStackPolicyName              = setStackPolicy.Arg("stack", "An AWS stack name.").Required().String()
+		setStackPolicyTemplate          = setStackPolicy.Arg("template", "A path to the template file.").String()
+		setDefaultBlockingStackPolicy   = setStackPolicy.Flag("block", "Blocking all actions.").Bool()
+		setDefaultUnblockingStackPolicy = setStackPolicy.Flag("unblock", "Unblocking all actions.").Bool()
+		setDisableStackTermination      = setStackPolicy.Flag("disable-stack-termination", "Allow to delete a stack.").Bool()
+		setEnableStackTermination       = setStackPolicy.Flag("enable-stack-termination", "Protecting a stack from being deleted.").Bool()
+
+		estimateCost               = app.Command(EstimateCostMode, "Estimate template's cost.")
+		estimateCostTemplate       = estimateCost.Arg("template", "A path to the template file.").Required().String()
+		estimateCostParams         = estimateCost.Flag("parameter", "list of parameters").StringMap()
+		estimateCostParametersFile = estimateCost.Flag("parameters-file", "filename with parameters").String()
 	)
+
 	app.HelpFlag.Short('h')
 	app.Version(utilities.VersionStatus())
 
 	switch kingpin.MustParse(app.Parse(args[1:])) {
 
-	//online validate
-	case onlineValidate.FullCommand():
+	// validate
+	case validate.FullCommand():
 		cliArguments.Mode = &ValidateMode
-		cliArguments.TemplatePath = onlineValidateTemplate
-
-		// offline validation
-	case offlineValidate.FullCommand():
-		cliArguments.Mode = &OfflineValidateMode
-		cliArguments.TemplatePath = offlineValidateTemplate
-
-		// convert
-	case convert.FullCommand():
-		cliArguments.Mode = &ConvertMode
-		cliArguments.TemplatePath = convertTemplate
-		cliArguments.OutputFilePath = convertOutputFile
-		cliArguments.OutputFileFormat = convertOutputFormat
+		cliArguments.TemplatePath = validateTemplate
+		cliArguments.Lint = validateLint
+		cliArguments.LinterConfiguration = validateLintConfiguration
+		cliArguments.Parameters = validateParams
+		cliArguments.ParametersFile = validateParametersFile
 
 		// configure
 	case configure.FullCommand():
 		cliArguments.Mode = &ConfigureMode
 
-		// create Stack
+	case lint.FullCommand():
+		cliArguments.Mode = &LintMode
+		cliArguments.TemplatePath = lintTemplate
+		cliArguments.LinterConfiguration = lintConfiguration
 
+		// create Stack
 	case createStack.FullCommand():
 		cliArguments.Mode = &CreateStackMode
 		cliArguments.Stack = createStackName
+		cliArguments.TemplatePath = createStackTemplate
+		cliArguments.Capabilities = createStackCapabilities
+		cliArguments.Parameters = createStackParams
+		cliArguments.ParametersFile = createStackParametersFile
+		cliArguments.Lint = createStackLint
+		cliArguments.LinterConfiguration = createStackLintConfiguration
 
-		// delete Stack
+	// delete Stack
 	case deleteStack.FullCommand():
 		cliArguments.Mode = &DestroyStackMode
 		cliArguments.Stack = deleteStackName
+
+		// generate MFA token
+	case mfaCommand.FullCommand():
+		cliArguments.Mode = &MfaMode
+
+		// update Stack
+	case updateStack.FullCommand():
+		cliArguments.Mode = &UpdateStackMode
+		cliArguments.Stack = updateStackName
+		cliArguments.TemplatePath = updateStackTemplate
+		cliArguments.Capabilities = updateStackCapabilities
+		cliArguments.ParametersFile = updateStackParametersFile
+		cliArguments.Parameters = updateStackParams
+		cliArguments.Lint = updateStackLint
+		cliArguments.LinterConfiguration = updateStackLintConfiguration
+
+	// create Parameters
+	case createParameters.FullCommand():
+		cliArguments.Mode = &CreateParametersMode
+		cliArguments.TemplatePath = createParametersTemplate
+		cliArguments.OutputFilePath = createParametersParamsOutputFile
+		cliArguments.Parameters = createParametersParams
+		cliArguments.PrettyPrint = createParametersPrettyPrint
+
+		// set stack policy
+	case setStackPolicy.FullCommand():
+		cliArguments.Mode = &SetStackPolicyMode
+		cliArguments.Block = setDefaultBlockingStackPolicy
+		cliArguments.Unblock = setDefaultUnblockingStackPolicy
+		cliArguments.Stack = setStackPolicyName
+		cliArguments.TemplatePath = setStackPolicyTemplate
+		cliArguments.DisableStackTermination = setDisableStackTermination
+		cliArguments.EnableStackTermination = setEnableStackTermination
+
+	case createChangeSet.FullCommand():
+		cliArguments.Mode = &CreateChangeSetMode
+		if *createChangeSetName != "" {
+			cliArguments.ChangeSet = createChangeSetName
+		} else {
+			ChangeSetDefaultName = *changeSetStackName + time.Now().Format("-2006-01-02--15-04-05")
+			cliArguments.ChangeSet = &ChangeSetDefaultName
+		}
+		cliArguments.TemplatePath = changeSetTemplate
+		cliArguments.Stack = changeSetStackName
+		cliArguments.Parameters = createChangeSetParams
+		cliArguments.ParametersFile = createChangeSetParametersFile
+		cliArguments.Lint = createChangeSetLint
+		cliArguments.LinterConfiguration = createChangeSetLintConfiguration
+
+	case deleteChangeSet.FullCommand():
+		cliArguments.Mode = &DeleteChangeSetMode
+		cliArguments.Stack = deleteChangeSetStackName
+		cliArguments.ChangeSet = deleteChangeSetName
+
+		// set up remote sink
+	case setupSink.FullCommand():
+		cliArguments.Mode = &SetupSinkMode
+
+		// destroy remote sink
+	case destroySink.FullCommand():
+		cliArguments.Mode = &DestroySinkMode
+
+		// estimate template cost
+	case estimateCost.FullCommand():
+		cliArguments.Mode = &EstimateCostMode
+		cliArguments.TemplatePath = estimateCostTemplate
+		cliArguments.Parameters = estimateCostParams
+		cliArguments.ParametersFile = estimateCostParametersFile
 	}
 
 	// OTHER FLAGS
@@ -139,6 +284,8 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 	cliArguments.Region = region
 	cliArguments.Sandbox = sandbox
 	cliArguments.ConfigurationPath = configurationPath
+	cliArguments.Progress = showProgress
+	cliArguments.SkipValidation = noValidate
 
 	if *cliArguments.DurationForMFA < 0 {
 		err = errors.New("You should specify value for duration of MFA token greater than zero")
@@ -153,15 +300,6 @@ func ParseCliArguments(args []string) (cliArguments CliArguments, err error) {
 	if *cliArguments.Verbosity != "" && !logger.IsVerbosityValid(*cliArguments.Verbosity) {
 		err = errors.New("You specified invalid value for --verbosity flag")
 		return
-	}
-
-	if *cliArguments.Mode == ConvertMode {
-		*cliArguments.OutputFileFormat = strings.ToLower(*cliArguments.OutputFileFormat)
-		if *cliArguments.OutputFileFormat != JSON && *cliArguments.OutputFileFormat != YAML {
-			err = errors.New("Invalid output file format. Use JSON or YAML")
-			return
-		}
-
 	}
 
 	return

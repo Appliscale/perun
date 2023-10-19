@@ -1,4 +1,4 @@
-// Copyright 2017 Appliscale
+// Copyright 2018 Appliscale
 //
 // Maintainers and contributors are listed in README file inside repository.
 //
@@ -21,11 +21,6 @@ import (
 	"testing"
 )
 
-func TestInvalidOutputFormatInConvertMode(t *testing.T) {
-	assert.Equal(t, "Invalid output file format. Use JSON or YAML",
-		parseCliArguments([]string{"cmd", "convert", "some_path", "some_path", "wrong_format"}).Error())
-}
-
 func TestInvalidVerbosity(t *testing.T) {
 	assert.Equal(t, "You specified invalid value for --verbosity flag",
 		parseCliArguments([]string{"cmd", "validate", "some_path", "--verbosity=TEST"}).Error())
@@ -42,7 +37,7 @@ func TestTooBigDurationForMFA(t *testing.T) {
 }
 
 func TestValidArgs(t *testing.T) {
-	assert.Nil(t, parseCliArguments([]string{"cmd", "validate_offline", "some_path"}))
+	assert.Nil(t, parseCliArguments([]string{"cmd", "validate", "some_path"}))
 }
 
 func parseCliArguments(args []string) error {

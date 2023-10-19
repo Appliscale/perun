@@ -1,4 +1,4 @@
-// Copyright 2017 Appliscale
+// Copyright 2018 Appliscale
 //
 // Maintainers and contributors are listed in README file inside repository.
 //
@@ -30,17 +30,20 @@ import (
 	"github.com/Appliscale/perun/context"
 )
 
+// Specification contains information about specification - type and version.
 type Specification struct {
 	PropertyTypes                map[string]PropertyType
 	ResourceSpecificationVersion string
 	ResourceTypes                map[string]Resource
 }
 
+// PropertyType contains Documentation and map of Properties.
 type PropertyType struct {
 	Documentation string
 	Properties    map[string]Property
 }
 
+// Property describes what should be in structure.
 type Property struct {
 	Documentation     string
 	DuplicatesAllowed bool
@@ -52,12 +55,14 @@ type Property struct {
 	UpdateType        string
 }
 
+// Resource in specification contains documentation, map of attributes and properties.
 type Resource struct {
 	Documentation string
 	Attributes    map[string]Attribute
 	Properties    map[string]Property
 }
 
+// Attribute of item.
 type Attribute struct {
 	ItemType          string
 	PrimitiveItemType string
@@ -65,7 +70,7 @@ type Attribute struct {
 	Type              string
 }
 
-// IsSubproperty : Checks if it is subproperty
+// IsSubproperty : Checks if it is subproperty.
 func (property *Property) IsSubproperty() bool {
 	if property.Type != "List" && property.Type != "Map" && len(property.Type) > 0 {
 		return true
@@ -83,7 +88,7 @@ func GetSpecification(context *context.Context) (specification Specification, er
 	return GetSpecificationFromFile(filePath)
 }
 
-// Get specification from file.
+// Get specification from file. It's used in GetSpecification().
 func GetSpecificationFromFile(specificationFilePath string) (specification Specification, err error) {
 	specificationFile, err := ioutil.ReadFile(specificationFilePath)
 	if err != nil {

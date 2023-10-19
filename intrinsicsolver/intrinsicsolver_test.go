@@ -39,18 +39,60 @@ func TestMain(m *testing.M) {
 
 func TestIndentations(t *testing.T) {
 	line := "                Key: Value       "
-	lineIndent := indentations(line)
+	lineIndent := countLeadingSpaces(line)
 	firstLetter := string(line[lineIndent])
 	assert.Equal(t, 16, lineIndent, "MSG")
 	assert.Equal(t, "K", firstLetter, "MSG")
 }
 
-func TestFixFunctions(t *testing.T) {
+func TestMultiline(t *testing.T) {
 	rawTemplate, _ := ioutil.ReadFile("./test_resources/test_map.yaml")
 	expectedTemplate, _ := ioutil.ReadFile("./test_resources/manual_test_map.yaml")
-	fixed, _ := FixFunctions(rawTemplate, &sink)
+	fixed, _ := FixFunctions(rawTemplate, &sink, "multiline")
 	expected, _ := parseFileIntoLines(expectedTemplate, &sink)
 	actual, _ := parseFileIntoLines(fixed, &sink)
 
+	if string(actual[len(actual)-1]) == "" {
+		actual = actual[:(len(actual) - 1)]
+	}
+
 	assert.Equal(t, expected, actual, "MSG")
+}
+
+func TestElongate(t *testing.T) {
+	rawTemplate, _ := ioutil.ReadFile("./test_resources/test_elongate.yaml")
+	expectedTemplate, _ := ioutil.ReadFile("./test_resources/manual_test_elongate.yaml")
+	fixed, _ := FixFunctions(rawTemplate, &sink, "elongate")
+	expected, _ := parseFileIntoLines(expectedTemplate, &sink)
+	actual, _ := parseFileIntoLines(fixed, &sink)
+
+	if string(actual[len(actual)-1]) == "" {
+		actual = actual[:(len(actual) - 1)]
+	}
+
+	assert.Equal(t, expected, actual, "MSG")
+}
+
+func TestCorrectLong(t *testing.T) {
+	rawTemplate, _ := ioutil.ReadFile("./test_resources/manual_test_elongate.yaml")
+	expectedTemplate, _ := ioutil.ReadFile("./test_resources/manual_test_correctlong.yaml")
+	fixed, _ := FixFunctions(rawTemplate, &sink, "correctlong")
+	expected, _ := parseFileIntoLines(expectedTemplate, &sink)
+	actual, _ := parseFileIntoLines(fixed, &sink)
+
+	if string(actual[len(actual)-1]) == "" {
+		actual = actual[:(len(actual) - 1)]
+	}
+
+	assert.Equal(t, expected, actual, "MSG")
+}
+
+func TestAdjustIndentForNestedFunctionBody(t *testing.T) {
+	lines := []string{"ASD:", "  BCA: |", "    firstLine", "    secondLine with spaces", "", "    fourth line # with comment", "just: anotherYaml"}
+	adjustIndentForNestedFunctionBody(1, lines[1], &lines)
+	assert.Equal(t, "      firstLine", lines[2])
+	assert.Equal(t, "      secondLine with spaces", lines[3])
+	assert.Equal(t, "", lines[4])
+	assert.Equal(t, "      fourth line # with comment", lines[5])
+	assert.Equal(t, "just: anotherYaml", lines[6])
 }

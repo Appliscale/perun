@@ -19,3 +19,5 @@
   - AWS API.
 - https://github.com/go-ini/ini
   - For handling AWS credential files.
+- https://github.com/awslabs/goformation
+  - Library for working with AWS CloudFormation templates (capable of resolving the intrinsic functions).

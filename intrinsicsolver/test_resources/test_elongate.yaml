@@ -1,0 +1,1 @@
+Key: !Equals [ value_1, !FindInMap [ MapName, !Ref TopLevelKeyRef, SecondLevelKey ] ]

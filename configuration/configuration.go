@@ -1,4 +1,4 @@
-// Copyright 2017 Appliscale
+// Copyright 2018 Appliscale
 //
 // Maintainers and contributors are listed in README file inside repository.
 //
@@ -19,11 +19,13 @@ package configuration
 
 import (
 	"errors"
+	"io/ioutil"
+	"os"
+	"strings"
+
 	"github.com/Appliscale/perun/cliparser"
 	"github.com/Appliscale/perun/logger"
 	"github.com/ghodss/yaml"
-	"io/ioutil"
-	"os"
 )
 
 // Perun configuration.
@@ -40,6 +42,8 @@ type Configuration struct {
 	DefaultDurationForMFA int64
 	// Logger verbosity.
 	DefaultVerbosity string
+	// Directory for temporary files.
+	DefaultTemporaryFilesDirectory string
 }
 
 // Return URL to specification file. If there is no specification file for selected region, return error.
@@ -51,25 +55,21 @@ func (config Configuration) GetSpecificationFileURLForCurrentRegion() (string, e
 }
 
 // Return perun configuration read from file.
-func GetConfiguration(cliArguments cliparser.CliArguments, logger *logger.Logger) (config Configuration, err error) {
-	if getMode(cliArguments) != cliparser.ConfigureMode {
-		var configPath string
-		configPath, err = getConfigurationPath(cliArguments, logger)
-		if err != nil {
-			return
-		}
-		var rawConfiguration []byte
-		rawConfiguration, err = ioutil.ReadFile(configPath)
-		if err != nil {
-			return
-		}
-		err = yaml.Unmarshal(rawConfiguration, &config)
-		if err != nil {
-			return
-		}
-		postProcessing(&config, cliArguments)
+func GetConfiguration(cliArguments cliparser.CliArguments, logger logger.LoggerInt) (config Configuration, err error) {
+	mode := getMode(cliArguments)
+
+	if mode == cliparser.ConfigureMode {
 		return
 	}
+
+	config, err = getConfigurationFromFile(cliArguments, logger)
+	if err != nil && mode != cliparser.MfaMode {
+		return
+	}
+
+	err = nil
+	postProcessing(&config, cliArguments)
+
 	return
 }
 
@@ -97,15 +97,17 @@ func postProcessing(config *Configuration, cliArguments cliparser.CliArguments) 
 	if *cliArguments.Profile != "" {
 		config.DefaultProfile = *cliArguments.Profile
 	}
-	if *cliArguments.MFA != config.DefaultDecisionForMFA {
+	if *cliArguments.MFA {
 		config.DefaultDecisionForMFA = *cliArguments.MFA
+	} else {
+		*cliArguments.MFA = config.DefaultDecisionForMFA
 	}
 	if *cliArguments.DurationForMFA > 0 {
 		config.DefaultDurationForMFA = *cliArguments.DurationForMFA
 	}
 }
 
-func getConfigurationPath(cliArguments cliparser.CliArguments, logger *logger.Logger) (configPath string, err error) {
+func getConfigurationPath(cliArguments cliparser.CliArguments, logger logger.LoggerInt) (configPath string, err error) {
 	if *cliArguments.Sandbox {
 		return "", errors.New("No configuration file should be used.")
 	}
@@ -116,7 +118,7 @@ func getConfigurationPath(cliArguments cliparser.CliArguments, logger *logger.Lo
 	} else if path, ok := getConfigFileFromCurrentWorkingDirectory(os.Stat); ok {
 		notifyUserAboutConfigurationFile(path, logger)
 		return path, nil
-	} else if path, ok := getUserConfigFile(os.Stat); ok {
+	} else if path, ok := getUserConfigFile(os.Stat, "main.yaml"); ok {
 		notifyUserAboutConfigurationFile(path, logger)
 		return path, nil
 	} else if path, ok := getGlobalConfigFile(os.Stat); ok {
@@ -127,17 +129,44 @@ func getConfigurationPath(cliArguments cliparser.CliArguments, logger *logger.Lo
 	}
 }
 
-func notifyUserAboutConfigurationFile(configurationFilePath string, logger *logger.Logger) {
+func notifyUserAboutConfigurationFile(configurationFilePath string, logger logger.LoggerInt) {
 	logger.Info("Configuration file from the following location will be used: " + configurationFilePath)
 }
 
-func SaveToFile(config Configuration, path string, logger logger.Logger) {
+func SaveToFile(config Configuration, path string, logger logger.LoggerInt) {
+	wholePath := strings.Split(path, "/")
+	var newpath string
+	for i := 0; i < len(wholePath)-1; i++ {
+		newpath += "/" + wholePath[i]
+	}
+	os.MkdirAll(newpath, os.ModePerm)
 	file, err := os.Create(path)
 	defer file.Close()
 	if err != nil {
-		logger.Error("Could not create file")
+		logger.Error(err.Error())
 		return
 	}
 	obj, _ := yaml.Marshal(config)
 	_, err = file.Write(obj)
+	if err != nil {
+		logger.Error(err.Error())
+	}
+}
+
+func getConfigurationFromFile(cliArguments cliparser.CliArguments, logger logger.LoggerInt) (config Configuration, err error) {
+	var configPath string
+	configPath, err = getConfigurationPath(cliArguments, logger)
+	if err != nil {
+		return
+	}
+	var rawConfiguration []byte
+	rawConfiguration, err = ioutil.ReadFile(configPath)
+	if err != nil {
+		return
+	}
+	err = yaml.Unmarshal(rawConfiguration, &config)
+	if err != nil {
+		return
+	}
+	return
 }
