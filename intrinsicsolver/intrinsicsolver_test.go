@@ -39,7 +39,7 @@ func TestMain(m *testing.M) {
 
 func TestIndentations(t *testing.T) {
 	line := "                Key: Value       "
-	lineIndent := indentations(line)
+	lineIndent := countLeadingSpaces(line)
 	firstLetter := string(line[lineIndent])
 	assert.Equal(t, 16, lineIndent, "MSG")
 	assert.Equal(t, "K", firstLetter, "MSG")
@@ -85,4 +85,14 @@ func TestCorrectLong(t *testing.T) {
 	}
 
 	assert.Equal(t, expected, actual, "MSG")
+}
+
+func TestAdjustIndentForNestedFunctionBody(t *testing.T) {
+	lines := []string{"ASD:", "  BCA: |", "    firstLine", "    secondLine with spaces", "", "    fourth line # with comment", "just: anotherYaml"}
+	adjustIndentForNestedFunctionBody(1, lines[1], &lines)
+	assert.Equal(t, "      firstLine", lines[2])
+	assert.Equal(t, "      secondLine with spaces", lines[3])
+	assert.Equal(t, "", lines[4])
+	assert.Equal(t, "      fourth line # with comment", lines[5])
+	assert.Equal(t, "just: anotherYaml", lines[6])
 }

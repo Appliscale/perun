@@ -1,4 +1,4 @@
-// Copyright 2017 Appliscale
+// Copyright 2018 Appliscale
 //
 // Maintainers and contributors are listed in README file inside repository.
 //
@@ -33,8 +33,14 @@ func parseCliArgumentsValidStub(cliArguments cliparser.CliArguments) cliArgument
 }
 
 func getConfigurationValidStub(config configuration.Configuration) configurationReader {
-	return func(cliparser.CliArguments, *logger.Logger) (configuration.Configuration, error) {
+	return func(cliparser.CliArguments, logger.LoggerInt) (configuration.Configuration, error) {
 		return config, nil
+	}
+}
+
+func getInconsistencyConfigurationValidStub(config configuration.InconsistencyConfiguration) inconsistenciesReader {
+	return func(logger.LoggerInt) configuration.InconsistencyConfiguration {
+		return config
 	}
 }
 
@@ -42,7 +48,7 @@ func parseCliArgumentsErroneous(args []string) (cliparser.CliArguments, error) {
 	return cliparser.CliArguments{}, errors.New("")
 }
 
-func getConfigurationErroneous(cliparser.CliArguments, *logger.Logger) (configuration.Configuration, error) {
+func getConfigurationErroneous(cliparser.CliArguments, logger.LoggerInt) (configuration.Configuration, error) {
 	return configuration.Configuration{}, errors.New("")
 }
 
@@ -50,18 +56,26 @@ func TestCheckContextBody(t *testing.T) {
 	t.Run("CLI arguments returned from cliArgumentsParser are the same as the ones contained in context", func(t *testing.T) {
 		cliArguments := cliparser.CliArguments{}
 		config := configuration.Configuration{}
+		inconsistencyConfig := configuration.InconsistencyConfiguration{}
+
 		cliArgParserStub := parseCliArgumentsValidStub(cliArguments)
 		confReaderStub := getConfigurationValidStub(config)
-		context, _ := GetContext(cliArgParserStub, confReaderStub)
+		inconsistencyConfReaderStub := getInconsistencyConfigurationValidStub(inconsistencyConfig)
+
+		context, _ := GetContext(cliArgParserStub, confReaderStub, inconsistencyConfReaderStub)
 		assert.Equal(t, cliArguments, context.CliArguments)
 	})
 
 	t.Run("Config returned from configurationReader is the same as the one contained in context", func(t *testing.T) {
 		cliArguments := cliparser.CliArguments{}
 		config := configuration.Configuration{}
+		inconsistencyConfig := configuration.InconsistencyConfiguration{}
+
 		cliArgsParserStub := parseCliArgumentsValidStub(cliArguments)
 		confReaderStub := getConfigurationValidStub(config)
-		context, _ := GetContext(cliArgsParserStub, confReaderStub)
+		inconsistencyConfReaderStub := getInconsistencyConfigurationValidStub(inconsistencyConfig)
+
+		context, _ := GetContext(cliArgsParserStub, confReaderStub, inconsistencyConfReaderStub)
 		assert.Equal(t, config, context.Config)
 	})
 }
@@ -69,15 +83,23 @@ func TestCheckContextBody(t *testing.T) {
 func TestCheckErroneousDependencyReturn(t *testing.T) {
 	t.Run("Should return an error if cliArgumentsParser returns the error", func(t *testing.T) {
 		config := configuration.Configuration{}
+		inconsistencyConfig := configuration.InconsistencyConfiguration{}
+
 		confReaderStub := getConfigurationValidStub(config)
-		_, err := GetContext(parseCliArgumentsErroneous, confReaderStub)
+		inconsistencyConfReaderStub := getInconsistencyConfigurationValidStub(inconsistencyConfig)
+
+		_, err := GetContext(parseCliArgumentsErroneous, confReaderStub, inconsistencyConfReaderStub)
 		assert.NotNil(t, err)
 	})
 
 	t.Run("Should return an error if configurationReader returns the error", func(t *testing.T) {
 		cliArguments := cliparser.CliArguments{}
+		inconsistencyConfig := configuration.InconsistencyConfiguration{}
+
 		cliArgParserStub := parseCliArgumentsValidStub(cliArguments)
-		_, err := GetContext(cliArgParserStub, getConfigurationErroneous)
+		inconsistencyConfReaderStub := getInconsistencyConfigurationValidStub(inconsistencyConfig)
+
+		_, err := GetContext(cliArgParserStub, getConfigurationErroneous, inconsistencyConfReaderStub)
 		assert.NotNil(t, err)
 	})
 }

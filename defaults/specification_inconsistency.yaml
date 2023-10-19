@@ -1,0 +1,4 @@
+SpecificationInconsistency:
+  AWS::CloudFront::Distribution.DistributionConfig:
+      DefaultCacheBehavior:
+        - Required

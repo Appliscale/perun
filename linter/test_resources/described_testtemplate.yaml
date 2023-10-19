@@ -1,0 +1,15 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Simple Description"
+Parameters:
+  TestParameter1:
+    Description: "Prefix of the bucket name - environment"
+    Type: String
+    AllowedValues:
+      - prod
+      - staging
+
+Resources:
+  TestS3:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref TestParameter1

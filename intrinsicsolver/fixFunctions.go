@@ -1,3 +1,19 @@
+// Copyright 2018 Appliscale
+//
+// Maintainers and contributors are listed in README file inside repository.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package intrinsicsolver
 
 import (
@@ -10,22 +26,21 @@ import (
 	"github.com/Appliscale/perun/logger"
 )
 
-var functions = []string{"Base64", "GetAtt", "GetAZs", "ImportValue", "Ref", "FindInMap", "Join", "Select", "Split", "Sub", "And", "Equals", "If", "Not", "Or"}
-var mapNature = functions[5:]
+var Functions = []string{"Base64", "GetAtt", "GetAZs", "ImportValue", "Ref", "FindInMap", "Join", "Select", "Split", "Sub", "And", "Equals", "If", "Not", "Or"}
+var mapNature = Functions[5:]
 
 /*
 FixFunctions : takes []byte file and firstly converts all single quotation marks to double ones (anything between single ones is treated as the rune in GoLang),
-then deconstructs file into lines, checks for intrinsic functions. The FixFunctions has modes: `multiline`, `elongate`, `correctlong` and `temp`.
+then deconstructs file into lines, checks for intrinsic functions. The FixFunctions has modes: `multiline`, `elongate` and `correctlong`.
 Mode `multiline` looks for functions of a map nature where the function name is located in one line and it's body (map elements)
 are located in the following lines (if this would be not fixed an error would be thrown: `json: unsupported type: map[interface {}]interface {}`).
 The function changes the notation by putting function name in the next line with proper indentation.
 Mode `elongate` exchanges the short function names into their proper, long equivalent.
 Mode `correctlong` prepares the file for conversion into JSON. If the file is a YAML with every line being solicitously indented, there is no problem and the `elongate` mode is all we need.
 But if there is any mixed notation (e.g. indented maps along with one-line maps, functions in one line with the key), parsing must be preceded with some additional operations.
-Mode `temp` allows the user to save the result to a temporary file `.preprocessed.yml`.
 The result is returned as a []byte array.
 */
-func FixFunctions(template []byte, logger *logger.Logger, mode ...string) ([]byte, error) {
+func FixFunctions(template []byte, logger logger.LoggerInt, mode ...string) ([]byte, error) {
 	var quotationProcessed, temporaryResult []string
 	preLines, err := parseFileIntoLines(template, logger)
 	if err != nil {
@@ -58,7 +73,7 @@ func FixFunctions(template []byte, logger *logger.Logger, mode ...string) ([]byt
 				}
 			}
 			if m == "elongate" {
-				for _, function := range functions {
+				for _, function := range Functions {
 					elongateForms(&d, &lines, idx, function)
 				}
 			}
@@ -72,16 +87,6 @@ func FixFunctions(template []byte, logger *logger.Logger, mode ...string) ([]byt
 
 	stringStream := strings.Join(temporaryResult, "\n")
 	output := []byte(stringStream)
-
-	for _, m := range mode {
-		if m == "temp" {
-			if err := writeLines(temporaryResult, ".preprocessed.yml"); err != nil {
-				logger.Error(err.Error())
-				return nil, err
-			}
-			logger.Info("Created temporary file of a preprocessed template `.preprocessed.yml`")
-		}
-	}
 
 	return output, nil
 }
@@ -109,7 +114,7 @@ func shortForm(name string) string {
 }
 
 // Function parseFileIntoLines is reading the []byte file and returns it line by line as []string slice.
-func parseFileIntoLines(template []byte, logger *logger.Logger) ([]string, error) {
+func parseFileIntoLines(template []byte, logger logger.LoggerInt) ([]string, error) {
 	bytesReader := bytes.NewReader(template)
 	lines := make([]string, 0)
 	scanner := bufio.NewScanner(bytesReader)

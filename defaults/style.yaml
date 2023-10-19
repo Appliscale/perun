@@ -1,0 +1,33 @@
+yaml:
+  allowedQuotes:
+    double: true
+    single: true
+    noquotes: true
+  allowedLists:
+    inline: true
+    dash: true
+  continuationIndent: # checked only when indent is required
+    required: true
+    value: 2
+
+json:
+  spaces:
+    after: [':']
+    before: []
+
+global:
+  lineLength:
+    required: true
+    value: 100
+  indent:
+    required: true
+    value: 2
+  blankLinesAllowed: true
+
+#    AWS Specific
+  requiredFields:
+    templateDescription: true
+    parametersDescription: true
+
+  namingConventions:
+    logicalNames: ".+" #regex

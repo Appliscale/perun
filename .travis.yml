@@ -1,9 +1,18 @@
 language: go
 
+sudo: required
+
 go:
   - 1.9.x
 
-install: make config-install get-deps
+env:
+  global:
+    - secure: "roiMALXQRkKKlPP+cbtac795XeHHnPrKvc6M8HjVa5gzL1SZXHDn/zvcvTc//AAMBFxZXb9+V+USrU3vNyzULIoh5j7nTOutPtik4WYLIfwADVgSxpiEG9jDBYp3DLlXMAMb5uJWRuG4DSSxpUGPFujQr9+aaUa0Lz6tsPUpE2/yaQfR5GmrAVteevkEZ0h18BxiRKsf4cRIGEQpwOSAQ+x66MlaEAn/kkprS4K9imniHeDRnz4TM75SAI7VZh9Fglv6gf8HTZ73EV1sGzsbG8+k1eO53UxMYR7YneB86ihKjRFuXSXzT8K0RdoACY6Muf81kwP5JUP3SLMaNgRTrdGmzOZ+yhJzfuey0b7i2llvGHrfKCmEIUzTYC5KZgvwblqwU97u55baJpAwQJgwPOKBO2RUvyzdK00t39kj+PpGrmyrW9evQ7mGk7o7txn4K1LJfCTn/fll1Y3B1poyiflYfQ4vlj7RgKSwAgIs36+yPhYF/m1K9I+jy8BRHPCZek3JJIMnKaW3OEBzpCRBoxxmMFomN8tq2Ygde5TUVxukAbZNIrlaPPWB5ZB6ZQ1hKol0yddkqOKxivGPQJaZthlt7eHpx4rAG+ZY1e706pG3iqYcTEVJTjPPzCaKdSpbFg3oKGet3ClimF0ycNpJRFQs2eveI3AkhVCN2Z4IWX8=" #Github
+
+install:
+  - 'mkdir -p $HOME/.config/perun'
+  - 'cp defaults/main.yaml $HOME/.config/perun/main.yaml'
+  - make get-deps
 
 script:
   - make code-analysis
@@ -13,12 +22,8 @@ before_deploy:
   - 'mkdir -p release'
   - 'GOOS=linux GOARCH=amd64 go build -o release/perun-linux-amd64'
   - 'GOOS=darwin GOARCH=amd64 go build -o release/perun-darwin-amd64'
-  - 'GOOS=windows GOARCH=amd64 go build -o release/perun-windows-amd64.exe'
-  - 'GOOS=windows GOARCH=386 go build -o release/perun-windows-386.exe'
   - 'tar -C release -czf release/perun-linux-amd64.tar.gz perun-linux-amd64'
   - 'tar -C release -czf release/perun-darwin-amd64.tar.gz perun-darwin-amd64'
-  - 'tar -C release -czf release/perun-windows-amd64.tar.gz perun-windows-amd64.exe'
-  - 'tar -C release -czf release/perun-windows-386.tar.gz perun-windows-386.exe'
 
 deploy:
   provider: releases
@@ -27,8 +32,10 @@ deploy:
   file:
     - release/perun-linux-amd64.tar.gz
     - release/perun-darwin-amd64.tar.gz
-    - release/perun-windows-amd64.tar.gz
-    - release/perun-windows-386.tar.gz
   skip_cleanup: true
   on:
     tags: true
+
+after_deploy:
+  - chmod +x release.sh
+  - ./release.sh $TRAVIS_TAG $Github
